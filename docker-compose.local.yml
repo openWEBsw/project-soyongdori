@@ -1,0 +1,17 @@
+services:
+  local-db:
+    image: mysql:8.4.9
+    container_name: soyongdori-mysql-local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:{DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: dev_db
+      MYSQL_USER: dev_user
+      MYSQL_PASSWORD: dev_password
+    volumes:
+      - soyongdori_mysql_local_data:/var/lib/mysql
+
+volumes:
+  soyongdori_mysql_local_data:
