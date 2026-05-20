@@ -1,0 +1,68 @@
+services:
+  # frontend:
+  #   image: soyongdori_frontend:latest
+  #   container_name: soyongdori-frontend
+  #   networks:
+  #     - app-network
+  #   depends_on:
+  #     - backend
+
+  backend:
+    image: soyongdori_backend:latest
+    container_name: soyongdori-backend
+    environment:
+      - NODE_ENV=production
+      - APP_ENV=${APP_ENV:-development}
+      - DB_HOST=db
+      - DB_USER=${MYSQL_USER}
+      - DB_PASS=${MYSQL_PASSWORD}
+      - DB_NAME=${MYSQL_DATABASE:-soyongdori_db}
+      - PORT=3000
+    networks:
+      - app-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4.9
+    container_name: soyongdori-mysql
+    expose:
+      - "3306"
+    # ports:
+    #   - "127.0.0.1:${DB_PORT:-3306}:3306" # 필요시 이 주석을 풀어서 포트 개방
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-soyongdori_db}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - soyongdori_mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: soyongdori-cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    networks:
+      - app-network
+    depends_on:
+      # - frontend
+      - backend
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  soyongdori_mysql_data:
+    driver: local
