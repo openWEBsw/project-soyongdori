@@ -10,6 +10,7 @@ services:
   backend:
     image: soyongdori_backend:latest
     container_name: soyongdori-backend
+    restart: unless-stopped
     environment:
       - NODE_ENV=production
       - APP_ENV=${APP_ENV:-development}
@@ -27,6 +28,7 @@ services:
   db:
     image: mysql:8.4.9
     container_name: soyongdori-mysql
+    restart: unless-stopped
     expose:
       - "3306"
     # ports:
@@ -50,6 +52,7 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: soyongdori-cloudflared
+    restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
