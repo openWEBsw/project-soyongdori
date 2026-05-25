@@ -1,9 +1,17 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import BoardListPage from '../features/board/pages/BoardListPage';
+import BoardDetailPage from '../features/board/pages/BoardDetailPage';
+import BoardWritePage from '../features/board/pages/BoardWritePage';
 
 function App() {
   return (
-    <>
-    <h1>test!</h1>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/boards/:boardType" element={<BoardListPage />} />
+        <Route path="/boards/:boardType/write" element={<BoardWritePage />} />
+        <Route path="/boards/:boardType/:postId" element={<BoardDetailPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
