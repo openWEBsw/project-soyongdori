@@ -1,0 +1,241 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ENUM들 정의
+
+enum MemberStatus {
+  pending
+  active
+  inactive
+
+  @@map("member_status")
+}
+
+enum MemberPosition {
+  not_member // 비회원, 준회원
+  member // 일반 회원
+  planning_member // 기획부원
+  planning_lead // 기획팀장
+  treasurer // 총무
+  vice_leader // 부회장
+  leader // 회장
+  super_admin // 관리자
+
+  @@map("member_position")
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+
+  @@map("application_status")
+}
+
+enum ApplicationPart {
+  vocal
+  drum
+  electric
+  keyboard
+  bass
+  etc
+
+  @@map("application_part")
+}
+
+enum BoardType {
+  notice
+  free
+  resource
+  photo
+  planning
+  budget
+
+  @@map("board_type")
+}
+
+enum EventVisibility {
+  personal
+  group
+  public
+
+  @@map("event_visibility")
+}
+
+// db 스키마 테이블
+
+model Member {
+  id              BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  email           String           @unique @db.VarChar(255)
+  passwordHash    String           @map("password_hash") @db.VarChar(255)
+  name            String           @db.VarChar(50)
+  studentId       String?          @unique @map("student_id") @db.VarChar(30)
+  phone           String?          @db.VarChar(30)
+  part            ApplicationPart?
+  position        MemberPosition?
+  cohort          Int?             @db.UnsignedInt
+  isCohortLead    Boolean          @default(false) @map("is_cohort_lead") // TODO 적절한지 체크!
+  status          MemberStatus     @default(pending)
+  birthday        DateTime?        @db.Date
+  profileImageUrl String?          @map("profile_image_url") @db.VarChar(500) // TODO 현재는 로컬 파일 주소. 추후 여유시 MinIO와 연결
+  approvedAt      DateTime?        @map("approved_at")
+  applicationId   BigInt?          @unique @map("application_id") @db.UnsignedBigInt
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  application          JoinApplication?  @relation("ApplicationMember", fields: [applicationId], references: [id], onDelete: SetNull)
+  reviewedApplications JoinApplication[] @relation("ApplicationReviewer")
+  posts                Post[]
+  comments             Comment[]
+  calendarEvents       CalendarEvent[]
+
+  @@index([cohort])
+  @@index([status])
+  @@map("members")
+}
+
+model JoinApplication {
+  id         BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  email      String            @db.VarChar(255)
+  name       String            @db.VarChar(50)
+  studentId  String?           @map("student_id") @db.VarChar(30)
+  phone      String?           @db.VarChar(30)
+  part       ApplicationPart?
+  motivation String?           @db.Text
+  status     ApplicationStatus @default(pending)
+  reviewedBy BigInt?           @map("reviewed_by") @db.UnsignedBigInt
+  reviewedAt DateTime?         @map("reviewed_at")
+  reviewNote String?           @map("review_note") @db.Text
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  reviewer Member? @relation("ApplicationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  member   Member? @relation("ApplicationMember")
+
+  @@index([status])
+  @@map("join_applications")
+}
+
+model Board {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  type          BoardType
+  name          String    @db.VarChar(50)
+  description   String?   @db.VarChar(255)
+  minReadLevel  Int       @default(0) @map("min_read_level") @db.UnsignedInt
+  minWriteLevel Int       @default(1) @map("min_write_level") @db.UnsignedInt
+  sortOrder     Int       @default(0) @map("sort_order") // 직접 게시판간 표시 순서 조절용
+
+  // TODO 연도별 관리를 위함. 체크 필요!
+  isHidden Boolean @default(false) @map("is_hidden")
+  year     Int     @db.UnsignedInt
+
+  // Relations
+  posts Post[]
+
+  @@unique([type, year])
+  @@index([sortOrder])
+  @@index([year])
+  @@map("boards")
+}
+
+model Post {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  boardId   BigInt    @map("board_id") @db.UnsignedBigInt
+  authorId  BigInt    @map("author_id") @db.UnsignedBigInt
+  title     String    @db.VarChar(200)
+  content   String    @db.LongText
+  viewCount Int       @default(0) @map("view_count") @db.UnsignedInt
+  isNotice  Boolean   @default(false) @map("is_notice")
+  isHidden  Boolean   @default(false) @map("is_hidden")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  board       Board            @relation(fields: [boardId], references: [id], onDelete: Restrict)
+  author      Member           @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  comments    Comment[]
+  attachments PostAttachment[]
+
+  @@index([boardId, createdAt])
+  @@index([authorId])
+  @@index([isNotice])
+  @@index([isHidden])
+  @@index([deletedAt])
+  @@index([title])
+  @@map("posts")
+}
+
+model Comment {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  postId    BigInt?   @map("post_id") @db.UnsignedBigInt
+  authorId  BigInt    @map("author_id") @db.UnsignedBigInt
+  content   String    @db.Text
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  post   Post?  @relation(fields: [postId], references: [id], onDelete: SetNull)
+  author Member @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([postId])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model CalendarEvent {
+  id          BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  authorId    BigInt          @map("author_id") @db.UnsignedBigInt
+  title       String          @db.VarChar(200)
+  description String?         @db.Text
+  startAt     DateTime        @map("start_at")
+  endAt       DateTime?       @map("end_at")
+  allDay      Boolean         @default(false) @map("all_day")
+  visibility  EventVisibility @default(group)
+  location    String?         @db.VarChar(255)
+  color       String?         @db.VarChar(20)
+  deletedAt   DateTime?       @map("deleted_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  author Member @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([startAt, endAt])
+  @@index([authorId, visibility])
+  @@index([deletedAt])
+  @@map("calendar_events")
+}
+
+model PostAttachment {
+  id               BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  postId           BigInt   @map("post_id") @db.UnsignedBigInt
+  fileName         String   @map("file_name") @db.VarChar(255)
+  originalFileName String   @map("original_file_name") @db.VarChar(255)
+  fileSize         Int      @map("file_size")
+  mimeType         String   @map("mime_type") @db.VarChar(100)
+  filePath         String   @map("file_path") @db.VarChar(500)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("post_attachments")
+}
