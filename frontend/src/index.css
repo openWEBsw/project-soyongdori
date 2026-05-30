@@ -13,6 +13,29 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* 색상 조정용 변수 */
+  --color-text-title: #000000;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #4a4a4a;
+  --color-text-muted: #8c8c8c;
+  --color-text-danger: #ef4444;
+
+  --color-bg-white: #ffffff;
+  --color-bg-light: #f2f2f2;
+  --color-bg-deep: #e0e0e0;
+  --color-bg-dark: #2d2d2d;
+
+  --color-border-light: #e5e7eb;
+  --color-border-dark: #cccccc;
+
+  --color-btn-primary-bg: #333333;
+  --color-btn-primary-text: #ffffff;
+  --color-btn-secondary-bg: #ffffff;
+  --color-btn-secondary-text: #4a4a4a;
+  --color-btn-active-bg: #dcdcdc;
+  --color-btn-active-text: #1a1a1a;
+
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -53,9 +76,9 @@
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 0;
   text-align: center;
   border-inline: 1px solid var(--border);
   min-height: 100svh;
@@ -79,20 +102,24 @@ h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
+
   @media (max-width: 1024px) {
     font-size: 36px;
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
+
   @media (max-width: 1024px) {
     font-size: 20px;
   }
 }
+
 p {
   margin: 0;
 }
