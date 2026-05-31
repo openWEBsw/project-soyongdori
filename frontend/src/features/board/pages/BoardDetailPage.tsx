@@ -200,7 +200,7 @@ function BoardDetailPage() {
                 {post.attachments.map(att => (
                   <a
                     key={att.id}
-                    href={`http://localhost:3000${att.filePath}`}
+                    href={att.filePath.startsWith('/') ? att.filePath : `/${att.filePath}`}
                     download={att.originalFileName}
                     className="flex items-center gap-3 bg-bg-light border border-border-light rounded-lg px-3 py-2.5 text-text-secondary hover:bg-bg-deep transition-colors no-underline"
                   >

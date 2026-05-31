@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import logo from '../../../../img/logo.png'
+import logo from '../../assets/logo.png'
 
 const Header: React.FC = () => {
   const { member, logout, isAuthenticated } = useAuth();

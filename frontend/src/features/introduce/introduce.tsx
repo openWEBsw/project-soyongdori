@@ -1,5 +1,6 @@
 import React from 'react';
 import Header from '../../shared/layout/Header';
+import introduceHero from '../../assets/introduce_hero.jpeg';
 
 const partsData = [
   { name: '보컬', english: 'Vocal', desc: '밴드의 목소리' },
@@ -51,9 +52,12 @@ const Introduce: React.FC = () => {
           </div>
           <hr className="border-border-light -mt-4 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center mt-8">
-            <div className="bg-bg-deep rounded-lg aspect-[1.8/1] flex items-center justify-center text-text-muted text-sm font-medium p-6">
-              역사 사진 영역
-            </div>
+            <img
+              src={introduceHero}
+              alt="소용돌이 역사"
+              className="w-full aspect-[1.8/1] object-cover rounded-lg"
+            />
+
             <div className="md:col-span-2 text-sm md:text-base leading-loose font-light text-text-secondary">
               <p>
                 충북대학교에서 창단된 소용돌이는 약 50년간 캠퍼스 음악 문화를 이끌어왔습니다. <br />

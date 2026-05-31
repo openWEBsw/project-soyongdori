@@ -16,7 +16,7 @@ app.set('json replacer', (_key: string, value: unknown) =>
   typeof value === 'bigint' ? value.toString() : value
 );
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5174', credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
