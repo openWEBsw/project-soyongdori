@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Dashboard from '../features/dashboard/dashboard';
 import BoardListPage from '../features/board/pages/BoardListPage';
 import BoardDetailPage from '../features/board/pages/BoardDetailPage';
 import BoardWritePage from '../features/board/pages/BoardWritePage';
@@ -18,14 +19,19 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+
         <Route path="/introduce" element={<Introduce />} />
+
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/" element={<Navigate to="/introduce" replace />} />
+
         <Route path="/boards/:boardType" element={<ProtectedRoute><BoardListPage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
+
         <Route path="/apply" element={<ProtectedRoute><ApplicationPage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
