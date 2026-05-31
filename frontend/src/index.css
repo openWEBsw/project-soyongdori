@@ -48,6 +48,17 @@
   box-sizing: border-box;
 }
 
+
+@media (max-width: 48rem) {
+  :root {
+    font-size: 16px;
+  }
+
+  #root {
+    padding-bottom: 70px;
+  }
+}
+
 body {
   margin: 0;
 }

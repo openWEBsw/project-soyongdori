@@ -8,6 +8,7 @@ import LoginPage from '../features/auth/pages/LoginPage';
 import SignupPage from '../features/auth/pages/SignupPage';
 import ApplicationPage from '../features/application/pages/ApplicationPage';
 import Introduce from '../features/introduce/introduce';
+import Profile from '../features/profile/profile';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -27,6 +28,7 @@ function App() {
         <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
         <Route path="/apply" element={<ProtectedRoute><ApplicationPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );
