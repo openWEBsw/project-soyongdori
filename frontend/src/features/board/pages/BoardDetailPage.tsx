@@ -1,4 +1,15 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowLeftIcon,
+  PaperClipIcon,
+  ArrowDownTrayIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
+import api from '../../../lib/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import Header from '../../../shared/layout/Header';
 
 const boardNames: Record<string, string> = {
   notice: '공지 게시판',
@@ -9,129 +20,331 @@ const boardNames: Record<string, string> = {
   budget: '동아리비 내역',
 };
 
-// 나중에 api로 교체
-const comments = [
-  { name: '이OO', part: '기타 · 6기', content: '오 저 갑니다! 기타 들고 갈게요', date: '0000.00.00', time: '00:00' },
-  { name: '박OO', part: '드럼 · 5기', content: '드럼 가능해요 시간 맞춰서 갈게요', date: '0000.00.00', time: '00:00' },
-];
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorId: string;
+  author: { name: string; part: string | null; cohort: number | null };
+}
+
+interface Attachment {
+  id: string;
+  originalFileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  viewCount: number;
+  createdAt: string;
+  authorId: string;
+  author: { name: string; part: string | null; cohort: number | null };
+  comments: Comment[];
+  attachments: Attachment[];
+  _count: { comments: number };
+}
+
+function formatDateTime(iso: string) {
+  return iso.slice(0, 16).replace('T', ' ').replace(/-/g, '.');
+}
 
 function BoardDetailPage() {
   const navigate = useNavigate();
-  const { boardType = 'free' } = useParams();
+  const { boardType = 'free', postId } = useParams();
+  const { member, logout } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
-  // TODO: 나중에 로그인 정보로 교체
-  const isAdmin = false;
-  const isAuthor = true;
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+
+  const fetchPost = () => {
+    api.get(`/boards/posts/${postId}`)
+      .then(res => setPost(res.data.data))
+      .catch(err => {
+        if (err.response?.status === 401) { logout(); navigate('/login'); }
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchPost(); }, [postId]);
+
+  const handleDelete = async () => {
+    if (!confirm('게시글을 삭제하시겠습니까?')) return;
+    try {
+      await api.delete(`/boards/posts/${postId}`);
+      navigate(`/boards/${boardType}`);
+    } catch {
+      alert('삭제에 실패했습니다');
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim()) return;
+    setSubmitting(true);
+    try {
+      await api.post(`/boards/posts/${postId}/comments`, { content: commentText });
+      setCommentText('');
+      fetchPost();
+    } catch {
+      alert('댓글 등록에 실패했습니다');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCommentEdit = async (commentId: string) => {
+    if (!editingCommentText.trim()) return;
+    try {
+      await api.put(`/boards/comments/${commentId}`, { content: editingCommentText });
+      setEditingCommentId(null);
+      fetchPost();
+    } catch {
+      alert('댓글 수정에 실패했습니다');
+    }
+  };
+
+  const handleCommentDelete = async (commentId: string) => {
+    if (!confirm('댓글을 삭제하시겠습니까?')) return;
+    try {
+      await api.delete(`/boards/comments/${commentId}`);
+      fetchPost();
+    } catch {
+      alert('댓글 삭제에 실패했습니다');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg-light flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center text-text-muted text-sm">
+          불러오는 중...
+        </div>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-bg-light flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center text-text-danger text-sm">
+          게시글을 찾을 수 없습니다
+        </div>
+      </div>
+    );
+  }
+
+  const isAuthor = member?.id === post.authorId;
 
   return (
-    <div style={{ background: '#16171d', minHeight: '100vh', color: '#f3f4f6' }}>
-      <div style={{ borderBottom: '1px solid #2e303a', padding: '12px 24px' }}>
-        <button
-          onClick={() => navigate('/')}
-          style={{ border: '1px solid #4b4d5a', padding: '6px 16px', borderRadius: 4, fontWeight: 700, fontSize: 14, background: '#16171d', color: '#f3f4f6', cursor: 'pointer' }}
-        >
-          SYDR
-        </button>
-      </div>
+    <div className="min-h-screen bg-bg-light text-text-primary">
+      <Header />
 
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px' }}>
-        <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>
+      <div className="max-w-4xl mx-auto px-6 md:px-12 py-8">
+        {/* 브레드크럼 */}
+        <div className="text-xs text-text-muted mb-6">
           홈 / 게시판 / {boardName} / 게시글
         </div>
 
-        <div style={{ border: '1px solid #2e303a', borderRadius: 8, padding: '40px 48px', marginBottom: 32, background: '#1f2028' }}>
-          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, letterSpacing: 1 }}>
-            {boardType.toUpperCase()} BOARD
+        {/* 게시글 본문 */}
+        <div className="bg-bg-white border border-border-light rounded-lg px-8 py-8 mb-4 shadow-sm">
+          <div className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-3">
+            {boardType} board
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.4, marginBottom: 24, color: '#f3f4f6' }}>
-            합주 연습 가시는 분<br />같이 가요
+          <h1 className="text-2xl font-bold text-text-title leading-snug mb-6">
+            {post.title}
           </h1>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#3d3f4a' }} />
+          {/* 작성자 정보 */}
+          <div className="flex justify-between items-center pb-4 border-b border-border-light mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-bg-deep flex items-center justify-center flex-shrink-0 text-sm font-bold text-text-primary">
+                {post.author.name[0]}
+              </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#f3f4f6' }}>김OO</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>기타 · 6기</div>
+                <div className="text-sm font-semibold text-text-primary">{post.author.name}</div>
+                <div className="text-xs text-text-muted">
+                  {[post.author.part, post.author.cohort ? `${post.author.cohort}기` : null].filter(Boolean).join(' · ')}
+                </div>
               </div>
             </div>
-            <div style={{ textAlign: 'right', fontSize: 12, color: '#6b7280' }}>
-              <div>0000.00.00 &nbsp; 00:00</div>
-              <div>조회 38 · 댓글 5</div>
+            <div className="text-right text-xs text-text-muted">
+              <div>{formatDateTime(post.createdAt)}</div>
+              <div className="mt-0.5">조회 {post.viewCount} · 댓글 {post._count.comments}</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 32 }}>
-            {isAuthor && (
-              <button style={{ border: '1px solid #2e303a', padding: '6px 16px', borderRadius: 4, fontSize: 13, background: '#16171d', color: '#9ca3af', cursor: 'pointer' }}>수정</button>
-            )}
-            {isAuthor && (
-              <button style={{ border: '1px solid #2e303a', padding: '6px 16px', borderRadius: 4, fontSize: 13, background: '#16171d', color: '#9ca3af', cursor: 'pointer' }}>삭제</button>
-            )}
-            {isAdmin && (
-              <button style={{ border: '1px solid #7f1d1d', color: '#f87171', padding: '6px 16px', borderRadius: 4, fontSize: 13, background: '#16171d', cursor: 'pointer' }}>
-                숨김 <span style={{ fontSize: 11 }}>(회장+)</span>
+          {/* 본문 내용 */}
+          <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
+            {post.content}
+          </div>
+
+          {/* 첨부파일 */}
+          {post.attachments.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-border-light">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-text-muted uppercase tracking-widest mb-3">
+                <PaperClipIcon className="w-4 h-4" />
+                첨부파일 ({post.attachments.length})
+              </div>
+              <div className="flex flex-col gap-2">
+                {post.attachments.map(att => (
+                  <a
+                    key={att.id}
+                    href={`http://localhost:3000${att.filePath}`}
+                    download={att.originalFileName}
+                    className="flex items-center gap-3 bg-bg-light border border-border-light rounded-lg px-3 py-2.5 text-text-secondary hover:bg-bg-deep transition-colors no-underline"
+                  >
+                    <PaperClipIcon className="w-4 h-4 text-text-muted flex-shrink-0" />
+                    <span className="flex-1 text-xs overflow-hidden text-ellipsis whitespace-nowrap">
+                      {att.originalFileName}
+                    </span>
+                    <span className="text-xs text-text-muted flex-shrink-0">
+                      {att.fileSize < 1024 * 1024
+                        ? `${(att.fileSize / 1024).toFixed(1)}KB`
+                        : `${(att.fileSize / 1024 / 1024).toFixed(1)}MB`}
+                    </span>
+                    <ArrowDownTrayIcon className="w-4 h-4 text-text-muted flex-shrink-0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 수정/삭제 버튼 */}
+          {isAuthor && (
+            <div className="flex justify-end gap-2 pt-5 border-t border-border-light mt-5">
+              <button
+                onClick={() => navigate(`/boards/${boardType}/${postId}/edit`)}
+                className="flex items-center gap-1.5 border border-border-dark px-4 py-1.5 rounded text-xs text-text-secondary bg-bg-white hover:bg-bg-light transition-colors cursor-pointer"
+              >
+                <PencilSquareIcon className="w-3.5 h-3.5" />
+                수정
               </button>
-            )}
-          </div>
-
-          <div style={{ fontSize: 14, color: '#d1d5db', lineHeight: 1.8, marginBottom: 32 }}>
-            <p>안녕하세요! 이번 주 토요일 오후 2시쯤 동방에서 합주 연습 하려고 하는데 같이 하실 분 있으신가요?</p>
-            <br />
-            <p>곡은 자유롭게 정해도 됩니다. 보컬 분도 환영</p>
-          </div>
-
-          <div style={{ border: '1px solid #2e303a', borderRadius: 6, padding: '16px 20px', fontSize: 13, color: '#6b7280', background: '#16171d' }}>
-            📎 IMG_5524.jpg (첨부 이미지)
-          </div>
+              <button
+                onClick={handleDelete}
+                className="flex items-center gap-1.5 border border-border-light px-4 py-1.5 rounded text-xs text-text-danger bg-bg-white hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                <TrashIcon className="w-3.5 h-3.5" />
+                삭제
+              </button>
+            </div>
+          )}
         </div>
 
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 1, marginBottom: 16, color: '#9ca3af' }}>
-            COMMENTS ({comments.length})
+        {/* 댓글 섹션 */}
+        <div className="bg-bg-white border border-border-light rounded-lg px-6 py-6 shadow-sm">
+          <div className="text-sm font-semibold text-text-primary mb-4">
+            댓글 <span className="text-text-muted font-normal">{post._count.comments}</span>
           </div>
 
-          <div style={{ border: '1px solid #2e303a', borderRadius: 8, padding: '16px 20px', display: 'flex', gap: 12, marginBottom: 16, background: '#1f2028' }}>
+          {/* 댓글 입력 */}
+          <div className="border border-border-light rounded-lg p-4 flex gap-3 mb-5 bg-bg-light">
             <textarea
+              value={commentText}
+              onChange={e => setCommentText(e.target.value)}
               placeholder="댓글을 입력하세요..."
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, resize: 'none', color: '#d1d5db', background: 'transparent' }}
+              className="flex-1 border-none outline-none text-sm resize-none text-text-secondary bg-transparent font-[inherit]"
               rows={2}
+              onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleCommentSubmit(); }}
             />
-            <button style={{ background: '#c084fc', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontSize: 13, cursor: 'pointer', alignSelf: 'flex-end', fontWeight: 600 }}>
+            <button
+              onClick={handleCommentSubmit}
+              disabled={submitting}
+              className={`bg-btn-primary-bg text-btn-primary-text rounded-md px-4 py-2 text-xs font-semibold self-end whitespace-nowrap cursor-pointer transition-opacity ${submitting ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90'}`}
+            >
               등록
             </button>
           </div>
 
-          {comments.map((comment, i) => (
-            <div key={i} style={{ display: 'flex', gap: 12, padding: '16px 0', borderBottom: '1px solid #2e303a' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#3d3f4a', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#f3f4f6' }}>{comment.name}</span>
-                    <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>{comment.part}</span>
+          {/* 댓글 목록 */}
+          {post.comments.length === 0 ? (
+            <div className="text-center py-6 text-text-muted text-sm">
+              첫 번째 댓글을 남겨보세요
+            </div>
+          ) : post.comments.map(comment => (
+            <div key={comment.id} className="flex gap-3 py-4 border-b border-border-light last:border-0">
+              <div className="w-8 h-8 rounded-full bg-bg-deep flex items-center justify-center flex-shrink-0 text-xs font-bold text-text-primary">
+                {comment.author.name[0]}
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-text-primary">{comment.author.name}</span>
+                    <span className="text-[10px] text-text-muted">
+                      {[comment.author.part, comment.author.cohort ? `${comment.author.cohort}기` : null].filter(Boolean).join(' · ')}
+                    </span>
                   </div>
-                  <span style={{ fontSize: 12, color: '#6b7280' }}>{comment.date} &nbsp; {comment.time}</span>
+                  <span className="text-[10px] text-text-muted">{formatDateTime(comment.createdAt)}</span>
                 </div>
-                <p style={{ fontSize: 14, color: '#d1d5db', margin: 0 }}>{comment.content}</p>
-                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>↳ 답글 | 수정 | 삭제</div>
+
+                {editingCommentId === comment.id ? (
+                  <div className="mt-1">
+                    <textarea
+                      value={editingCommentText}
+                      onChange={e => setEditingCommentText(e.target.value)}
+                      rows={2}
+                      className="w-full border border-border-dark rounded-md px-3 py-2 text-sm resize-none outline-none font-[inherit] text-text-secondary box-border"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => handleCommentEdit(comment.id)}
+                        className="bg-btn-primary-bg text-btn-primary-text rounded px-3 py-1 text-xs font-semibold cursor-pointer hover:opacity-90"
+                      >
+                        저장
+                      </button>
+                      <button
+                        onClick={() => setEditingCommentId(null)}
+                        className="border border-border-light bg-bg-white text-text-muted rounded px-3 py-1 text-xs cursor-pointer hover:bg-bg-light"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-text-secondary leading-relaxed">{comment.content}</p>
+                    {member?.id === comment.authorId && (
+                      <div className="flex gap-3 mt-1.5">
+                        <button
+                          className="text-xs text-text-muted hover:text-text-secondary cursor-pointer"
+                          onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.content); }}
+                        >
+                          수정
+                        </button>
+                        <button
+                          className="text-xs text-text-muted hover:text-text-danger cursor-pointer"
+                          onClick={() => handleCommentDelete(comment.id)}
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        {/* 목록으로 */}
+        <div className="mt-4">
           <button
             onClick={() => navigate(`/boards/${boardType}`)}
-            style={{ border: '1px solid #2e303a', padding: '8px 20px', borderRadius: 6, fontSize: 13, background: '#1f2028', color: '#9ca3af', cursor: 'pointer' }}
+            className="flex items-center gap-1.5 border border-border-light px-5 py-2 rounded-lg text-sm bg-bg-white text-text-secondary hover:bg-bg-light transition-colors cursor-pointer shadow-sm"
           >
-            ← 목록
+            <ArrowLeftIcon className="w-4 h-4" />
+            목록
           </button>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button style={{ border: '1px solid #2e303a', padding: '8px 20px', borderRadius: 6, fontSize: 13, background: '#1f2028', color: '#9ca3af', cursor: 'pointer' }}>‹ 이전</button>
-            <button style={{ border: '1px solid #2e303a', padding: '8px 20px', borderRadius: 6, fontSize: 13, background: '#1f2028', color: '#9ca3af', cursor: 'pointer' }}>다음 ›</button>
-          </div>
         </div>
       </div>
     </div>
