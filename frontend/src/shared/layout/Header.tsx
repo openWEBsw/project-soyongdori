@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import logo from '../../../../img/logo.png'
 
 const Header: React.FC = () => {
   const { member, logout, isAuthenticated } = useAuth();
@@ -17,14 +18,13 @@ const Header: React.FC = () => {
   // TODO 입부신청, 마이페이지가 출력되는 조건, 위치, 필요성 검토 필요
   return (
     <div className="bg-bg-white border-b border-border-light w-full text-left font-sans">
-      <header className="max-w-6xl mx-auto px-6 md:px-12 py-6 flex items-center justify-between">
+      <header className="max-w-6xl mx-auto px-6 md:px-12 py-3 flex items-center justify-between">
         {/* 로고 부분 */}
         <div className=" flex-1 flex justify-start">
           <Link
             to="/"
-            className="bg-bg-deep text-text-primary px-6 py-2 rounded-md font-bold tracking-wide text-xs hover:opacity-80 transition-opacity inline-block"
           >
-            SYDR
+            <img src={logo} alt="logo" className="h-10 w-auto" />
           </Link>
         </div>
 
