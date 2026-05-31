@@ -11,7 +11,7 @@ import hero4 from '../../assets/hero_4.jpeg';
 const heroImages = [hero1, hero2, hero3, hero4];
 const HERO_INTERVAL_MS = 5000;
 
-// 더미 공지사항 데이터 — 추후 API로 교체
+// TODO: — 추후 API로 교체
 const noticesData = [
     {
         id: 1,
@@ -42,7 +42,7 @@ const noticesData = [
     },
 ];
 
-// 더미 일정 데이터 — 추후 API로 교체
+// TODO: — 추후 API로 교체
 const eventsData = [
     {
         month: 'MAY',
@@ -64,6 +64,12 @@ const statsData = [
     { value: '50+', label: 'YEARS' },
     { value: '5', label: 'PARTS' },
     { value: '500+', label: 'MEMBERS' },
+];
+
+// TODO: API 연동 시 다음 공연/합주 일정으로 자동 교체
+const heroHighlights = [
+    { label: '다음 무대', value: '2026 상반기 정기공연 (5/19)' },
+    { label: '정기 합주', value: '매주 수·금 19:00' },
 ];
 
 const Dashboard: React.FC = () => {
@@ -90,9 +96,8 @@ const Dashboard: React.FC = () => {
                         key={i}
                         src={src}
                         alt={`소용돌이 ${i + 1}`}
-                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                            i === heroIndex ? 'opacity-100' : 'opacity-0'
-                        }`}
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIndex ? 'opacity-100' : 'opacity-0'
+                            }`}
                     />
                 ))}
                 {/* 그라데이션 오버레이 */}
@@ -114,10 +119,16 @@ const Dashboard: React.FC = () => {
                             충북대학교 밴드 중앙 동아리
                         </p>
 
-                        <div className="text-sm font-light leading-relaxed text-text-secondary">
-                            <p>거센 흐름 속에서 우리는 함께 연주한다.</p>
-                            <p>수십년의 시간, 변하지 않은 단 하나 — 무대 위의 우리.</p>
-                        </div>
+                        <ul className="flex flex-col gap-1.5 text-sm text-text-secondary">
+                            {heroHighlights.map((item) => (
+                                <li key={item.label} className="flex items-baseline gap-3">
+                                    <span className="text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap min-w-[72px]">
+                                        {item.label}
+                                    </span>
+                                    <span>{item.value}</span>
+                                </li>
+                            ))}
+                        </ul>
 
                         {/* CTA 버튼들 */}
                         <div className="flex gap-3 mt-2">
