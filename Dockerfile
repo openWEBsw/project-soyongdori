@@ -12,6 +12,7 @@ WORKDIR /build-stage
 COPY backend/package*.json ./
 RUN npm ci
 COPY backend/ ./
+RUN DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy" npx prisma generate
 RUN npm run build
 
 FROM alpine:${ALPINE_VERSION}
