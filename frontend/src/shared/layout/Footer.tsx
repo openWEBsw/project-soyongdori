@@ -44,7 +44,7 @@ const YoutubeIcon: React.FC = () => (
 const Footer: React.FC = () => {
   return (
     <footer className="bg-bg-white border-t border-border-light">
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between gap-6 text-xs text-text-muted">
+      <div className="px-6 md:px-12 py-4 flex flex-col md:flex-row justify-between gap-6 text-xs text-text-muted">
         <div className="flex flex-col gap-3">
           <span>© 2026 SOYONGDORI · 충북대학교 중앙동아리</span>
           <div className="flex items-center gap-3">

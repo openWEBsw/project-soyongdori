@@ -18,7 +18,7 @@ const Header: React.FC = () => {
   // TODO 입부신청, 마이페이지가 출력되는 조건, 위치, 필요성 검토 필요
   return (
     <div className="bg-bg-white border-b border-border-light w-full text-left font-sans">
-      <header className="max-w-6xl mx-auto px-6 md:px-12 py-3 flex items-center justify-between">
+      <header className="px-6 md:px-12 py-3 flex items-center justify-between">
         {/* 로고 부분 */}
         <div className=" flex-1 flex justify-start">
           <Link
