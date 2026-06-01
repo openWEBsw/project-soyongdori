@@ -23,10 +23,10 @@ export const signup = async (req: Request, res: Response) => {
       data: { email, passwordHash, name, studentId, phone },
       select: { id: true, email: true, name: true, status: true, createdAt: true },
     });
-    return res.status(201).json({ data: member });
+    return res.status(201).json({ success: true, data: member });
   } catch (error) {
     console.error('signup error:', error);
-    return res.status(500).json({ error: { code: 'SERVER_ERROR', message: 'server error' } });
+    return res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'server error' } });
   }
 };
 
@@ -52,7 +52,7 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { memberId: member.id.toString(), position: member.position },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '15m' } // Access token 만료시간 15분으로 변경
     );
     await prisma.member.update({
       where: { id: member.id },
