@@ -12,6 +12,7 @@ WORKDIR /build-stage
 COPY backend/package*.json ./
 RUN npm ci
 COPY backend/ ./
+RUN DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy" npx prisma generate
 RUN npm run build
 
 FROM alpine:${ALPINE_VERSION}
@@ -26,4 +27,6 @@ USER node
 COPY --from=backend-builder /build-stage/node_modules ./node_modules
 COPY --from=backend-builder /build-stage/dist ./dist
 COPY --from=frontend-builder /frontend/dist ./public
+COPY --from=backend-builder /build-stage/prisma ./prisma
+COPY --from=backend-builder /build-stage/prisma.config.ts ./
 CMD ["dumb-init", "node", "dist/index.js"]

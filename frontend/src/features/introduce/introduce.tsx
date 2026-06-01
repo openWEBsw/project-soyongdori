@@ -1,9 +1,7 @@
 import React from 'react';
 import Header from '../../shared/layout/Header';
+import introduceHero from '../../assets/introduce_hero.jpeg';
 
-// TODO FOOTER 필요
-
-// 반복 데이터
 const partsData = [
   { name: '보컬', english: 'Vocal', desc: '밴드의 목소리' },
   { name: '일렉기타', english: 'Electric Guitar', desc: '리프와 솔로의 핵심' },
@@ -23,9 +21,7 @@ const timelineData = [
 
 const Introduce: React.FC = () => {
   return (
-    <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col ">
-
-      {/* 헤더. TODO APP.tsx로 옮길지는 고민 필요 */}
+    <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
       <Header />
 
       {/* 메인 챕터 */}
@@ -48,7 +44,7 @@ const Introduce: React.FC = () => {
       {/* 역사 챕터 */}
       <section className="bg-bg-white border-b border-border-light">
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 text-left">
-          <div className=" mb-8 flex flex-col gap-1">
+          <div className="mb-8 flex flex-col gap-1">
             <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
               SECTION 01 — HISTORY
             </span>
@@ -56,10 +52,13 @@ const Introduce: React.FC = () => {
           </div>
           <hr className="border-border-light -mt-4 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center mt-8">
-            <div className="bg-bg-deep rounded-lg aspect-[1.8/1] flex items-center justify-center text-text-muted text-sm font-medium p-6">
-              역사 사진 영역 {/* TODO 추후 img 태그로 교체 */}
-            </div>
-            <div className="md:col-span-2 text-sm md:text-base leading-11 font-light text-text-secondary">
+            <img
+              src={introduceHero}
+              alt="소용돌이 역사"
+              className="w-full aspect-[1.8/1] object-cover rounded-lg"
+            />
+
+            <div className="md:col-span-2 text-sm md:text-base leading-loose font-light text-text-secondary">
               <p>
                 충북대학교에서 창단된 소용돌이는 약 50년간 캠퍼스 음악 문화를 이끌어왔습니다. <br />
                 매년 2회 정기공연, 가두모집, 학교 축제 참여 등 활발한 활동을 하고 있으며, <br />
@@ -73,7 +72,7 @@ const Introduce: React.FC = () => {
       {/* 파트소개 챕터 */}
       <section className="bg-bg-light border-b border-border-light">
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 text-left">
-          <div className=" mb-8 flex flex-col gap-1">
+          <div className="mb-8 flex flex-col gap-1">
             <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
               SECTION 02 — PARTS
             </span>
@@ -98,7 +97,7 @@ const Introduce: React.FC = () => {
       {/* 연간활동 챕터 */}
       <section className="bg-bg-white border-b border-border-light">
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 text-left">
-          <div className=" mb-8 flex flex-col gap-1">
+          <div className="mb-8 flex flex-col gap-1">
             <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
               SECTION 03 — YEARLY ACTIVITIES
             </span>
@@ -106,9 +105,7 @@ const Introduce: React.FC = () => {
           </div>
           <hr className="border-border-light -mt-4 mb-8" />
           <div className="relative mt-12 mb-8">
-
             <div className="hidden md:block absolute top-[8px] left-[2px] right-[2px] h-[2px] bg-border-dark z-0" />
-
             <div className="grid grid-cols-2 md:grid-cols-6 gap-y-10 gap-x-4 relative z-10">
               {timelineData.map((item, index) => (
                 <div key={index} className="flex flex-col items-center text-center">
@@ -129,6 +126,9 @@ const Introduce: React.FC = () => {
         <div className="max-w-6xl mx-auto px-6 md:px-12 flex flex-col items-center">
           <button className="bg-btn-primary-bg text-btn-primary-text rounded-md flex items-center justify-center gap-2.5 h-12 px-8 text-sm md:text-base font-bold hover:opacity-95 transition-opacity shadow-sm cursor-pointer">
             소용돌이에 합류하기
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+            </svg>
           </button>
         </div>
       </section>

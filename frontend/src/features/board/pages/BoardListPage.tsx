@@ -1,4 +1,13 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  LockClosedIcon,
+} from '@heroicons/react/24/outline';
+import api from '../../../lib/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import Header from '../../../shared/layout/Header';
 
 const boardNames: Record<string, string> = {
   notice: '공지 게시판',
@@ -9,159 +18,214 @@ const boardNames: Record<string, string> = {
   budget: '동아리비 내역',
 };
 
-// 나중에 api로 교체
-const posts = [
-  { id: 142, title: '합주 연습 가시는 분 같이 가요', author: '김OO', date: '2026.05.25', views: 38, comments: 5 },
-  { id: 141, title: '이번 주 동아리실 사용 공지', author: '이OO', date: '2026.05.24', views: 87, comments: 12 },
-  { id: 140, title: '기타 줄 공동구매 하실 분?', author: '박OO', date: '2026.05.23', views: 52, comments: 8 },
-  { id: 139, title: '신입생 환영 파티 후기', author: '최OO', date: '2026.05.22', views: 24, comments: 2 },
-  { id: 138, title: '다음 달 공연 일정 공유', author: '정OO', date: '2026.05.21', views: 94, comments: 15 },
-];
+interface Post {
+  id: string;
+  title: string;
+  isNotice: boolean;
+  viewCount: number;
+  createdAt: string;
+  author: { name: string; part: string | null; cohort: number | null };
+  _count: { comments: number };
+}
+
+function formatDate(iso: string) {
+  return iso.slice(0, 10).replace(/-/g, '.');
+}
 
 function BoardListPage() {
   const navigate = useNavigate();
   const { boardType = 'free' } = useParams();
+  const { member } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const { logout } = useAuth();
+
+  useEffect(() => { setPage(1); }, [boardType]);
+
+  useEffect(() => {
+    setLoading(true);
+    setError('');
+    api.get(`/boards/${boardType}/posts?page=${page}&limit=10`)
+      .then(res => {
+        setPosts(res.data.data.posts);
+        setTotalPages(res.data.data.pagination.totalPages || 1);
+      })
+      .catch(err => {
+        if (err.response?.status === 401) { logout(); navigate('/login'); }
+        else setError('게시글을 불러오지 못했습니다');
+      })
+      .finally(() => setLoading(false));
+  }, [boardType, page]);
+
   return (
-    <div style={{ background: '#16171d', minHeight: '100vh', color: '#f3f4f6' }}>
-      <div style={{ borderBottom: '1px solid #2e303a', padding: '12px 24px' }}>
-        <button
-          onClick={() => navigate('/')}
-          style={{ border: '1px solid #4b4d5a', padding: '6px 16px', borderRadius: 4, fontWeight: 700, fontSize: 14, background: '#16171d', color: '#f3f4f6', cursor: 'pointer' }}
-        >
-          SYDR
-        </button>
-      </div>
+    <div className="min-h-screen bg-bg-light text-text-primary">
+      <Header />
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
-        <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
-          홈 / 게시판 / {boardName}
-        </div>
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 24, color: '#f3f4f6' }}>{boardName}</h1>
+      <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
+        {/* 브레드크럼 */}
+        <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardName}</div>
+        <h1 className="text-2xl font-bold text-text-title mb-6">{boardName}</h1>
 
-        <div style={{ display: 'flex', gap: 24 }}>
+        <div className="flex gap-5">
           {/* 사이드바 */}
-          <div style={{ width: 220, flexShrink: 0 }}>
-            <div style={{ border: '1px solid #2e303a', borderRadius: 8, padding: '16px', background: '#1f2028' }}>
-              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>카테고리</div>
+          <aside className="w-52 flex-shrink-0">
+            <div className="bg-bg-white border border-border-light rounded-lg p-4 shadow-sm">
+              <div className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-3">카테고리</div>
               {Object.entries(boardNames).map(([key, name]) => (
-                <div
+                <button
                   key={key}
                   onClick={() => navigate(`/boards/${key}`)}
-                  style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '8px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 14,
-                    fontWeight: boardType === key ? 700 : 400,
-                    color: boardType === key ? '#f3f4f6' : '#9ca3af',
-                    background: boardType === key ? '#2e303a' : 'transparent',
-                  }}
+                  className={`w-full flex justify-between items-center px-2.5 py-2 rounded-md text-sm mb-0.5 transition-colors text-left cursor-pointer ${
+                    boardType === key
+                      ? 'bg-bg-dark text-white font-semibold'
+                      : 'text-text-secondary hover:bg-bg-light font-normal'
+                  }`}
                 >
                   <span>{name}</span>
-                  {['resource', 'photo'].includes(key) && <span style={{ fontSize: 11, color: '#6b7280' }}>회원+</span>}
-                  {['planning', 'budget'].includes(key) && <span style={{ color: '#6b7280' }}>🔒</span>}
-                </div>
+                  {['resource', 'photo'].includes(key) && (
+                    <span className="text-[10px] text-text-muted bg-bg-light rounded px-1.5 py-0.5">
+                      회원+
+                    </span>
+                  )}
+                  {['planning', 'budget'].includes(key) && (
+                    <LockClosedIcon className="w-3 h-3 text-text-muted" />
+                  )}
+                </button>
               ))}
 
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #2e303a' }}>
-                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>접근 권한</div>
-                <ul style={{ fontSize: 12, color: '#9ca3af', listStyle: 'none', padding: 0, margin: 0, lineHeight: 2 }}>
-                  <li>• 공지/자유: 전체</li>
-                  <li>• 자료/사진: 회원+</li>
-                  <li>• 기획부: 기획부원+</li>
-                  <li>• 동아리비: 총무+</li>
+              <div className="mt-4 pt-4 border-t border-border-light">
+                <div className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-2">접근 권한</div>
+                <ul className="text-xs text-text-muted space-y-1 leading-relaxed">
+                  <li>공지/자유: 전체</li>
+                  <li>자료/사진: 회원+</li>
+                  <li>기획부: 기획부원+</li>
+                  <li>동아리비: 총무+</li>
                 </ul>
               </div>
 
-              <div
-                onClick={() => navigate('/mypage')}
-                style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #2e303a', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-              >
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#3d3f4a', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#f3f4f6' }}>김OO</div>
-                  <div style={{ fontSize: 12, color: '#6b7280' }}>일반회원 · 기타 · 6기</div>
+              {member && (
+                <div className="mt-4 pt-4 border-t border-border-light flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-bg-deep flex items-center justify-center flex-shrink-0 text-xs font-bold text-text-primary">
+                    {member.name[0]}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-text-primary">{member.name}</div>
+                    <div className="text-[10px] text-text-muted">{member.position}</div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
+          </aside>
 
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              <input
-                type="text"
-                placeholder=" 제목 또는 내용으로 검색"
-                style={{ flex: 1, border: '1px solid #2e303a', borderRadius: 6, padding: '10px 16px', fontSize: 14, background: '#1f2028', color: '#f3f4f6', outline: 'none' }}
-              />
-              <select style={{ border: '1px solid #2e303a', borderRadius: 6, padding: '10px 12px', fontSize: 14, background: '#1f2028', color: '#9ca3af', cursor: 'pointer' }}>
-                <option>최신순</option>
-                <option>조회순</option>
-              </select>
+          {/* 메인 컨텐츠 */}
+          <div className="flex-1 min-w-0">
+            {/* 검색 + 글쓰기 */}
+            <div className="flex gap-2 mb-4">
+              <div className="relative flex-1">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <input
+                  type="text"
+                  placeholder="제목 또는 내용으로 검색"
+                  className="w-full border border-border-light rounded-lg pl-9 pr-4 py-2.5 text-sm bg-bg-white text-text-primary outline-none focus:border-border-dark transition-colors"
+                />
+              </div>
               <button
                 onClick={() => navigate(`/boards/${boardType}/write`)}
-                style={{ background: '#c084fc', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontWeight: 600 }}
+                className="flex items-center gap-1.5 bg-btn-primary-bg text-btn-primary-text px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer"
               >
-                + 글쓰기
+                <PencilSquareIcon className="w-4 h-4" />
+                글쓰기
               </button>
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: '1px solid #2e303a' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #2e303a', fontSize: 13, color: '#6b7280' }}>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', width: 60 }}>NO.</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left' }}>제목</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', width: 80 }}>작성자</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', width: 100 }}>날짜</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', width: 50 }}>조회</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', width: 50 }}>댓글</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderBottom: '1px solid #2e303a', background: '#1f2028' }}>
-                  <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                    <span style={{ background: '#3d3f4a', color: '#9ca3af', fontSize: 11, padding: '2px 8px', borderRadius: 4 }}>PIN</span>
-                  </td>
-                  <td style={{ padding: '12px 8px', fontSize: 14, color: '#f3f4f6', fontWeight: 500 }}>[필독] 게시판 이용 규칙 안내</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>관리자</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>0000.00.00</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>421</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>3</td>
-                </tr>
-                {posts.map((post) => (
-                  <tr
-                    key={post.id}
-                    onClick={() => navigate(`/boards/${boardType}/${post.id}`)}
-                    style={{ borderBottom: '1px solid #2e303a', cursor: 'pointer' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#1f2028')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>{post.id}</td>
-                    <td style={{ padding: '12px 8px', fontSize: 14, color: '#f3f4f6' }}>
-                      {post.title}
-                      {post.comments > 0 && <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 4 }}>[{post.comments}]</span>}
-                    </td>
-                    <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>{post.author}</td>
-                    <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>{post.date}</td>
-                    <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>{post.views}</td>
-                    <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 13, color: '#6b7280' }}>{post.comments}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginTop: 24 }}>
-              {[1, 2, 3].map((page) => (
-                <button key={page} style={{
-                  width: 32, height: 32, borderRadius: 6, fontSize: 13, cursor: 'pointer',
-                  background: page === 1 ? '#c084fc' : '#1f2028',
-                  color: page === 1 ? '#fff' : '#9ca3af',
-                  border: page === 1 ? 'none' : '1px solid #2e303a',
-                }}>
-                  {page}
-                </button>
-              ))}
-              <button style={{ width: 32, height: 32, borderRadius: 6, fontSize: 13, cursor: 'pointer', background: '#1f2028', color: '#9ca3af', border: '1px solid #2e303a' }}>›</button>
+            {/* 게시글 테이블 */}
+            <div className="bg-bg-white border border-border-light rounded-lg overflow-hidden shadow-sm">
+              {loading ? (
+                <div className="text-center py-16 text-text-muted text-sm">불러오는 중...</div>
+              ) : error ? (
+                <div className="text-center py-16 text-text-danger text-sm">{error}</div>
+              ) : (
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-bg-light border-b border-border-light text-text-muted text-xs font-semibold">
+                      <th className="py-3 px-4 text-center w-14">NO.</th>
+                      <th className="py-3 px-4 text-left">제목</th>
+                      <th className="py-3 px-4 text-center w-20">작성자</th>
+                      <th className="py-3 px-4 text-center w-24">날짜</th>
+                      <th className="py-3 px-4 text-center w-12">조회</th>
+                      <th className="py-3 px-4 text-center w-12">댓글</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {posts.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-16 text-text-muted text-sm">
+                          게시글이 없습니다
+                        </td>
+                      </tr>
+                    ) : posts.map((post, idx) => (
+                      <tr
+                        key={post.id}
+                        onClick={() => navigate(`/boards/${boardType}/${post.id}`)}
+                        className={`border-b border-border-light cursor-pointer hover:bg-bg-light transition-colors ${post.isNotice ? 'bg-bg-light' : 'bg-bg-white'}`}
+                      >
+                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                          {post.isNotice ? (
+                            <span className="bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold">
+                              공지
+                            </span>
+                          ) : (page - 1) * 10 + idx + 1}
+                        </td>
+                        <td className="py-3.5 px-4 text-text-primary">
+                          {post.title}
+                          {post._count.comments > 0 && (
+                            <span className="text-xs text-text-muted font-semibold ml-1.5">
+                              [{post._count.comments}]
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-center text-xs text-text-secondary">
+                          {post.author.name}
+                        </td>
+                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                          {formatDate(post.createdAt)}
+                        </td>
+                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                          {post.viewCount}
+                        </td>
+                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                          {post._count.comments}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
+
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-1.5 mt-5">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                      p === page
+                        ? 'bg-bg-dark text-white border border-bg-dark'
+                        : 'bg-bg-white text-text-secondary border border-border-light hover:bg-bg-light'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

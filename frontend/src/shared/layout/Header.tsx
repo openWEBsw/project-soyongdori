@@ -1,32 +1,30 @@
-import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import React from 'react';
+import { Link, useNavigate, NavLink } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import logo from '../../assets/logo.png'
 
-const Header = () => {
+const Header: React.FC = () => {
+  const { member, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  // TODO 추후 백엔드 연결
-  const [isLogin, setIsLogin] = useState(true);
-  const [isMember, setIsMember] = useState(true);
-
-  // TODO 추후 멤버 부분은 분리
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃 하시겠습니까?')) {
       alert('로그아웃 되었습니다.');
-      setIsLogin(false);
-      setIsMember(false);
+      logout();
+      navigate('/login');
     }
   };
 
   // TODO 입부신청, 마이페이지가 출력되는 조건, 위치, 필요성 검토 필요
   return (
     <div className="bg-bg-white border-b border-border-light w-full text-left font-sans">
-      <header className="max-w-6xl mx-auto px-6 md:px-12 py-6 flex items-center justify-between">
+      <header className="max-w-6xl mx-auto px-6 md:px-12 py-3 flex items-center justify-between">
         {/* 로고 부분 */}
         <div className=" flex-1 flex justify-start">
           <Link
             to="/"
-            className="bg-bg-deep text-text-primary px-6 py-2 rounded-md font-bold tracking-wide text-xs hover:opacity-80 transition-opacity inline-block"
           >
-            SYDR
+            <img src={logo} alt="logo" className="h-10 w-auto" />
           </Link>
         </div>
 
@@ -65,7 +63,7 @@ const Header = () => {
           >
             캘린더
           </NavLink>
-          {!isMember && (<NavLink
+          {!(isAuthenticated && member?.status === 'active') && (<NavLink
             to="/apply"
             className={({ isActive }) =>
               `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
@@ -127,7 +125,7 @@ const Header = () => {
             </svg>
             <span>캘린더</span>
           </NavLink>
-          {!isMember && (<NavLink
+          {!(isAuthenticated && member?.status === 'active') && (<NavLink
             to="/apply"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'
@@ -157,7 +155,7 @@ const Header = () => {
 
         {/* 로그인/로그아웃 부분 */}
         <div className=" flex-1 flex justify-end text-xs gap-4">
-          {!isLogin && (
+          {!(isAuthenticated) && (
             <Link
               to="/login"
               className="px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block"
@@ -165,7 +163,7 @@ const Header = () => {
               로그인
             </Link>
           )}
-          {!isLogin && (
+          {!(isAuthenticated) && (
             <Link
               to="/signup"
               className="px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
@@ -173,7 +171,7 @@ const Header = () => {
               회원가입
             </Link>
           )}
-          {isLogin && (
+          {(isAuthenticated && member) && (
             <button
               onClick={handleLogout}
               className="px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block cursor-pointer"
@@ -181,7 +179,7 @@ const Header = () => {
               로그아웃
             </button>
           )}
-          {isMember && (
+          {(isAuthenticated && member) && (
             <Link
               to="/profile"
               className="px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
