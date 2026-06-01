@@ -28,4 +28,5 @@ COPY --from=backend-builder /build-stage/node_modules ./node_modules
 COPY --from=backend-builder /build-stage/dist ./dist
 COPY --from=frontend-builder /frontend/dist ./public
 COPY --from=backend-builder /build-stage/prisma ./prisma
+COPY --from=backend-builder /build-stage/prisma.config.ts ./
 CMD ["dumb-init", "node", "dist/index.js"]
