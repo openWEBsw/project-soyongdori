@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import prisma from '../prisma/client.js';
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
-
+//회원가입
 export const signup = async (req: Request, res: Response) => {
   console.log('signup called', req.body);
   const { email, password, name, studentId, phone } = req.body;
@@ -30,6 +29,8 @@ export const signup = async (req: Request, res: Response) => {
   }
 };
 
+
+//로그인
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -49,18 +50,24 @@ export const login = async (req: Request, res: Response) => {
     if (!isMatch) {
       return res.status(401).json({ error: { code: 'INVALID_CREDENTIALS', message: 'invalid credentials' } });
     }
-    const token = jwt.sign(
-      { memberId: member.id.toString(), position: member.position },
-      JWT_SECRET,
-      { expiresIn: '15m' } // Access token 만료시간 15분으로 변경
-    );
-    await prisma.member.update({
-      where: { id: member.id },
-      data: { approvedAt: member.approvedAt ?? new Date() },
+    const accessToken = generateAccessToken({
+      memberId: member.id.toString(),
+      position: member.position,
     });
+    const refreshToken = generateRefreshToken(member.id.toString());
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/api/auth',
+    });
+
     return res.json({
+      success: true,
       data: {
-        token,
+        token: accessToken,
         member: {
           id: member.id.toString(),
           email: member.email,
