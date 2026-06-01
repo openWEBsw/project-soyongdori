@@ -25,13 +25,30 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/', (req, res) => {
-  res.json({ message: 'server running' });
-});
+// 정적 파일 서빙
+const publicPath = path.join(__dirname, '../public');
+app.use(express.static(publicPath));
 
+// api 라우팅
 app.use('/api/auth', authRouter);
 app.use('/api/boards', boardRouter);
 app.use('/api/applications', applicationRouter);
+
+// SPA fallback
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(publicPath, 'index.html'), (err) => {
+    if (err) {
+      if (req.path === '/') {
+        res.json({ message: 'server running but frontend build error' });
+      } else {
+        next();
+      }
+    }
+  });
+});
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
