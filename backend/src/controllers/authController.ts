@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../prisma/client.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 
 //회원가입
 export const signup = async (req: Request, res: Response) => {
@@ -48,7 +48,7 @@ export const login = async (req: Request, res: Response) => {
     }
     const isMatch = await bcrypt.compare(password, member.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ error: { code: 'INVALID_CREDENTIALS', message: 'invalid credentials' } });
+      return res.status(401).json({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'invalid credentials' } });
     }
     const accessToken = generateAccessToken({
       memberId: member.id.toString(),
@@ -81,4 +81,59 @@ export const login = async (req: Request, res: Response) => {
     console.error('login error:', error);
     return res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'server error' } });
   }
+};
+
+//refresh
+export const refresh = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      error: { code: 'MISSING_REFRESH_TOKEN', message: 'refresh token required' },
+    });
+  }
+
+  const payload = verifyRefreshToken(refreshToken);
+  if (!payload) {
+    return res.status(401).json({
+      success: false,
+      error: { code: 'INVALID_REFRESH_TOKEN', message: 'invalid refresh token' },
+    });
+  }
+
+  try {
+    const member = await prisma.member.findUnique({
+      where: { id: BigInt(payload.memberId) },
+      select: { id: true, position: true, status: true },
+    });
+    if (!member || member.status === 'inactive') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_REFRESH_TOKEN', message: 'invalid refresh token' },
+      });
+    }
+
+    const newAccessToken = generateAccessToken({
+      memberId: member.id.toString(),
+      position: member.position,
+    });
+    return res.json({ success: true, data: { token: newAccessToken } });
+  } catch (error) {
+    console.error('refresh error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'server error' },
+    });
+  }
+};
+
+// logout
+export const logout = async (_req: Request, res: Response) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/api/auth',
+  });
+  return res.json({ success: true });
 };
