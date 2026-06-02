@@ -1,11 +1,13 @@
 import React from 'react';
-import { Link, useNavigate, NavLink } from 'react-router-dom';
+import { Link, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/logo.png'
 
 const Header: React.FC = () => {
   const { member, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isBoardActive = location.pathname.startsWith('/boards');
 
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃 하시겠습니까?')) {
@@ -40,10 +42,8 @@ const Header: React.FC = () => {
             홈
           </NavLink>
           <NavLink
-            to="/board"
-            className={({ isActive }) =>
-              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
-              }`}
+            to="/boards/free"
+            className={`px-1 py-2 transition-colors border-b-2 ${isBoardActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'}`}
           >
             게시판
           </NavLink>
@@ -90,11 +90,8 @@ const Header: React.FC = () => {
             <span>홈</span>
           </NavLink>
           <NavLink
-            to="/board"
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'
-              }`
-            }
+            to="/boards/free"
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isBoardActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12H12m-8.25 5.25h16.5" />
