@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Dashboard from '../features/dashboard/dashboard';
+import Home from '../features/home/home';
 import BoardListPage from '../features/board/pages/BoardListPage';
 import BoardDetailPage from '../features/board/pages/BoardDetailPage';
 import BoardWritePage from '../features/board/pages/BoardWritePage';
@@ -10,18 +10,27 @@ import SignupPage from '../features/auth/pages/SignupPage';
 import ApplicationPage from '../features/application/pages/ApplicationPage';
 import Introduce from '../features/introduce/introduce';
 import Profile from '../features/profile/profile';
+import ErrorPage from '../features/error/ErrorPage';
+import Calendar from '../features/calendar/Calendar';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
+function MemberBlockRout({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, member } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (member?.status === 'active') return <Navigate to="/home" replace />;
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/home" element={<Home />} />
 
         <Route path="/introduce" element={<Introduce />} />
 
@@ -33,8 +42,11 @@ function App() {
         <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
 
-        <Route path="/apply" element={<ProtectedRoute><ApplicationPage /></ProtectedRoute>} />
+        <Route path="/apply" element={<MemberBlockRout><ApplicationPage /></MemberBlockRout>} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/calendar" element={<Calendar />} />
+
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>
   );

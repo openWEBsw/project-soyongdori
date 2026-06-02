@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/_soyongdori_/';
 const YOUTUBE_URL = 'https://www.youtube.com/@ilovelecguitar';
 const GAME_URL = 'https://sydrhythm.pages.dev/';
+const QUIZ_URL = 'https://band-quiz.pages.dev/';
 
 const InstagramIcon: React.FC = () => (
   <svg
@@ -29,6 +31,18 @@ const GamepadIcon: React.FC = () => (
   </svg>
 );
 
+const TimerIcon: React.FC = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-5 h-5"
+    aria-hidden="true"
+  >
+    <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
+  </svg>
+);
+
 const YoutubeIcon: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -42,9 +56,10 @@ const YoutubeIcon: React.FC = () => (
 );
 
 const Footer: React.FC = () => {
+  const { isAuthenticated, member } = useAuth();
   return (
     <footer className="bg-bg-white border-t border-border-light">
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between gap-6 text-xs text-text-muted">
+      <div className="px-6 md:px-12 py-4 flex flex-col md:flex-row justify-between gap-6 text-xs text-text-muted">
         <div className="flex flex-col gap-3">
           <span>© 2026 SOYONGDORI · 충북대학교 중앙동아리</span>
           <div className="flex items-center gap-3">
@@ -75,18 +90,31 @@ const Footer: React.FC = () => {
             >
               <GamepadIcon />
             </a>
+            <a
+              href={QUIZ_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="밴드 퀴즈"
+              className="text-text-muted hover:text-text-primary transition-colors"
+            >
+              <TimerIcon />
+            </a>
           </div>
         </div>
         <div className="flex items-center gap-3 font-medium">
-          <Link to="/dashboard" className="hover:text-text-primary transition-colors">HOME</Link>
+          <Link to="/home" className="hover:text-text-primary transition-colors">HOME</Link>
           <span>·</span>
           <Link to="/introduce" className="hover:text-text-primary transition-colors">ABOUT</Link>
           <span>·</span>
           <Link to="/boards/free" className="hover:text-text-primary transition-colors">BOARD</Link>
           <span>·</span>
           <Link to="/calendar" className="hover:text-text-primary transition-colors">CALENDAR</Link>
-          <span>·</span>
-          <Link to="/apply" className="hover:text-text-primary transition-colors">JOIN</Link>
+          {!(isAuthenticated && member?.status === 'active') && (
+            <>
+              <span>·</span>
+              <Link to="/apply" className="hover:text-text-primary transition-colors">JOIN</Link>
+            </>
+          )}
         </div>
       </div>
     </footer>

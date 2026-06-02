@@ -72,7 +72,7 @@ const heroHighlights = [
     { label: '정기 합주', value: '매주 수·금 19:00' },
 ];
 
-const Dashboard: React.FC = () => {
+const Home: React.FC = () => {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
 
@@ -258,25 +258,25 @@ const Dashboard: React.FC = () => {
             </section>
 
             {/* CTA 배너 */}
-            <section className="bg-bg-light border-b border-border-light">
-                <div className="max-w-6xl mx-auto px-6 md:px-12 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <h2 className="text-2xl md:text-3xl font-black text-text-title tracking-tight">
-                        소용돌이의 다음 무대를 함께 만들어요
-                    </h2>
-                    {!(isAuthenticated && member?.status === 'active') && (
+            {!(isAuthenticated && member?.status === 'active') && (
+                <section className="bg-bg-light border-b border-border-light">
+                    <div className="max-w-6xl mx-auto px-6 md:px-12 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <h2 className="text-2xl md:text-3xl font-black text-text-title tracking-tight">
+                            소용돌이의 다음 무대를 함께 만들어요
+                        </h2>
                         <Link
                             to="/apply"
                             className="bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
                         >
                             입부 신청하기 →
                         </Link>
-                    )}
-                </div>
-            </section>
+                    </div>
+                </section>
+            )}
 
             <Footer />
         </div>
     );
 };
 
-export default Dashboard;
+export default Home;
