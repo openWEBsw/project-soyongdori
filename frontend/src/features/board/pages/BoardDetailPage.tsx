@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeftIcon,
   PaperClipIcon,
@@ -55,7 +55,9 @@ function formatDateTime(iso: string) {
 
 function BoardDetailPage() {
   const navigate = useNavigate();
-  const { boardType = 'free', postId } = useParams();
+  const { postId } = useParams();
+  const location = useLocation();
+  const boardType: string = (location.state as any)?.boardType ?? 'free';
   const { member, logout } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
@@ -224,7 +226,7 @@ function BoardDetailPage() {
           {isAuthor && (
             <div className="flex justify-end gap-2 pt-5 border-t border-border-light mt-5">
               <button
-                onClick={() => navigate(`/boards/${boardType}/${postId}/edit`)}
+                onClick={() => navigate(`/posts/${postId}/edit`, { state: { boardType } })}
                 className="flex items-center gap-1.5 border border-border-dark px-4 py-1.5 rounded text-xs text-text-secondary bg-bg-white hover:bg-bg-light transition-colors cursor-pointer"
               >
                 <PencilSquareIcon className="w-3.5 h-3.5" />

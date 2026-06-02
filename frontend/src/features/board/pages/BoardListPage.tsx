@@ -135,7 +135,7 @@ function BoardListPage() {
                 />
               </div>
               <button
-                onClick={() => navigate(`/boards/${boardType}/write`)}
+                onClick={() => navigate('/posts/write', { state: { boardType } })}
                 className="flex items-center gap-1.5 bg-btn-primary-bg text-btn-primary-text px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer"
               >
                 <PencilSquareIcon className="w-4 h-4" />
@@ -171,7 +171,7 @@ function BoardListPage() {
                     ) : posts.map((post, idx) => (
                       <tr
                         key={post.id}
-                        onClick={() => navigate(`/boards/${boardType}/${post.id}`)}
+                        onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
                         className={`border-b border-border-light cursor-pointer hover:bg-bg-light transition-colors ${post.isNotice ? 'bg-bg-light' : 'bg-bg-white'}`}
                       >
                         <td className="py-3.5 px-4 text-center text-xs text-text-muted">

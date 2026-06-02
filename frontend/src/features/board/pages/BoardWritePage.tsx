@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   PaperClipIcon,
   XMarkIcon,
@@ -29,12 +29,12 @@ function formatBytes(bytes: number) {
 
 function BoardWritePage() {
   const navigate = useNavigate();
-  const { boardType = 'free' } = useParams();
+  const location = useLocation();
+  const initialBoardType: string = (location.state as any)?.boardType ?? 'free';
   const { logout } = useAuth();
-  const boardName = boardNames[boardType] || '게시판';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedBoard, setSelectedBoard] = useState(boardType);
+  const [selectedBoard, setSelectedBoard] = useState(initialBoardType);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -72,7 +72,7 @@ function BoardWritePage() {
       files.forEach(f => formData.append('files', f));
 
       const res = await api.post(`/boards/${selectedBoard}/posts`, formData);
-      navigate(`/boards/${selectedBoard}/${res.data.data.id}`);
+      navigate(`/posts/${res.data.data.id}`, { state: { boardType: selectedBoard } });
     } catch (err: any) {
       if (err.response?.status === 401) { logout(); navigate('/login'); return; }
       setError('게시글 등록에 실패했습니다');
@@ -86,7 +86,7 @@ function BoardWritePage() {
       <Header />
 
       <div className="max-w-4xl mx-auto px-6 md:px-12 py-8">
-        <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardName} / 글쓰기</div>
+        <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardNames[selectedBoard] || '게시판'} / 글쓰기</div>
         <h1 className="text-2xl font-bold text-text-title mb-6">글쓰기</h1>
 
         <div className="bg-bg-white border border-border-light rounded-lg px-8 py-8 shadow-sm">
@@ -195,7 +195,7 @@ function BoardWritePage() {
 
         <div className="flex justify-between mt-4">
           <button
-            onClick={() => navigate(`/boards/${boardType}`)}
+            onClick={() => navigate(`/boards/${selectedBoard}`)}
             className="border border-border-light px-6 py-2.5 rounded-lg text-sm bg-bg-white text-text-secondary hover:bg-bg-light transition-colors cursor-pointer"
           >
             취소
