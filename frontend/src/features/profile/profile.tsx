@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
 import { boardNames, partNames, positionNames } from '../../shared/utils/translations';
+import Footer from '../../shared/layout/Footer';
 
 // TODO 임시 데이터 (추후 db 연결)
 const testPost1 = [
@@ -445,6 +446,7 @@ const Profile = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };
