@@ -11,6 +11,7 @@ import ApplicationPage from '../features/application/pages/ApplicationPage';
 import Introduce from '../features/introduce/introduce';
 import Profile from '../features/profile/profile';
 import ErrorPage from '../features/error/ErrorPage';
+import Calendar from '../features/calendar/Calendar';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -43,6 +44,7 @@ function App() {
 
         <Route path="/apply" element={<MemberBlockRout><ApplicationPage /></MemberBlockRout>} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/calendar" element={<Calendar />} />
 
         <Route path="*" element={<ErrorPage />} />
       </Routes>
