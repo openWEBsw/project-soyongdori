@@ -10,6 +10,7 @@ import SignupPage from '../features/auth/pages/SignupPage';
 import ApplicationPage from '../features/application/pages/ApplicationPage';
 import Introduce from '../features/introduce/introduce';
 import Profile from '../features/profile/profile';
+import ErrorPage from '../features/error/ErrorPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -42,6 +43,8 @@ function App() {
 
         <Route path="/apply" element={<ProtectedRoute><MemberBlockRout /><ApplicationPage /></ProtectedRoute>} />
         <Route path="/profile" element={<Profile />} />
+
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>
   );
