@@ -16,6 +16,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
+function MemberBlockRout({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, member } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (member?.status === 'active') return <Navigate to="/home" replace />;
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -33,7 +40,7 @@ function App() {
         <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
 
-        <Route path="/apply" element={<ProtectedRoute><ApplicationPage /></ProtectedRoute>} />
+        <Route path="/apply" element={<ProtectedRoute><MemberBlockRout /><ApplicationPage /></ProtectedRoute>} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>

@@ -31,7 +31,7 @@ const Header: React.FC = () => {
         {/* NAVBAR 부분 (pc) */}
         <div className="hidden md:flex justify-center text-sm gap-4 tracking-normal">
           <NavLink
-            to="/"
+            to="/home"
             end
             className={({ isActive }) =>
               `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
