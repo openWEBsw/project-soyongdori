@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const INSTAGRAM_URL = 'https://www.instagram.com/_soyongdori_/';
 const YOUTUBE_URL = 'https://www.youtube.com/@ilovelecguitar';
 const GAME_URL = 'https://sydrhythm.pages.dev/';
+const QUIZ_URL = 'https://band-quiz.pages.dev/';
 
 const InstagramIcon: React.FC = () => (
   <svg
@@ -27,6 +28,18 @@ const GamepadIcon: React.FC = () => (
     aria-hidden="true"
   >
     <path d="M21.58 16.09l-1.09-7.66C20.21 6.46 18.52 5 16.53 5H7.47C5.48 5 3.79 6.46 3.51 8.43l-1.09 7.66C2.2 17.63 3.39 19 4.94 19c.68 0 1.32-.27 1.8-.75L9 16h6l2.25 2.25c.48.48 1.13.75 1.8.75 1.56 0 2.75-1.37 2.53-2.91zM11 11H9v2H8v-2H6v-1h2V8h1v2h2v1zm4-1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 3c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
+  </svg>
+);
+
+const TimerIcon: React.FC = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-5 h-5"
+    aria-hidden="true"
+  >
+    <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
   </svg>
 );
 
@@ -76,6 +89,15 @@ const Footer: React.FC = () => {
               className="text-text-muted hover:text-text-primary transition-colors"
             >
               <GamepadIcon />
+            </a>
+            <a
+              href={QUIZ_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="밴드 퀴즈"
+              className="text-text-muted hover:text-text-primary transition-colors"
+            >
+              <TimerIcon />
             </a>
           </div>
         </div>
