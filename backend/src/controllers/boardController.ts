@@ -113,10 +113,11 @@ export const createPost = async (req: AuthRequest, res: Response) => {
     }
 
     const savedFiles = await Promise.all(memFiles.map(async f => {
-      const ext = path.extname(f.originalname);
+      const originalname = Buffer.from(f.originalname, 'latin1').toString('utf8');
+      const ext = path.extname(originalname);
       const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
       await fs.promises.writeFile(path.join(uploadsDir, filename), f.buffer);
-      return { filename, originalname: f.originalname, size: f.size, mimetype: f.mimetype };
+      return { filename, originalname, size: f.size, mimetype: f.mimetype };
     }));
 
     const post = await prisma.post.create({
@@ -148,6 +149,16 @@ export const createPost = async (req: AuthRequest, res: Response) => {
 export const updatePost = async (req: AuthRequest, res: Response) => {
   const postId = toStr(req.params.postId);
   const { title, content } = req.body;
+  const memFiles = (req.files as Express.Multer.File[]) || [];
+
+  let deleteIds: bigint[] = [];
+  try {
+    const raw = req.body.deleteAttachmentIds;
+    if (raw) {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      deleteIds = Array.isArray(parsed) ? parsed.map((id: string) => BigInt(id)) : [];
+    }
+  } catch {}
 
   try {
     const post = await prisma.post.findFirst({
@@ -162,9 +173,42 @@ export const updatePost = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: { code: 'FORBIDDEN', message: '수정 권한이 없습니다' } });
     }
 
+    if (deleteIds.length > 0) {
+      const toDelete = await prisma.postAttachment.findMany({
+        where: { id: { in: deleteIds }, postId: toBigInt(postId) },
+      });
+      await Promise.all(toDelete.map(att =>
+        fs.promises.unlink(path.join(uploadsDir, att.fileName)).catch(() => {})
+      ));
+      await prisma.postAttachment.deleteMany({
+        where: { id: { in: deleteIds }, postId: toBigInt(postId) },
+      });
+    }
+
+    const savedFiles = await Promise.all(memFiles.map(async f => {
+      const originalname = Buffer.from(f.originalname, 'latin1').toString('utf8');
+      const ext = path.extname(originalname);
+      const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
+      await fs.promises.writeFile(path.join(uploadsDir, filename), f.buffer);
+      return { filename, originalname, size: f.size, mimetype: f.mimetype };
+    }));
+
     const updated = await prisma.post.update({
       where: { id: toBigInt(postId) },
-      data: { title, content },
+      data: {
+        title,
+        content,
+        attachments: savedFiles.length > 0 ? {
+          create: savedFiles.map(f => ({
+            fileName: f.filename,
+            originalFileName: f.originalname,
+            fileSize: f.size,
+            mimeType: f.mimetype,
+            filePath: `/uploads/${f.filename}`,
+          })),
+        } : undefined,
+      },
+      include: { attachments: true },
     });
 
     return res.json({ data: updated });
