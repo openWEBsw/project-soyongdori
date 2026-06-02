@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Dashboard from '../features/dashboard/dashboard';
+import Home from '../features/home/home';
 import BoardListPage from '../features/board/pages/BoardListPage';
 import BoardDetailPage from '../features/board/pages/BoardDetailPage';
 import BoardWritePage from '../features/board/pages/BoardWritePage';
@@ -20,8 +20,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/home" element={<Home />} />
 
         <Route path="/introduce" element={<Introduce />} />
 

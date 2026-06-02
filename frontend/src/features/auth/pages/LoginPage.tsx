@@ -22,7 +22,7 @@ function LoginPage() {
       const res = await api.post('/auth/login', { email, password });
       const { token, member } = res.data.data;
       login(token, member);
-      navigate('/dashboard');
+      navigate('/home');
     } catch (err: any) {
       const code = err.response?.data?.error?.code;
       if (code === 'INVALID_CREDENTIALS') setError('이메일 또는 비밀번호가 올바르지 않습니다');

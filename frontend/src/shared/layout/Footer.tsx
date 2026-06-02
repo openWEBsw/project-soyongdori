@@ -78,7 +78,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-3 font-medium">
-          <Link to="/dashboard" className="hover:text-text-primary transition-colors">HOME</Link>
+          <Link to="/home" className="hover:text-text-primary transition-colors">HOME</Link>
           <span>·</span>
           <Link to="/introduce" className="hover:text-text-primary transition-colors">ABOUT</Link>
           <span>·</span>

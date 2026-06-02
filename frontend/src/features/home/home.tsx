@@ -72,7 +72,7 @@ const heroHighlights = [
     { label: '정기 합주', value: '매주 수·금 19:00' },
 ];
 
-const Dashboard: React.FC = () => {
+const Home: React.FC = () => {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
 
@@ -279,4 +279,4 @@ const Dashboard: React.FC = () => {
     );
 };
 
-export default Dashboard;
+export default Home;
