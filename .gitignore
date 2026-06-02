@@ -362,3 +362,6 @@ uploads/
 dist/
 build/
 out/
+
+# 미그레이션 파일은 제외
+!backend/prisma/migrations/**/migration.sql
