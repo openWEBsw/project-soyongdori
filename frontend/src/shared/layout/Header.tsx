@@ -40,7 +40,7 @@ const Header: React.FC = () => {
             홈
           </NavLink>
           <NavLink
-            to="/board"
+            to="/boards"
             className={({ isActive }) =>
               `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
               }`}
@@ -90,7 +90,7 @@ const Header: React.FC = () => {
             <span>홈</span>
           </NavLink>
           <NavLink
-            to="/board"
+            to="/boards"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'
               }`
