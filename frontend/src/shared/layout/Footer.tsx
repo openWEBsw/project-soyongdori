@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/_soyongdori_/';
 const YOUTUBE_URL = 'https://www.youtube.com/@ilovelecguitar';
@@ -42,9 +43,10 @@ const YoutubeIcon: React.FC = () => (
 );
 
 const Footer: React.FC = () => {
+  const { isAuthenticated, member } = useAuth();
   return (
     <footer className="bg-bg-white border-t border-border-light">
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between gap-6 text-xs text-text-muted">
+      <div className="px-6 md:px-12 py-4 flex flex-col md:flex-row justify-between gap-6 text-xs text-text-muted">
         <div className="flex flex-col gap-3">
           <span>© 2026 SOYONGDORI · 충북대학교 중앙동아리</span>
           <div className="flex items-center gap-3">
@@ -78,15 +80,19 @@ const Footer: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-3 font-medium">
-          <Link to="/dashboard" className="hover:text-text-primary transition-colors">HOME</Link>
+          <Link to="/home" className="hover:text-text-primary transition-colors">HOME</Link>
           <span>·</span>
           <Link to="/introduce" className="hover:text-text-primary transition-colors">ABOUT</Link>
           <span>·</span>
           <Link to="/boards/free" className="hover:text-text-primary transition-colors">BOARD</Link>
           <span>·</span>
           <Link to="/calendar" className="hover:text-text-primary transition-colors">CALENDAR</Link>
-          <span>·</span>
-          <Link to="/apply" className="hover:text-text-primary transition-colors">JOIN</Link>
+          {!(isAuthenticated && member?.status === 'active') && (
+            <>
+              <span>·</span>
+              <Link to="/apply" className="hover:text-text-primary transition-colors">JOIN</Link>
+            </>
+          )}
         </div>
       </div>
     </footer>

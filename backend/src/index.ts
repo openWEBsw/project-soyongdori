@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import boardRouter from './routes/board.js';
 import authRouter from './routes/auth.js';
 import applicationRouter from './routes/application.js';
+import cookieParser from 'cookie-parser';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,6 +18,7 @@ app.set('json replacer', (_key: string, value: unknown) =>
 );
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 

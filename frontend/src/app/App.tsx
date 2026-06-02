@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Dashboard from '../features/dashboard/dashboard';
+import Home from '../features/home/home';
 import BoardListPage from '../features/board/pages/BoardListPage';
 import BoardDetailPage from '../features/board/pages/BoardDetailPage';
 import BoardWritePage from '../features/board/pages/BoardWritePage';
@@ -16,12 +16,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
+function MemberBlockRout({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, member } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (member?.status === 'active') return <Navigate to="/home" replace />;
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/home" element={<Home />} />
 
         <Route path="/introduce" element={<Introduce />} />
 
@@ -33,7 +40,7 @@ function App() {
         <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
 
-        <Route path="/apply" element={<ProtectedRoute><ApplicationPage /></ProtectedRoute>} />
+        <Route path="/apply" element={<ProtectedRoute><MemberBlockRout /><ApplicationPage /></ProtectedRoute>} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
