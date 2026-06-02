@@ -294,7 +294,7 @@ const Profile = () => {
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
-                            <p className="h-[32px] md:h-[45px] text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
+                            <p className="h-[32px] md:h-[40px] text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
                               {comment.content}
                             </p>
                           </td>
