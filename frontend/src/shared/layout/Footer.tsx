@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/_soyongdori_/';
 const YOUTUBE_URL = 'https://www.youtube.com/@ilovelecguitar';
@@ -42,6 +43,7 @@ const YoutubeIcon: React.FC = () => (
 );
 
 const Footer: React.FC = () => {
+  const { isAuthenticated, member } = useAuth();
   return (
     <footer className="bg-bg-white border-t border-border-light">
       <div className="px-6 md:px-12 py-4 flex flex-col md:flex-row justify-between gap-6 text-xs text-text-muted">
@@ -85,8 +87,12 @@ const Footer: React.FC = () => {
           <Link to="/boards/free" className="hover:text-text-primary transition-colors">BOARD</Link>
           <span>·</span>
           <Link to="/calendar" className="hover:text-text-primary transition-colors">CALENDAR</Link>
-          <span>·</span>
-          <Link to="/apply" className="hover:text-text-primary transition-colors">JOIN</Link>
+          {!(isAuthenticated && member?.status === 'active') && (
+            <>
+              <span>·</span>
+              <Link to="/apply" className="hover:text-text-primary transition-colors">JOIN</Link>
+            </>
+          )}
         </div>
       </div>
     </footer>
