@@ -41,7 +41,7 @@ function App() {
         <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
         <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
 
-        <Route path="/apply" element={<ProtectedRoute><MemberBlockRout /><ApplicationPage /></ProtectedRoute>} />
+        <Route path="/apply" element={<MemberBlockRout><ApplicationPage /></MemberBlockRout>} />
         <Route path="/profile" element={<Profile />} />
 
         <Route path="*" element={<ErrorPage />} />
