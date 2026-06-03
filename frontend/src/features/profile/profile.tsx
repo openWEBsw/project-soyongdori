@@ -1,26 +1,15 @@
 // src/features/profile/profile.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
-import { boardNames, partNames, positionNames } from '../../shared/utils/translations';
+import { boardNames, formatDate, partNames, positionNames } from '../../shared/utils/translations';
 import Footer from '../../shared/layout/Footer';
+import api from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 
-// TODO 임시 데이터 (추후 db 연결)
-const testPost1 = [
-  { id: 1112, category: 'free', title: '안녕하세요반갑습니다이건테스트데이 터입니다길이가필요합니다아아아아 안녕하세요반갑습니다이건테스트데이터입니다길이가필요합니다아아아아', date: '2026.05.13', views: 11, comments: 5 },
-  { id: 1118, category: 'free', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 2 },
-  { id: 1115, category: 'resource', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 8 },
-  { id: 1113, category: 'photo', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 112, comments: 8 },
-  { id: 11513, category: 'photo', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 112, comments: 8 },
-];
+import defaultProfileImg from '../../assets/default_profile_image.jpg';
+// TODO 고화질 이미지 깨짐 증상 개선
 
-const testPost2 = [
-  { id: 1131, category: 'free', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 12 },
-  { id: 11111, category: 'free', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 45, comments: 3 },
-  { id: 111111, category: 'notice', title: 'ㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 110, comments: 2 },
-  { id: 1151, category: 'resource', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 2 },
-  { id: 1611, category: 'resource', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 2 },
-];
 
 // TODO 백엔드 컨트롤러에서 넘길 때, category는 추가로 붙여줘야 함
 const testComment = [
@@ -31,28 +20,25 @@ const testComment = [
   { id: 1161, category: 'resource', content: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ', date: '2026.05.13', postTitle: 'ㅇㅇ', postId: 125 },
 ];
 
+interface ProfileData {
+  name: string;
+  part: string;
+  position: string;
+  isCohortLead: boolean;
+  cohort: number;
+  createdAt: string;
+  email: string;
+  studentId: string;
+  phone: string;
+  department: string;
+  profileImageUrl: string;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
-
-  // 편집용 State와 실 출력용 State 분리
-
-  // 유저 프로필 정보 상태 (실 출력용)
-  const [profile, setProfile] = useState({
-    name: '김철수철수',
-    part: 'electric',
-    position: 'member',
-    isCohortLead: true,
-    cohort: 6,
-    createdAt: '2022.03.15',
-    email: 'kimcheolsusstestlog@cbnu.ac.kr',
-    studentId: '2022041000',
-    phone: '010-1234-5678',
-    department: '소프트웨어학부 소프트웨어전공',
-  });
-
-  // 폼 및 입력 필드 상태 (편집용)
-  const [editForm, setEditForm] = useState({ ...profile, currentPassword: '', newPassword: '', confirmPassword: '' });
-
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const { logout } = useAuth();
 
   // 탭 상태
   const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts');
@@ -61,40 +47,167 @@ const Profile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAccountDeleteModalOpen, setIsAccountDeleteModalOpen] = useState(false);
 
+  // 편집용 프로필 State와 실 출력용 프로필 State 분리
+
+  // 유저 프로필 정보 상태 (실 출력용)
+  const [profile, setProfile] = useState<ProfileData>(null);
 
   // TODO 페이지네이션 처리 필요, 추후 연결하며 모두 수정. 페이지 상태
   const [postPage, setPostPage] = useState<1 | 2>(1);
-  const [posts, setPosts] = useState(testPost1);
+  const [posts, setPosts] = useState(null);
   const [totalPosts] = useState(12); // 백엔드에서 받아올 전체 게시글 개수 가정
 
-  const [comments] = useState(testComment);
+  const [comments, setComments] = useState(testComment);
   const [totalComments] = useState(4); // 백엔드에서 받아올 전체 댓글 개수 가정
 
   useEffect(() => {
-    if (postPage === 1) {
-      setPosts(testPost1);
-    } else {
-      setPosts(testPost2);
-    }
-  }, [postPage]);
+    setLoading(true);
+    setError('');
+    Promise.all([
+      api.get('/members/me'),
+      api.get('/members/me/posts'),
+      api.get('/members/me/comments')
+    ])
+      .then(([resProfile, resPosts, resComments]) => {
+        setProfile(resProfile.data.data);
+        setPosts(resPosts.data.data);
+        setComments(resComments.data.data);
+      })
+      .catch(err => {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+          logout(); navigate('/login');
+        }
+        else {
+          console.log(err);
+          setError('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 불러오는 데 실패했습니다.');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      })
+  }, []);
 
 
-  // TODO 함수들 백엔드와 잇기
+  // 폼 및 입력 필드 상태 (편집용)
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', department: '', currentPassword: '', newPassword: '', confirmPassword: '' });
 
-  // 프로필 수정 제출 처리
-  const handleEditSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  // edit 핸들링 함수
+  const handleEditSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setProfile(editForm);
-    setIsEditModalOpen(false);
-    alert('프로필 정보가 수정되었습니다.');
+
+    if (!editForm.currentPassword) {
+      alert("현재 비밀번호를 입력해주세요!");
+      return;
+    }
+
+    if (editForm.newPassword && !editForm.confirmPassword) {
+      alert("새 비밀번호를 한번 더 입력해주세요!");
+      return;
+    }
+
+    if (editForm.newPassword && editForm.newPassword.length < 8) {
+      alert("비밀번호는 8자리 이상이어야 합니다.");
+      return;
+    }
+
+    if (editForm.newPassword !== editForm.confirmPassword) {
+      alert("새로운 비밀번호가 일치하지 않습니다!");
+      return;
+    }
+
+    try {
+      const res = await api.post('/members/me', editForm);
+      setProfile(res.data.data);
+      setIsEditModalOpen(false);
+
+      setEditForm(prev => ({
+        ...prev, currentPassword: '', newPassword: '', confirmPassword: ''
+      }));
+
+      alert('프로필 정보가 수정되었습니다.');
+    } catch (err) {
+      if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+        logout(); navigate('/login');
+      }
+      else if (err.response?.data?.error?.code === 'INCORRECT_PASSWORD') {
+        const errMsg = ('현재 비밀번호가 일치하지 않습니다.');
+        alert(errMsg);
+      }
+      else {
+        console.log(err);
+        const errMsg = ('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 수정하는 데 실패했습니다.');
+        alert(errMsg);
+      }
+    }
+
   };
+
+
+  // 파일 처리 input 숨김용 ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 파일 처리 함수
+  const uploadProfileImage = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일 크기가 10MB를 초과합니다.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profileImage', file);
+
+    try {
+      const res = await api.post('/members/me/profile-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const newImageUrl = res.data.data.profileImageUrl;
+      setProfile(prev => ({ ...prev, profileImageUrl: newImageUrl }));
+      alert('프로필 이미지가 성공적으로 변경되었습니다.');
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err.response?.data?.error?.message || '이미지 업로드 중 오류가 발생했습니다.';
+      alert(errMsg);
+    }
+  };
+
+
+
 
   // 로그아웃 처리
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃 하시겠습니까?')) {
       alert('로그아웃 되었습니다.');
+      logout();
+      navigate('/login');
     }
   };
+
+  if (loading) {
+    return (
+      <div>
+        로딩중
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        에러 {error}
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
@@ -120,23 +233,25 @@ const Profile = () => {
           {/* 프로필 챕터 */}
           <div className="bg-bg-white rounded-lg border border-border-light shadow-sm p-5 md:p-8 flex flex-col md:flex-row gap-8 items-stretch text-left">
             {/* 일반 정보 영역 */}
-            {/* TODO 예쁘긴 하지만 꼭 2번 정보를 보여줘야 하는지?, 적절히 분할할지 검토 필요*/}
+
             <div className="flex-1 flex flex-col md:flex-row gap-6 items-center md:items-start">
-              <div className="w-24 h-24 rounded-full bg-bg-deep border border-border-dark flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight p-2">
-                프로필 이미지 {/* TODO 추후 이미지 태그로 교체 */}
+              <div onClick={() => fileInputRef.current?.click()}
+                className="w-24 h-24 rounded-full bg-bg-deep border border-border-light flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight cursor-pointer">
+                <img src={profile.profileImageUrl || defaultProfileImg} className="w-full h-full rounded-full overflow-hidden object-cover"></img>
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={e => uploadProfileImage(e.target.files)}
+              />
               <div className="flex flex-col gap-2 text-center md:text-left">
                 <h2 className="text-2xl font-bold text-text-title">{profile.name}</h2>
                 <div className="text-sm font-semibold text-text-secondary">
                   {partNames[profile.part]} · {profile.cohort}기 {profile.isCohortLead ? '(기장)' : ''} · {positionNames[profile.position]}
                 </div>
-                {/* <div className="text-xs text-text-muted font-medium text-center md:text-left leading-relaxed">
-                  <span className="whitespace-nowrap">{profile.email}</span>
-                  <span className="whitespace-nowrap"> · {profile.department}</span>
-                  <span className="whitespace-nowrap"> · {profile.studentId}</span>
-              </div> */}
                 <div className="text-xs text-text-muted font-medium">
-                  가입일: {profile.createdAt}
+                  가입일 : {formatDate(profile.createdAt)}
                 </div>
                 <button
                   onClick={() => {

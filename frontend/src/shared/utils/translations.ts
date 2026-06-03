@@ -26,3 +26,8 @@ export const positionNames: Record<string, string> = {
   leader: '회장',
   super_admin: '관리자',
 };
+
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  return dateString.substring(0, 10).replaceAll('-', '.');
+};

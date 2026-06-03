@@ -24,7 +24,7 @@ const getProfile = async (req: AuthRequest, res: Response, targetId: bigint, isM
                 isCohortLead: true,
                 email: isMe,
                 studentId: isMe,
-                phone: isMe, // TODO 페이지에 추가
+                phone: isMe,
                 department: isMe,
             },
         });

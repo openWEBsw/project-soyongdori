@@ -7,6 +7,7 @@ import boardRouter from './routes/board.js';
 import authRouter from './routes/auth.js';
 import applicationRouter from './routes/application.js';
 import cookieParser from 'cookie-parser';
+import memberRouter from './routes/member.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +36,7 @@ app.use(express.static(publicPath));
 app.use('/api/auth', authRouter);
 app.use('/api/boards', boardRouter);
 app.use('/api/applications', applicationRouter);
+app.use('/api/members', memberRouter);
 
 // SPA fallback
 app.get('*path', (req, res, next) => {
