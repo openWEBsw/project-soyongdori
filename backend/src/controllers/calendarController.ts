@@ -165,3 +165,50 @@ export const updateEvent = async (req: AuthRequest, res: Response) => {
         })
     }
 }
+
+// 4. 일정 삭제
+export const deleteEvent = async (req: AuthRequest, res: Response) => {
+    const eventId = toBigInt(toStr(req.params.eventId));
+    const level = positionToLevel(req.memberPosition);
+
+    try {
+        const event = await prisma.calendarEvent.findFirst({
+            where: {
+                id: eventId,
+                deletedAt: null,
+            }
+        });
+        if (!event) {
+            return res.status(403).json({
+                error: {
+                    code: 'EVENT_NOT_FOUND',
+                    message: '존재하지 않는 일정입니다.',
+                }
+            });
+        }
+        if (event.authorId !== req.memberId && level < 6) {
+            return res.status(403).json({
+                error: {
+                    code: 'FORBIDDEN',
+                    message: '삭제 권한이 없습니다.',
+                }
+            })
+        }
+
+        await prisma.calendarEvent.update({
+            where: { id: eventId },
+            data: {
+                deletedAt: new Date(),
+            }
+        });
+        return res.json({ data: { success: true } });
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({
+            error: {
+                code: 'SERVER_ERROR',
+                message: '서버 오류'
+            }
+        })
+    }
+}
