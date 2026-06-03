@@ -26,8 +26,8 @@ export const getEvents = async (req: AuthRequest, res: Response) => {
         where.visibility = "public";
     } else {
         where.OR = [
-            { authorID: req.memberId },
-            { visibility: { in: ['pulic', 'group'] } },
+            { authorId: req.memberId },
+            { visibility: { in: ['public', 'group'] } },
         ];
     }
 
@@ -125,7 +125,7 @@ export const updateEvent = async (req: AuthRequest, res: Response) => {
             }
         });
         if (!event) {
-            return res.status(403).json({
+            return res.status(404).json({
                 error: {
                     code: 'EVENT_NOT_FOUND',
                     message: '존재하지 않는 일정입니다.',
@@ -157,7 +157,7 @@ export const updateEvent = async (req: AuthRequest, res: Response) => {
         return res.json({ data: updated });
     } catch (e) {
         console.error(e);
-        return res.status(600).json({
+        return res.status(500).json({
             error: {
                 code: 'SERVER_ERROR',
                 message: '서버 오류'
@@ -179,7 +179,7 @@ export const deleteEvent = async (req: AuthRequest, res: Response) => {
             }
         });
         if (!event) {
-            return res.status(403).json({
+            return res.status(404).json({
                 error: {
                     code: 'EVENT_NOT_FOUND',
                     message: '존재하지 않는 일정입니다.',
