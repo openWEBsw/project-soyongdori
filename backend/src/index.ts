@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import boardRouter from './routes/board.js';
 import authRouter from './routes/auth.js';
+import calendar from './routes/calendar.js'
 import applicationRouter from './routes/application.js';
 import cookieParser from 'cookie-parser';
 
@@ -35,6 +36,7 @@ app.use(express.static(publicPath));
 app.use('/api/auth', authRouter);
 app.use('/api/boards', boardRouter);
 app.use('/api/applications', applicationRouter);
+app.use('/api/calendar', calendar);
 
 // SPA fallback
 app.get('*path', (req, res, next) => {
