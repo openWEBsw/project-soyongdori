@@ -77,7 +77,7 @@ const Header: React.FC = () => {
         {/* NAVBAR 부분 (모바일)  */}
         <div className="bg-bg-white z-50 border-t border-border-dark h-[70px] fixed bottom-0 left-0 w-full flex md:hidden justify-around items-center text-xs leading-relaxed tracking-wide">
           <NavLink
-            to="/"
+            to="/home"
             end
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'
@@ -151,11 +151,11 @@ const Header: React.FC = () => {
         </div>
 
         {/* 로그인/로그아웃 부분 */}
-        <div className=" flex-1 flex justify-end text-xs gap-4">
+        <div className=" flex-1 flex justify-end text-xs gap-3 md:gap-4">
           {!(isAuthenticated) && (
             <Link
               to="/login"
-              className="px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block"
+              className="shrink-0 px-3 md:px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block"
             >
               로그인
             </Link>
@@ -163,7 +163,7 @@ const Header: React.FC = () => {
           {!(isAuthenticated) && (
             <Link
               to="/signup"
-              className="px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
+              className="shrink-0 px-3 md:px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
             >
               회원가입
             </Link>
@@ -171,7 +171,7 @@ const Header: React.FC = () => {
           {(isAuthenticated && member) && (
             <button
               onClick={handleLogout}
-              className="px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block cursor-pointer"
+              className="shrink-0 px-3 md:px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block cursor-pointer"
             >
               로그아웃
             </button>
@@ -179,7 +179,7 @@ const Header: React.FC = () => {
           {(isAuthenticated && member) && (
             <Link
               to="/profile"
-              className="px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
+              className="shrink-0 px-3 md:px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
             >
               마이페이지
             </Link>
