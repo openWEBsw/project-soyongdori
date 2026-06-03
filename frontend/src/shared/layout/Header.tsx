@@ -1,11 +1,13 @@
 import React from 'react';
-import { Link, useNavigate, NavLink } from 'react-router-dom';
+import { Link, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/logo.png'
 
 const Header: React.FC = () => {
   const { member, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isBoardActive = location.pathname.startsWith('/boards');
 
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃 하시겠습니까?')) {
@@ -18,7 +20,7 @@ const Header: React.FC = () => {
   // TODO 입부신청, 마이페이지가 출력되는 조건, 위치, 필요성 검토 필요
   return (
     <div className="bg-bg-white border-b border-border-light w-full text-left font-sans">
-      <header className="max-w-6xl mx-auto px-6 md:px-12 py-3 flex items-center justify-between">
+      <header className="px-6 md:px-12 py-3 flex items-center justify-between">
         {/* 로고 부분 */}
         <div className=" flex-1 flex justify-start">
           <Link
@@ -31,7 +33,7 @@ const Header: React.FC = () => {
         {/* NAVBAR 부분 (pc) */}
         <div className="hidden md:flex justify-center text-sm gap-4 tracking-normal">
           <NavLink
-            to="/"
+            to="/home"
             end
             className={({ isActive }) =>
               `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
@@ -40,10 +42,8 @@ const Header: React.FC = () => {
             홈
           </NavLink>
           <NavLink
-            to="/boards"
-            className={({ isActive }) =>
-              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
-              }`}
+            to="/boards/free"
+            className={`px-1 py-2 transition-colors border-b-2 ${isBoardActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'}`}
           >
             게시판
           </NavLink>
@@ -77,7 +77,7 @@ const Header: React.FC = () => {
         {/* NAVBAR 부분 (모바일)  */}
         <div className="bg-bg-white z-50 border-t border-border-dark h-[70px] fixed bottom-0 left-0 w-full flex md:hidden justify-around items-center text-xs leading-relaxed tracking-wide">
           <NavLink
-            to="/"
+            to="/home"
             end
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'
@@ -90,11 +90,8 @@ const Header: React.FC = () => {
             <span>홈</span>
           </NavLink>
           <NavLink
-            to="/boards"
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'
-              }`
-            }
+            to="/boards/free"
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors border-t-2 ${isBoardActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary border-transparent'}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12H12m-8.25 5.25h16.5" />
@@ -154,11 +151,11 @@ const Header: React.FC = () => {
         </div>
 
         {/* 로그인/로그아웃 부분 */}
-        <div className=" flex-1 flex justify-end text-xs gap-4">
+        <div className=" flex-1 flex justify-end text-xs gap-3 md:gap-4">
           {!(isAuthenticated) && (
             <Link
               to="/login"
-              className="px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block"
+              className="shrink-0 px-3 md:px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block"
             >
               로그인
             </Link>
@@ -166,7 +163,7 @@ const Header: React.FC = () => {
           {!(isAuthenticated) && (
             <Link
               to="/signup"
-              className="px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
+              className="shrink-0 px-3 md:px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
             >
               회원가입
             </Link>
@@ -174,7 +171,7 @@ const Header: React.FC = () => {
           {(isAuthenticated && member) && (
             <button
               onClick={handleLogout}
-              className="px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block cursor-pointer"
+              className="shrink-0 px-3 md:px-4 py-2 border-border-dark font-bold border rounded-md hover:bg-bg-light transition-colors inline-block cursor-pointer"
             >
               로그아웃
             </button>
@@ -182,7 +179,7 @@ const Header: React.FC = () => {
           {(isAuthenticated && member) && (
             <Link
               to="/profile"
-              className="px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
+              className="shrink-0 px-3 md:px-4 py-2 bg-bg-dark text-white font-bold rounded-md hover:opacity-90 transition-opacity inline-block"
             >
               마이페이지
             </Link>

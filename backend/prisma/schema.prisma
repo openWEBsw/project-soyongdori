@@ -82,6 +82,7 @@ model Member {
   name            String           @db.VarChar(50)
   studentId       String?          @unique @map("student_id") @db.VarChar(30)
   phone           String?          @db.VarChar(30)
+  department      String?          @db.VarChar(100)
   part            ApplicationPart?
   position        MemberPosition?
   cohort          Int?             @db.UnsignedInt

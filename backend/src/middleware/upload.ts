@@ -22,3 +22,15 @@ export const upload = multer({
     }
   },
 });
+
+export const uploadImage = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/gif', 'image/webp',].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('지원하지 않는 파일 형식입니다. 이미지 파일만 업로드 가능합니다.'));
+    }
+  },
+});
