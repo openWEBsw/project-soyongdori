@@ -22,7 +22,7 @@ export const getEvents = async (req: AuthRequest, res: Response) => {
     }
 
     //가시성 필터
-    if (level == 0) { //비회원
+    if (level === 0) { //비회원
         where.visibility = "public";
     } else {
         where.OR = [
@@ -77,7 +77,7 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
     if (visibility !== 'personal' && level < 1) {
         return res.status(403).json({
             error: {
-                code: 'FORBIDEN',
+                code: 'FORBIDDEN',
                 message: '공유 일정은 회원만 등록할 수 있습니다.'
             }
         });
@@ -136,7 +136,7 @@ export const updateEvent = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({
                 error: {
                     code: 'FORBIDDEN',
-                    mesage: '수정 권한이 없습니다.',
+                    message: '수정 권한이 없습니다.',
                 }
             });
         }
