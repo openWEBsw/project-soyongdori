@@ -110,3 +110,58 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
         });
     }
 }
+
+//3. 일정 수정
+export const updateEvent = async (req: AuthRequest, res: Response) => {
+    const eventId = toBigInt(toStr(req.params.eventId));
+    const level = positionToLevel(req.memberPosition);
+    const { title, description, startAt, endAt, allDay, visibility, location, color } = req.body ?? {};
+
+    try {
+        const event = await prisma.calendarEvent.findFirst({
+            where: {
+                id: eventId,
+                deletedAt: null,
+            }
+        });
+        if (!event) {
+            return res.status(403).json({
+                error: {
+                    code: 'EVENT_NOT_FOUND',
+                    message: '존재하지 않는 일정입니다.',
+                }
+            });
+        }
+        if (event.authorId !== req.memberId && level < 6) {
+            return res.status(403).json({
+                error: {
+                    code: 'FORBIDDEN',
+                    mesage: '수정 권한이 없습니다.',
+                }
+            });
+        }
+
+        const updated = await prisma.calendarEvent.update({
+            where: { id: eventId },
+            data: {
+                ...(title !== undefined && { title }),
+                ...(description !== undefined && { description }),
+                ...(startAt !== undefined && { startAt: new Date(startAt) }),
+                ...(endAt !== undefined && { endAt: new Date(endAt) }),
+                ...(allDay !== undefined && { allDay }),
+                ...(visibility !== undefined && { visibility }),
+                ...(location !== undefined && { location }),
+                ...(color !== undefined && { color }),
+            }
+        });
+        return res.json({ data: updated });
+    } catch (e) {
+        console.error(e);
+        return res.status(600).json({
+            error: {
+                code: 'SERVER_ERROR',
+                message: '서버 오류'
+            }
+        })
+    }
+}
