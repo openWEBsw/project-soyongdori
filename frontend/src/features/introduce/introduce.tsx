@@ -40,7 +40,7 @@ const Introduce: React.FC = () => {
           <p className="text-lg tracking-tighter font-bold mb-5 text-text-secondary">
             충북대학교 중앙 밴드 동아리
           </p>
-          <p className="text-sm md:text-base font-light leading-relaxed text-text-secondary max-w-2xl">
+          <p className="break-keep text-sm md:text-base font-light leading-relaxed text-text-secondary max-w-2xl">
             1970년대부터 이어져 온 충북대학교 대표 중앙 밴드 동아리입니다. <br />
             다양한 장르의 음악을 함께 연주하며 우리만의 무대를 만들어갑니다.
           </p>
@@ -64,7 +64,7 @@ const Introduce: React.FC = () => {
               className="md:col-span-2 w-full aspect-[1.8/1] object-cover rounded-lg"
             />
 
-            <div className="md:col-span-3 text-sm md:text-base leading-loose font-light text-text-secondary">
+            <div className="break-keep md:col-span-3 text-sm md:text-base leading-loose font-light text-text-secondary">
               <p>
                 충북대학교에서 창단된 소용돌이는 약 50년간 캠퍼스 음악 문화를 이끌어왔습니다. <br />
                 매년 2회 정기공연, 가두모집, 학교 축제 참여 등 활발한 활동을 하고 있으며, <br />
