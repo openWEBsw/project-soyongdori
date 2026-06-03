@@ -15,13 +15,14 @@ const adapter = new PrismaMariaDb({
 
 const prisma = new PrismaClient({ adapter });
 
-const YEAR = new Date().getFullYear();
+const year = new Date().getFullYear();
 
+// 도커 DB 새로 만들 때 기본 게시판 데이터 없어서 오류남
 const boards = [
   { type: 'notice' as const, name: '공지 게시판', minReadLevel: 0, minWriteLevel: 2, sortOrder: 0 },
-  { type: 'free'   as const, name: '자유 게시판', minReadLevel: 0, minWriteLevel: 1, sortOrder: 1 },
+  { type: 'free' as const, name: '자유 게시판', minReadLevel: 0, minWriteLevel: 1, sortOrder: 1 },
   { type: 'resource' as const, name: '자료 게시판', minReadLevel: 1, minWriteLevel: 1, sortOrder: 2 },
-  { type: 'photo'  as const, name: '사진 게시판', minReadLevel: 1, minWriteLevel: 1, sortOrder: 3 },
+  { type: 'photo' as const, name: '사진 게시판', minReadLevel: 1, minWriteLevel: 1, sortOrder: 3 },
   { type: 'planning' as const, name: '기획부 게시판', minReadLevel: 3, minWriteLevel: 3, sortOrder: 4 },
   { type: 'budget' as const, name: '동아리비 내역', minReadLevel: 4, minWriteLevel: 4, sortOrder: 5 },
 ];
@@ -29,13 +30,13 @@ const boards = [
 async function main() {
   for (const board of boards) {
     await prisma.board.upsert({
-      where: { type_year: { type: board.type, year: YEAR } },
+      where: { type_year: { type: board.type, year } },
       update: {},
-      create: { ...board, year: YEAR },
+      create: { ...board, year },
     });
-    console.log(`✓ ${board.name} (${YEAR})`);
+    console.log(`${board.name} 삽입 완료`);
   }
-  console.log('Seed complete.');
+  console.log('시드 완료');
 }
 
 main().finally(() => prisma.$disconnect());
