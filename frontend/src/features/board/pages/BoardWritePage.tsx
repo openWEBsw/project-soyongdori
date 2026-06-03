@@ -85,12 +85,11 @@ function BoardWritePage() {
     <div className="min-h-screen bg-bg-light text-text-primary">
       <Header />
 
-      <div className="max-w-4xl mx-auto px-6 md:px-12 py-8">
+      <div className="max-w-4xl mx-auto px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
         <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardNames[selectedBoard] || '게시판'} / 글쓰기</div>
-        <h1 className="text-2xl font-bold text-text-title mb-6">글쓰기</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-text-title mb-4 md:mb-6">글쓰기</h1>
 
-        <div className="bg-bg-white border border-border-light rounded-lg px-8 py-8 shadow-sm">
-          {/* 게시판 선택 */}
+        <div className="bg-bg-white border border-border-light rounded-lg px-4 py-5 sm:px-8 sm:py-8 shadow-sm">
           <div className="mb-5">
             <label className="text-xs font-semibold text-text-secondary block mb-2">
               게시판 <span className="text-text-danger">*</span>
@@ -106,7 +105,6 @@ function BoardWritePage() {
             </select>
           </div>
 
-          {/* 제목 */}
           <div className="mb-5">
             <label className="text-xs font-semibold text-text-secondary block mb-2">
               제목 <span className="text-text-danger">*</span>
@@ -121,7 +119,6 @@ function BoardWritePage() {
             />
           </div>
 
-          {/* 본문 */}
           <div className="mb-5">
             <label className="text-xs font-semibold text-text-secondary block mb-2">
               본문 <span className="text-text-danger">*</span>

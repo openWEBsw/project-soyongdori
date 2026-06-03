@@ -66,14 +66,33 @@ function BoardListPage() {
     <div className="min-h-screen bg-bg-light text-text-primary">
       <Header />
 
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
+      <div className="max-w-6xl mx-auto px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
         {/* 브레드크럼 */}
         <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardName}</div>
-        <h1 className="text-2xl font-bold text-text-title mb-6">{boardName}</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-text-title mb-4 md:mb-6">{boardName}</h1>
+
+        {/* 모바일 카테고리 탭 */}
+        <div className="md:hidden -mx-4 px-4 overflow-x-auto pb-1 mb-4">
+          <div className="flex gap-2 w-max">
+            {Object.entries(boardNames).map(([key, name]) => (
+              <button
+                key={key}
+                onClick={() => navigate(`/boards/${key}`)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                  boardType === key
+                    ? 'bg-bg-dark text-white'
+                    : 'bg-bg-white border border-border-light text-text-secondary'
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-5">
-          {/* 사이드바 */}
-          <aside className="w-52 flex-shrink-0">
+          {/* 사이드바 - 데스크톱만 */}
+          <aside className="hidden md:block w-52 flex-shrink-0">
             <div className="bg-bg-white border border-border-light rounded-lg p-4 shadow-sm">
               <div className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-3">카테고리</div>
               {Object.entries(boardNames).map(([key, name]) => (
@@ -122,9 +141,7 @@ function BoardListPage() {
             </div>
           </aside>
 
-          {/* 메인 컨텐츠 */}
           <div className="flex-1 min-w-0">
-            {/* 검색 + 글쓰기 */}
             <div className="flex gap-2 mb-4">
               <div className="relative flex-1">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -136,75 +153,111 @@ function BoardListPage() {
               </div>
               <button
                 onClick={() => navigate('/posts/write', { state: { boardType } })}
-                className="flex items-center gap-1.5 bg-btn-primary-bg text-btn-primary-text px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                className="flex items-center gap-1.5 bg-btn-primary-bg text-btn-primary-text px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
               >
                 <PencilSquareIcon className="w-4 h-4" />
                 글쓰기
               </button>
             </div>
 
-            {/* 게시글 테이블 */}
             <div className="bg-bg-white border border-border-light rounded-lg overflow-hidden shadow-sm">
               {loading ? (
                 <div className="text-center py-16 text-text-muted text-sm">불러오는 중...</div>
               ) : error ? (
                 <div className="text-center py-16 text-text-danger text-sm">{error}</div>
               ) : (
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-bg-light border-b border-border-light text-text-muted text-xs font-semibold">
-                      <th className="py-3 px-4 text-center w-14">NO.</th>
-                      <th className="py-3 px-4 text-left">제목</th>
-                      <th className="py-3 px-4 text-center w-20">작성자</th>
-                      <th className="py-3 px-4 text-center w-24">날짜</th>
-                      <th className="py-3 px-4 text-center w-12">조회</th>
-                      <th className="py-3 px-4 text-center w-12">댓글</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <>
+                  {/* 모바일 카드 목록 */}
+                  <div className="md:hidden divide-y divide-border-light">
                     {posts.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="text-center py-16 text-text-muted text-sm">
-                          게시글이 없습니다
-                        </td>
-                      </tr>
+                      <div className="text-center py-12 text-text-muted text-sm">게시글이 없습니다</div>
                     ) : posts.map((post, idx) => (
-                      <tr
+                      <div
                         key={post.id}
                         onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
-                        className={`border-b border-border-light cursor-pointer hover:bg-bg-light transition-colors ${post.isNotice ? 'bg-bg-light' : 'bg-bg-white'}`}
+                        className={`px-4 py-3.5 cursor-pointer hover:bg-bg-light active:bg-bg-light transition-colors ${post.isNotice ? 'bg-bg-light' : 'bg-bg-white'}`}
                       >
-                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                        <div className="flex items-start gap-2 mb-1">
                           {post.isNotice ? (
-                            <span className="bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold">
-                              공지
-                            </span>
-                          ) : (page - 1) * 10 + idx + 1}
-                        </td>
-                        <td className="py-3.5 px-4 text-text-primary">
-                          {post.title}
-                          {post._count.comments > 0 && (
-                            <span className="text-xs text-text-muted font-semibold ml-1.5">
-                              [{post._count.comments}]
-                            </span>
+                            <span className="flex-shrink-0 bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold mt-0.5">공지</span>
+                          ) : (
+                            <span className="flex-shrink-0 text-[10px] text-text-muted mt-0.5 w-5 text-center">{(page - 1) * 10 + idx + 1}</span>
                           )}
-                        </td>
-                        <td className="py-3.5 px-4 text-center text-xs text-text-secondary">
-                          {post.author.name}
-                        </td>
-                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
-                          {formatDate(post.createdAt)}
-                        </td>
-                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
-                          {post.viewCount}
-                        </td>
-                        <td className="py-3.5 px-4 text-center text-xs text-text-muted">
-                          {post._count.comments}
-                        </td>
-                      </tr>
+                          <span className="text-sm text-text-primary leading-snug">
+                            {post.title}
+                            {post._count.comments > 0 && (
+                              <span className="text-xs text-text-muted font-semibold ml-1">[{post._count.comments}]</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-text-muted ml-7">
+                          <span>{post.author.name}</span>
+                          <span>·</span>
+                          <span>{formatDate(post.createdAt)}</span>
+                          <span>·</span>
+                          <span>조회 {post.viewCount}</span>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+
+                  {/* 데스크톱 테이블 */}
+                  <table className="hidden md:table w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-bg-light border-b border-border-light text-text-muted text-xs font-semibold">
+                        <th className="py-3 px-4 text-center w-14">NO.</th>
+                        <th className="py-3 px-4 text-left">제목</th>
+                        <th className="py-3 px-4 text-center w-20">작성자</th>
+                        <th className="py-3 px-4 text-center w-24">날짜</th>
+                        <th className="py-3 px-4 text-center w-12">조회</th>
+                        <th className="py-3 px-4 text-center w-12">댓글</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {posts.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-16 text-text-muted text-sm">
+                            게시글이 없습니다
+                          </td>
+                        </tr>
+                      ) : posts.map((post, idx) => (
+                        <tr
+                          key={post.id}
+                          onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
+                          className={`border-b border-border-light cursor-pointer hover:bg-bg-light transition-colors ${post.isNotice ? 'bg-bg-light' : 'bg-bg-white'}`}
+                        >
+                          <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                            {post.isNotice ? (
+                              <span className="bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold">
+                                공지
+                              </span>
+                            ) : (page - 1) * 10 + idx + 1}
+                          </td>
+                          <td className="py-3.5 px-4 text-text-primary">
+                            {post.title}
+                            {post._count.comments > 0 && (
+                              <span className="text-xs text-text-muted font-semibold ml-1.5">
+                                [{post._count.comments}]
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-center text-xs text-text-secondary">
+                            {post.author.name}
+                          </td>
+                          <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                            {formatDate(post.createdAt)}
+                          </td>
+                          <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                            {post.viewCount}
+                          </td>
+                          <td className="py-3.5 px-4 text-center text-xs text-text-muted">
+                            {post._count.comments}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </div>
 
