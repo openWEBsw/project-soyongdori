@@ -40,16 +40,18 @@ const Profile = () => {
   const [profile, setProfile] = useState({
     name: '김철수철수',
     part: 'electric',
-    email: 'kimcheolsuss@cbnu.ac.kr',
-    department: '소프트웨어학부',
-    studentId: '2022041000',
-    cohort: 6,
     position: 'member',
+    isCohortLead: true,
+    cohort: 6,
     createdAt: '2022.03.15',
+    email: 'kimcheolsusstestlog@cbnu.ac.kr',
+    studentId: '2022041000',
+    phone: '010-1234-5678',
+    department: '소프트웨어학부 소프트웨어전공',
   });
 
   // 폼 및 입력 필드 상태 (편집용)
-  const [editForm, setEditForm] = useState({ ...profile });
+  const [editForm, setEditForm] = useState({ ...profile, currentPassword: '', newPassword: '', confirmPassword: '' });
 
 
   // 탭 상태
@@ -120,25 +122,25 @@ const Profile = () => {
             {/* 일반 정보 영역 */}
             {/* TODO 예쁘긴 하지만 꼭 2번 정보를 보여줘야 하는지?, 적절히 분할할지 검토 필요*/}
             <div className="flex-1 flex flex-col md:flex-row gap-6 items-center md:items-start">
-              <div className="w-24 h-24 rounded-full bg-bg-deep border border-border-dark flex items-center justify-center flex-shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight p-2">
+              <div className="w-24 h-24 rounded-full bg-bg-deep border border-border-dark flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight p-2">
                 프로필 이미지 {/* TODO 추후 이미지 태그로 교체 */}
               </div>
               <div className="flex flex-col gap-2 text-center md:text-left">
                 <h2 className="text-2xl font-bold text-text-title">{profile.name}</h2>
                 <div className="text-sm font-semibold text-text-secondary">
-                  {partNames[profile.part]} · {profile.cohort}기 · {positionNames[profile.position]}
+                  {partNames[profile.part]} · {profile.cohort}기 {profile.isCohortLead ? '(기장)' : ''} · {positionNames[profile.position]}
                 </div>
-                <div className="text-xs text-text-muted font-medium text-center md:text-left leading-relaxed">
+                {/* <div className="text-xs text-text-muted font-medium text-center md:text-left leading-relaxed">
                   <span className="whitespace-nowrap">{profile.email}</span>
-                  {/* <span className="whitespace-nowrap"> · {profile.department}</span>
-                  <span className="whitespace-nowrap"> · {profile.studentId}</span> */}
-                </div>
+                  <span className="whitespace-nowrap"> · {profile.department}</span>
+                  <span className="whitespace-nowrap"> · {profile.studentId}</span>
+              </div> */}
                 <div className="text-xs text-text-muted font-medium">
                   가입일: {profile.createdAt}
                 </div>
                 <button
                   onClick={() => {
-                    setEditForm({ ...profile });
+                    setEditForm({ ...profile, currentPassword: '', newPassword: '', confirmPassword: '' });
                     setIsEditModalOpen(true);
                   }}
                   className="mt-2 self-center md:self-start border border-border-dark text-text-secondary px-5 py-1.5 rounded text-xs font-semibold hover:bg-bg-light transition-colors cursor-pointer"
@@ -150,21 +152,22 @@ const Profile = () => {
 
             {/* 우측 표 형식 정보 영역 */}
             <div className="w-full md:w-80 bg-bg-light rounded-lg p-5 border border-border-light flex flex-col gap-3 justify-center text-sm text-text-secondary font-medium">
-              <div className="flex justify-between border-b border-border-light/50 pb-2">
-                <span className="text-text-muted">이름</span>
-                <span className="text-text-primary font-bold">{profile.name}</span>
+              <div className="flex justify-between gap-4 border-b border-border-light/50 pb-2">
+                <span className="text-text-muted whitespace-nowrap shrink-0">학번</span>
+                <span className="text-text-primary text-right">{profile.studentId}</span>
               </div>
-              <div className="flex justify-between border-b border-border-light/50 pb-2">
-                <span className="text-text-muted">학번</span>
-                <span className="text-text-primary">{profile.studentId}</span>
+              <div className="flex justify-between gap-4 border-b border-border-light/50 pb-2">
+                <span className="text-text-muted whitespace-nowrap shrink-0">학과</span>
+                <span className="text-text-primary text-right break-keep">{profile.department}</span>
               </div>
-              <div className="flex justify-between border-b border-border-light/50 pb-2">
-                <span className="text-text-muted">기수</span>
-                <span className="text-text-primary">{profile.cohort}기</span>
+              {/* TODO 이메일 길 때 안 예쁨 */}
+              <div className="flex justify-between gap-4 border-b border-border-light/50 pb-2">
+                <span className="text-text-muted whitespace-nowrap shrink-0">이메일</span>
+                <span className="text-text-primary text-right break-all">{profile.email}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">권한</span>
-                <span className="text-text-primary">{positionNames[profile.position]}</span>
+              <div className="flex justify-between gap-4">
+                <span className="text-text-muted whitespace-nowrap shrink-0">전화번호</span>
+                <span className="text-text-primary text-right">{profile.phone}</span>
               </div>
             </div>
           </div>
@@ -273,9 +276,9 @@ const Profile = () => {
                           <span className="hidden md:inline">카테고리</span>
                           <span className="md:hidden">분류</span>
                         </th>
-                        <th className="py-3 px-2 text-left w-[44%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
-                        <th className="py-3 px-1 md:px-2 w-[22%] md:w-[16%] whitespace-nowrap">날짜</th>
-                        <th className="py-3 px-1.5 md:px-2 text-left w-[16%] md:w-[22%]">
+                        <th className="py-3 px-2 text-left w-[20%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
+                        <th className="py-3 px-1 md:px-2 w-[14%] md:w-[16%] whitespace-nowrap">날짜</th>
+                        <th className="py-3 px-1.5 md:px-2 text-left w-[12%] md:w-[22%]">
                           <span className="hidden md:inline">원본 </span>게시글<span className="hidden md:inline"> 제목</span>
                         </th>
                       </tr>
@@ -345,21 +348,14 @@ const Profile = () => {
             </div>
             <form onSubmit={handleEditSubmit} className="p-6 flex flex-col gap-4 text-sm">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-text-primary">이름</label>
+                <label className="text-xs font-semibold text-text-primary">현재 비밀번호</label>
                 <input
-                  type="text"
-                  disabled
-                  value={editForm.name}
-                  className="w-full border border-border-light bg-bg-light text-text-muted rounded px-3 py-2 cursor-not-allowed"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-text-primary">학번</label>
-                <input
-                  type="text"
-                  disabled
-                  value={editForm.studentId}
-                  className="w-full border border-border-light bg-bg-light text-text-muted rounded px-3 py-2 cursor-not-allowed"
+                  type="password"
+                  placeholder="현재 비밀번호를 입력해주세요"
+                  required
+                  value={editForm.currentPassword}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -373,6 +369,16 @@ const Profile = () => {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-primary">전화번호</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-text-primary">소속 학과</label>
                 <input
                   type="text"
@@ -382,10 +388,30 @@ const Profile = () => {
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-primary">새 비밀번호 (8자 이상)</label>
+                <input
+                  type="password"
+                  placeholder="비밀번호 변경 시에 입력해주세요"
+                  value={editForm.newPassword}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-primary">새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  placeholder="비밀번호 변경 시에 입력해주세요"
+                  value={editForm.confirmPassword}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                />
+              </div>
 
 
               <p className="text-xs text-text-muted leading-relaxed">
-                ※ 이름 및 학번 수정이 필요하신 경우, 관리자에게 문의해 주시기 바랍니다.
+                ※ 이름 및 학번 등 수정 가능 항목 외의 수정이 필요하신 경우, 관리자에게 문의해 주시기 바랍니다.
               </p>
 
               <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border-light">
