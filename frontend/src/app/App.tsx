@@ -12,6 +12,9 @@ import Introduce from '../features/introduce/introduce';
 import Profile from '../features/profile/profile';
 import ErrorPage from '../features/error/ErrorPage';
 import Calendar from '../features/calendar/Calendar';
+import AdminPage from '../features/admin/AdminPage';
+import MemberDetail from '../features/member/memberDetail';
+import { positionToLevel } from '../lib/permission';
 import MemberDetail from '../features/member/memberDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -23,6 +26,14 @@ function MemberBlockRout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, member } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (member?.status === 'active') return <Navigate to="/home" replace />;
+  return <>{children}</>;
+}
+
+// 관리자 라우트 가드 (level≥5)
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, member } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (positionToLevel(member?.position) < 5) return <Navigate to="/home" replace />;
   return <>{children}</>;
 }
 
@@ -49,6 +60,8 @@ function App() {
         <Route path="/member/:memberId" element={<MemberDetail />} />
 
         <Route path="/calendar" element={<Calendar />} />
+
+        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
         <Route path="*" element={<ErrorPage />} />
       </Routes>
