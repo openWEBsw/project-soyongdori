@@ -1,4 +1,4 @@
-export const boardNames: Record<string, string> = {
+export const boardNameTags: Record<string, string> = {
   notice: '공지',
   free: '자유',
   resource: '자료',

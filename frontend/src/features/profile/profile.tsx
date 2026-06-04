@@ -1,24 +1,14 @@
-// src/features/profile/profile.tsx
+// TODO 고화질 이미지 업로드시 깨짐 증상 개선
+// TODO 프로필사진 지금처럼 말고 버튼 같은거 달아서 모달 뜨게 바꾸기
+import defaultProfileImg from '../../assets/default_profile_image.jpg';
+
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
-import { boardNames, formatDate, partNames, positionNames } from '../../shared/utils/translations';
+import { boardNameTags, formatDate, partNames, positionNames } from '../../shared/utils/translations';
 import Footer from '../../shared/layout/Footer';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-
-import defaultProfileImg from '../../assets/default_profile_image.jpg';
-// TODO 고화질 이미지 깨짐 증상 개선
-
-
-// TODO 백엔드 컨트롤러에서 넘길 때, category는 추가로 붙여줘야 함
-const testComment = [
-  { id: 13411, category: 'free', content: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ', date: '2026.05.13', postTitle: '안녕하세요반갑습니다 이건테스트데이터입니다 길이가필요합니다아아아아', postId: 142 },
-  { id: 1151, category: 'free', content: 'ㅇㅇ', date: '2026.05.13', postTitle: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ', postId: 138 },
-  { id: 11111, category: 'notice', content: '안녕하세요반갑습니다이건테스트데이터입니다길이가필요 합니다아아아아안녕하세요반갑습니다이건테스트 데이터입니다길이가필요합니다아아아아', date: '2026.05.13', postTitle: '안녕하세요반갑습니다이 건테스트데이터입니다길이가필요 합니다아아아아', postId: 71 },
-  { id: 111111, category: 'resource', content: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ', date: '2026.05.13', postTitle: 'ㅇㅇ', postId: 125 },
-  { id: 1161, category: 'resource', content: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ', date: '2026.05.13', postTitle: 'ㅇㅇ', postId: 125 },
-];
 
 interface ProfileData {
   name: string;
@@ -32,6 +22,23 @@ interface ProfileData {
   phone: string;
   department: string;
   profileImageUrl: string;
+}
+interface Post {
+  id: string;
+  title: string;
+  viewCount: number;
+  createdAt: string;
+  board: { type: string };
+  _count: { comments: number };
+}
+
+// TODO ID는 코멘트 것으로? 포스트 것으로? 확인 필요
+interface Comment {
+  id: string;
+  category: string;
+  content: string;
+  createdAt: string;
+  post: { title: string; board: { type: string } };
 }
 
 const Profile = () => {
@@ -52,13 +59,13 @@ const Profile = () => {
   // 유저 프로필 정보 상태 (실 출력용)
   const [profile, setProfile] = useState<ProfileData>(null);
 
-  // TODO 페이지네이션 처리 필요, 추후 연결하며 모두 수정. 페이지 상태
+  // TODO 페이지네이션 처리 필요. 페이지 상태
   const [postPage, setPostPage] = useState<1 | 2>(1);
-  const [posts, setPosts] = useState(null);
-  const [totalPosts] = useState(12); // 백엔드에서 받아올 전체 게시글 개수 가정
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [totalPosts, setTotalPosts] = useState(0); // 백엔드에서 받아올 전체 게시글 개수 가정
 
-  const [comments, setComments] = useState(testComment);
-  const [totalComments] = useState(4); // 백엔드에서 받아올 전체 댓글 개수 가정
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [totalComments, setTotalComments] = useState(0); // 백엔드에서 받아올 전체 댓글 개수 가정
 
   useEffect(() => {
     setLoading(true);
@@ -70,8 +77,10 @@ const Profile = () => {
     ])
       .then(([resProfile, resPosts, resComments]) => {
         setProfile(resProfile.data.data);
-        setPosts(resPosts.data.data);
-        setComments(resComments.data.data);
+        setPosts(resPosts.data.data.posts);
+        setTotalPosts(resPosts.data.data.pagination.total);
+        setComments(resComments.data.data.comments);
+        setTotalComments(resComments.data.data.pagination.total);
       })
       .catch(err => {
         if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
@@ -341,17 +350,17 @@ const Profile = () => {
                         >
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.id}</td>
                           <td className="py-3 px-1 md:px-2 text-center whitespace-nowrap">
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${post.category === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
+                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${post.board.type === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
                               }`}>
-                              {boardNames[post.category]}
+                              {boardNameTags[post.board.type]}
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
                             <p className="truncate">{post.title}</p>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{post.date}</td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.views}</td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.comments}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{post.createdAt}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.viewCount}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post._count.comments}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -402,14 +411,14 @@ const Profile = () => {
                       {comments.map((comment) => (
                         <tr
                           key={comment.id}
-                          onClick={() => navigate(`/posts/${comment.postId}`)}
+                          onClick={() => navigate(`/posts/${comment.id}`)}
                           className="border-b border-border-light hover:bg-bg-light/50 transition-colors cursor-pointer"
                         >
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{comment.id}</td>
                           <td className="py-3 px-1 md:px-2 text-center whitespace-nowrap">
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${comment.category === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
+                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${comment.post.board.type === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
                               }`}>
-                              {boardNames[comment.category]}
+                              {boardNameTags[comment.post.board.type]}
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
@@ -417,9 +426,9 @@ const Profile = () => {
                               {comment.content}
                             </p>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{comment.date}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{comment.createdAt}</td>
                           <td className="py-3 px-1.5 md:px-2 text-xs font-medium">
-                            <p className="truncate">{comment.postTitle}</p>
+                            <p className="truncate">{comment.post.title}</p>
                           </td>
                         </tr>
                       ))}
