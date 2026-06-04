@@ -1,56 +1,51 @@
-// src/features/profile/profile.tsx
-import React, { useState, useEffect } from 'react';
+// TODO 고화질 이미지 업로드시 깨짐 증상 개선
+// TODO 프로필사진 지금처럼 말고 버튼 같은거 달아서 모달 뜨게 바꾸기
+import defaultProfileImg from '../../assets/default_profile_image.jpg';
+
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
-import { boardNames, partNames, positionNames } from '../../shared/utils/translations';
+import { boardNameTags, formatDate, partNames, positionNames } from '../../shared/utils/translations';
 import Footer from '../../shared/layout/Footer';
+import api from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 
-// TODO 임시 데이터 (추후 db 연결)
-const testPost1 = [
-  { id: 1112, category: 'free', title: '안녕하세요반갑습니다이건테스트데이 터입니다길이가필요합니다아아아아 안녕하세요반갑습니다이건테스트데이터입니다길이가필요합니다아아아아', date: '2026.05.13', views: 11, comments: 5 },
-  { id: 1118, category: 'free', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 2 },
-  { id: 1115, category: 'resource', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 8 },
-  { id: 1113, category: 'photo', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 112, comments: 8 },
-  { id: 11513, category: 'photo', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 112, comments: 8 },
-];
+interface ProfileData {
+  name: string;
+  part: string;
+  position: string;
+  isCohortLead: boolean;
+  cohort: number;
+  createdAt: string;
+  email: string;
+  studentId: string;
+  phone: string;
+  department: string;
+  profileImageUrl: string;
+}
+interface Post {
+  id: string;
+  title: string;
+  viewCount: number;
+  createdAt: string;
+  board: { type: string };
+  _count: { comments: number };
+}
 
-const testPost2 = [
-  { id: 1131, category: 'free', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 12 },
-  { id: 11111, category: 'free', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 45, comments: 3 },
-  { id: 111111, category: 'notice', title: 'ㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 110, comments: 2 },
-  { id: 1151, category: 'resource', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 2 },
-  { id: 1611, category: 'resource', title: 'ㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇ ㅇㅇ ㅇ', date: '2026.05.13', views: 11, comments: 2 },
-];
-
-// TODO 백엔드 컨트롤러에서 넘길 때, category는 추가로 붙여줘야 함
-const testComment = [
-  { id: 13411, category: 'free', content: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ', date: '2026.05.13', postTitle: '안녕하세요반갑습니다 이건테스트데이터입니다 길이가필요합니다아아아아', postId: 142 },
-  { id: 1151, category: 'free', content: 'ㅇㅇ', date: '2026.05.13', postTitle: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ', postId: 138 },
-  { id: 11111, category: 'notice', content: '안녕하세요반갑습니다이건테스트데이터입니다길이가필요 합니다아아아아안녕하세요반갑습니다이건테스트 데이터입니다길이가필요합니다아아아아', date: '2026.05.13', postTitle: '안녕하세요반갑습니다이 건테스트데이터입니다길이가필요 합니다아아아아', postId: 71 },
-  { id: 111111, category: 'resource', content: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ', date: '2026.05.13', postTitle: 'ㅇㅇ', postId: 125 },
-  { id: 1161, category: 'resource', content: 'ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ ㅇ', date: '2026.05.13', postTitle: 'ㅇㅇ', postId: 125 },
-];
+// TODO ID는 코멘트 것으로? 포스트 것으로? 확인 필요
+interface Comment {
+  id: string;
+  category: string;
+  content: string;
+  createdAt: string;
+  post: { title: string; board: { type: string } };
+}
 
 const Profile = () => {
   const navigate = useNavigate();
-
-  // 편집용 State와 실 출력용 State 분리
-
-  // 유저 프로필 정보 상태 (실 출력용)
-  const [profile, setProfile] = useState({
-    name: '김철수철수',
-    part: 'electric',
-    email: 'kimcheolsuss@cbnu.ac.kr',
-    department: '소프트웨어학부',
-    studentId: '2022041000',
-    cohort: 6,
-    position: 'member',
-    createdAt: '2022.03.15',
-  });
-
-  // 폼 및 입력 필드 상태 (편집용)
-  const [editForm, setEditForm] = useState({ ...profile });
-
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const { logout } = useAuth();
 
   // 탭 상태
   const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts');
@@ -59,40 +54,169 @@ const Profile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAccountDeleteModalOpen, setIsAccountDeleteModalOpen] = useState(false);
 
+  // 편집용 프로필 State와 실 출력용 프로필 State 분리
 
-  // TODO 페이지네이션 처리 필요, 추후 연결하며 모두 수정. 페이지 상태
+  // 유저 프로필 정보 상태 (실 출력용)
+  const [profile, setProfile] = useState<ProfileData>(null);
+
+  // TODO 페이지네이션 처리 필요. 페이지 상태
   const [postPage, setPostPage] = useState<1 | 2>(1);
-  const [posts, setPosts] = useState(testPost1);
-  const [totalPosts] = useState(12); // 백엔드에서 받아올 전체 게시글 개수 가정
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [totalPosts, setTotalPosts] = useState(0); // 백엔드에서 받아올 전체 게시글 개수 가정
 
-  const [comments] = useState(testComment);
-  const [totalComments] = useState(4); // 백엔드에서 받아올 전체 댓글 개수 가정
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [totalComments, setTotalComments] = useState(0); // 백엔드에서 받아올 전체 댓글 개수 가정
 
   useEffect(() => {
-    if (postPage === 1) {
-      setPosts(testPost1);
-    } else {
-      setPosts(testPost2);
-    }
-  }, [postPage]);
+    setLoading(true);
+    setError('');
+    Promise.all([
+      api.get('/members/me'),
+      api.get('/members/me/posts'),
+      api.get('/members/me/comments')
+    ])
+      .then(([resProfile, resPosts, resComments]) => {
+        setProfile(resProfile.data.data);
+        setPosts(resPosts.data.data.posts);
+        setTotalPosts(resPosts.data.data.pagination.total);
+        setComments(resComments.data.data.comments);
+        setTotalComments(resComments.data.data.pagination.total);
+      })
+      .catch(err => {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+          logout(); navigate('/login');
+        }
+        else {
+          console.log(err);
+          setError('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 불러오는 데 실패했습니다.');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      })
+  }, []);
 
 
-  // TODO 함수들 백엔드와 잇기
+  // 폼 및 입력 필드 상태 (편집용)
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', department: '', currentPassword: '', newPassword: '', confirmPassword: '' });
 
-  // 프로필 수정 제출 처리
-  const handleEditSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  // edit 핸들링 함수
+  const handleEditSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setProfile(editForm);
-    setIsEditModalOpen(false);
-    alert('프로필 정보가 수정되었습니다.');
+
+    if (!editForm.currentPassword) {
+      alert("현재 비밀번호를 입력해주세요!");
+      return;
+    }
+
+    if (editForm.newPassword && !editForm.confirmPassword) {
+      alert("새 비밀번호를 한번 더 입력해주세요!");
+      return;
+    }
+
+    if (editForm.newPassword && editForm.newPassword.length < 8) {
+      alert("비밀번호는 8자리 이상이어야 합니다.");
+      return;
+    }
+
+    if (editForm.newPassword !== editForm.confirmPassword) {
+      alert("새로운 비밀번호가 일치하지 않습니다!");
+      return;
+    }
+
+    try {
+      const res = await api.post('/members/me', editForm);
+      setProfile(res.data.data);
+      setIsEditModalOpen(false);
+
+      setEditForm(prev => ({
+        ...prev, currentPassword: '', newPassword: '', confirmPassword: ''
+      }));
+
+      alert('프로필 정보가 수정되었습니다.');
+    } catch (err) {
+      if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+        logout(); navigate('/login');
+      }
+      else if (err.response?.data?.error?.code === 'INCORRECT_PASSWORD') {
+        const errMsg = ('현재 비밀번호가 일치하지 않습니다.');
+        alert(errMsg);
+      }
+      else {
+        console.log(err);
+        const errMsg = ('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 수정하는 데 실패했습니다.');
+        alert(errMsg);
+      }
+    }
+
   };
+
+
+  // 파일 처리 input 숨김용 ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 파일 처리 함수
+  const uploadProfileImage = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일 크기가 10MB를 초과합니다.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profileImage', file);
+
+    try {
+      const res = await api.post('/members/me/profile-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const newImageUrl = res.data.data.profileImageUrl;
+      setProfile(prev => ({ ...prev, profileImageUrl: newImageUrl }));
+      alert('프로필 이미지가 성공적으로 변경되었습니다.');
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err.response?.data?.error?.message || '이미지 업로드 중 오류가 발생했습니다.';
+      alert(errMsg);
+    }
+  };
+
+
+
 
   // 로그아웃 처리
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃 하시겠습니까?')) {
       alert('로그아웃 되었습니다.');
+      logout();
+      navigate('/login');
     }
   };
+
+  if (loading) {
+    return (
+      <div>
+        로딩중
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        에러 {error}
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
@@ -118,27 +242,29 @@ const Profile = () => {
           {/* 프로필 챕터 */}
           <div className="bg-bg-white rounded-lg border border-border-light shadow-sm p-5 md:p-8 flex flex-col md:flex-row gap-8 items-stretch text-left">
             {/* 일반 정보 영역 */}
-            {/* TODO 예쁘긴 하지만 꼭 2번 정보를 보여줘야 하는지?, 적절히 분할할지 검토 필요*/}
+
             <div className="flex-1 flex flex-col md:flex-row gap-6 items-center md:items-start">
-              <div className="w-24 h-24 rounded-full bg-bg-deep border border-border-dark flex items-center justify-center flex-shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight p-2">
-                프로필 이미지 {/* TODO 추후 이미지 태그로 교체 */}
+              <div onClick={() => fileInputRef.current?.click()}
+                className="w-24 h-24 rounded-full bg-bg-deep border border-border-light flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight cursor-pointer">
+                <img src={profile.profileImageUrl || defaultProfileImg} className="w-full h-full rounded-full overflow-hidden object-cover"></img>
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={e => uploadProfileImage(e.target.files)}
+              />
               <div className="flex flex-col gap-2 text-center md:text-left">
                 <h2 className="text-2xl font-bold text-text-title">{profile.name}</h2>
                 <div className="text-sm font-semibold text-text-secondary">
-                  {partNames[profile.part]} · {profile.cohort}기 · {positionNames[profile.position]}
-                </div>
-                <div className="text-xs text-text-muted font-medium text-center md:text-left leading-relaxed">
-                  <span className="whitespace-nowrap">{profile.email}</span>
-                  {/* <span className="whitespace-nowrap"> · {profile.department}</span>
-                  <span className="whitespace-nowrap"> · {profile.studentId}</span> */}
+                  {partNames[profile.part]} · {profile.cohort}기 {profile.isCohortLead ? '(기장)' : ''} · {positionNames[profile.position]}
                 </div>
                 <div className="text-xs text-text-muted font-medium">
-                  가입일: {profile.createdAt}
+                  가입일 : {formatDate(profile.createdAt)}
                 </div>
                 <button
                   onClick={() => {
-                    setEditForm({ ...profile });
+                    setEditForm({ ...profile, currentPassword: '', newPassword: '', confirmPassword: '' });
                     setIsEditModalOpen(true);
                   }}
                   className="mt-2 self-center md:self-start border border-border-dark text-text-secondary px-5 py-1.5 rounded text-xs font-semibold hover:bg-bg-light transition-colors cursor-pointer"
@@ -150,21 +276,22 @@ const Profile = () => {
 
             {/* 우측 표 형식 정보 영역 */}
             <div className="w-full md:w-80 bg-bg-light rounded-lg p-5 border border-border-light flex flex-col gap-3 justify-center text-sm text-text-secondary font-medium">
-              <div className="flex justify-between border-b border-border-light/50 pb-2">
-                <span className="text-text-muted">이름</span>
-                <span className="text-text-primary font-bold">{profile.name}</span>
+              <div className="flex justify-between gap-4 border-b border-border-light/50 pb-2">
+                <span className="text-text-muted whitespace-nowrap shrink-0">학번</span>
+                <span className="text-text-primary text-right">{profile.studentId}</span>
               </div>
-              <div className="flex justify-between border-b border-border-light/50 pb-2">
-                <span className="text-text-muted">학번</span>
-                <span className="text-text-primary">{profile.studentId}</span>
+              <div className="flex justify-between gap-4 border-b border-border-light/50 pb-2">
+                <span className="text-text-muted whitespace-nowrap shrink-0">학과</span>
+                <span className="text-text-primary text-right break-keep">{profile.department}</span>
               </div>
-              <div className="flex justify-between border-b border-border-light/50 pb-2">
-                <span className="text-text-muted">기수</span>
-                <span className="text-text-primary">{profile.cohort}기</span>
+              {/* TODO 이메일 길 때 안 예쁨 */}
+              <div className="flex justify-between gap-4 border-b border-border-light/50 pb-2">
+                <span className="text-text-muted whitespace-nowrap shrink-0">이메일</span>
+                <span className="text-text-primary text-right break-all">{profile.email}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">권한</span>
-                <span className="text-text-primary">{positionNames[profile.position]}</span>
+              <div className="flex justify-between gap-4">
+                <span className="text-text-muted whitespace-nowrap shrink-0">전화번호</span>
+                <span className="text-text-primary text-right">{profile.phone}</span>
               </div>
             </div>
           </div>
@@ -223,17 +350,17 @@ const Profile = () => {
                         >
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.id}</td>
                           <td className="py-3 px-1 md:px-2 text-center whitespace-nowrap">
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${post.category === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
+                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${post.board.type === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
                               }`}>
-                              {boardNames[post.category]}
+                              {boardNameTags[post.board.type]}
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
                             <p className="truncate">{post.title}</p>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{post.date}</td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.views}</td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.comments}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{post.createdAt}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.viewCount}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post._count.comments}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -273,9 +400,9 @@ const Profile = () => {
                           <span className="hidden md:inline">카테고리</span>
                           <span className="md:hidden">분류</span>
                         </th>
-                        <th className="py-3 px-2 text-left w-[44%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
-                        <th className="py-3 px-1 md:px-2 w-[22%] md:w-[16%] whitespace-nowrap">날짜</th>
-                        <th className="py-3 px-1.5 md:px-2 text-left w-[16%] md:w-[22%]">
+                        <th className="py-3 px-2 text-left w-[20%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
+                        <th className="py-3 px-1 md:px-2 w-[14%] md:w-[16%] whitespace-nowrap">날짜</th>
+                        <th className="py-3 px-1.5 md:px-2 text-left w-[12%] md:w-[22%]">
                           <span className="hidden md:inline">원본 </span>게시글<span className="hidden md:inline"> 제목</span>
                         </th>
                       </tr>
@@ -284,14 +411,14 @@ const Profile = () => {
                       {comments.map((comment) => (
                         <tr
                           key={comment.id}
-                          onClick={() => navigate(`/posts/${comment.postId}`)}
+                          onClick={() => navigate(`/posts/${comment.id}`)}
                           className="border-b border-border-light hover:bg-bg-light/50 transition-colors cursor-pointer"
                         >
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{comment.id}</td>
                           <td className="py-3 px-1 md:px-2 text-center whitespace-nowrap">
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${comment.category === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
+                            <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${comment.post.board.type === 'notice' ? 'bg-red-50 text-text-danger' : 'bg-bg-light text-text-secondary'
                               }`}>
-                              {boardNames[comment.category]}
+                              {boardNameTags[comment.post.board.type]}
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
@@ -299,9 +426,9 @@ const Profile = () => {
                               {comment.content}
                             </p>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{comment.date}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{comment.createdAt}</td>
                           <td className="py-3 px-1.5 md:px-2 text-xs font-medium">
-                            <p className="truncate">{comment.postTitle}</p>
+                            <p className="truncate">{comment.post.title}</p>
                           </td>
                         </tr>
                       ))}
@@ -345,21 +472,14 @@ const Profile = () => {
             </div>
             <form onSubmit={handleEditSubmit} className="p-6 flex flex-col gap-4 text-sm">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-text-primary">이름</label>
+                <label className="text-xs font-semibold text-text-primary">현재 비밀번호</label>
                 <input
-                  type="text"
-                  disabled
-                  value={editForm.name}
-                  className="w-full border border-border-light bg-bg-light text-text-muted rounded px-3 py-2 cursor-not-allowed"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-text-primary">학번</label>
-                <input
-                  type="text"
-                  disabled
-                  value={editForm.studentId}
-                  className="w-full border border-border-light bg-bg-light text-text-muted rounded px-3 py-2 cursor-not-allowed"
+                  type="password"
+                  placeholder="현재 비밀번호를 입력해주세요"
+                  required
+                  value={editForm.currentPassword}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -373,6 +493,16 @@ const Profile = () => {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-primary">전화번호</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-text-primary">소속 학과</label>
                 <input
                   type="text"
@@ -382,10 +512,30 @@ const Profile = () => {
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-primary">새 비밀번호 (8자 이상)</label>
+                <input
+                  type="password"
+                  placeholder="비밀번호 변경 시에 입력해주세요"
+                  value={editForm.newPassword}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-primary">새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  placeholder="비밀번호 변경 시에 입력해주세요"
+                  value={editForm.confirmPassword}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                />
+              </div>
 
 
               <p className="text-xs text-text-muted leading-relaxed">
-                ※ 이름 및 학번 수정이 필요하신 경우, 관리자에게 문의해 주시기 바랍니다.
+                ※ 이름 및 학번 등 수정 가능 항목 외의 수정이 필요하신 경우, 관리자에게 문의해 주시기 바랍니다.
               </p>
 
               <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border-light">

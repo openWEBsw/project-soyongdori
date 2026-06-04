@@ -1,4 +1,4 @@
-export const boardNames: Record<string, string> = {
+export const boardNameTags: Record<string, string> = {
   notice: '공지',
   free: '자유',
   resource: '자료',
@@ -25,4 +25,9 @@ export const positionNames: Record<string, string> = {
   vice_leader: '부회장',
   leader: '회장',
   super_admin: '관리자',
+};
+
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  return dateString.substring(0, 10).replaceAll('-', '.');
 };

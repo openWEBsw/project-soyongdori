@@ -21,9 +21,10 @@ const getProfile = async (req: AuthRequest, res: Response, targetId: bigint, isM
                 cohort: true,
                 profileImageUrl: true,
                 createdAt: true,
+                isCohortLead: true,
                 email: isMe,
                 studentId: isMe,
-                phone: isMe, // TODO 페이지에 추가
+                phone: isMe,
                 department: isMe,
             },
         });
@@ -55,7 +56,6 @@ export const getMemberProfile = async (req: AuthRequest, res: Response) => {
     if (!memberId) {
         return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } });
     }
-    // TODO 단순 멤버인지 체크를 넘어서서, status도 검토해봐야 할 지 고민 필요. 지금 기준으론 괜찮을
 
     const targetId = req.params.memberId;
 
@@ -72,7 +72,6 @@ export const getMemberProfile = async (req: AuthRequest, res: Response) => {
 }
 
 
-// TODO 페이지에서 현재 비밀번호 검증 로직 추가
 export const updateProfile = async (req: AuthRequest, res: Response) => {
     const memberId = req.memberId;
 
@@ -90,7 +89,6 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: '현재 비밀번호를 입력해주세요' } });
     }
 
-    // TODO 상황 봐서 phone도 unique하게 스키마랑 코드 수정
     try {
 
         const member = await prisma.member.findUnique({
@@ -194,7 +192,7 @@ const getPostsByMemberId = async (req: AuthRequest, res: Response, targetId: big
                     id: true,
                     title: true,
                     viewCount: true,
-                    updatedAt: true,
+                    createdAt: true,
                     board: { select: { type: true } },
                     _count: { select: { comments: true } },
                 },
@@ -231,9 +229,8 @@ const getCommentsByMemberId = async (req: AuthRequest, res: Response, targetId: 
                 select: {
                     id: true,
                     content: true,
-                    updatedAt: true,
+                    createdAt: true,
                     post: { select: { title: true, board: { select: { type: true } } } },
-                    // TODO 삭제된 게시글에 대한 노출 처리는 고민 필요
                 },
                 orderBy: [{ createdAt: 'desc' }],
                 skip,
