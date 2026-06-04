@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import positionToLevel from '../utils/permission.js';
+import { positionToLevel } from '../utils/permission.js';
 
 export interface AuthRequest extends Request {
   memberId?: bigint;

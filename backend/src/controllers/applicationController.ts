@@ -64,14 +64,14 @@ export const getMyApplication = async (req: AuthRequest, res: Response) => {
 
 
 // Admin
-export const listApplications(req: AuthRequest, res: Response) => {
+export const listApplications = (req: AuthRequest, res: Response) => {
 
 }
 
-export const approveApplication(req: AuthRequest, res: Response) => {
+export const approveApplication = (req: AuthRequest, res: Response) => {
 
 }
 
-export const rejectApplication(req: AuthRequest, res: Response) => {
+export const rejectApplication = (req: AuthRequest, res: Response) => {
 
 }
