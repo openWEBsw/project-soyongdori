@@ -45,7 +45,7 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light transition-colors"
+              className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light transition-colors cursor-pointer"
             >
               이전 페이지
             </button>

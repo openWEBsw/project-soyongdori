@@ -15,6 +15,7 @@ const getProfile = async (req: AuthRequest, res: Response, targetId: bigint, isM
         const member = await prisma.member.findUnique({
             where: { id: targetId },
             select: {
+                status: true,
                 name: true,
                 part: true,
                 position: true,
@@ -230,7 +231,7 @@ const getCommentsByMemberId = async (req: AuthRequest, res: Response, targetId: 
                     id: true,
                     content: true,
                     createdAt: true,
-                    post: { select: { title: true, board: { select: { type: true } } } },
+                    post: { select: { id: true, title: true, board: { select: { type: true } } } },
                 },
                 orderBy: [{ createdAt: 'desc' }],
                 skip,
