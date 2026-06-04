@@ -15,6 +15,7 @@ const getProfile = async (req: AuthRequest, res: Response, targetId: bigint, isM
         const member = await prisma.member.findUnique({
             where: { id: targetId },
             select: {
+                status: true,
                 name: true,
                 part: true,
                 position: true,

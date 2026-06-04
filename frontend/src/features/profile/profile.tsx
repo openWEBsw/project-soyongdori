@@ -2,6 +2,7 @@
 // TODO 프로필사진 지금처럼 말고 버튼 같은거 달아서 모달 뜨게 바꾸기
 
 // TODO 시간되면 할 것 
+// 0. 로딩, 에러 조금 더 예쁘게
 // 1. 페이지 갔다가 뒤로 돌아오면 보던 탭 보이게 
 // 2. 코멘트 눌러 이동시 그자리로
 
@@ -16,6 +17,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ProfileData {
+  status: string;
   name: string;
   part: string;
   position: string;
@@ -64,6 +66,7 @@ const Profile = () => {
 
   // 유저 프로필 정보 상태 (실 출력용)
   const [profile, setProfile] = useState<ProfileData>({
+    status: '',
     name: '',
     part: '',
     position: '',
@@ -323,7 +326,7 @@ const Profile = () => {
         {/* 본문 */}
         <div className="flex flex-1 flex-col gap-1 items-center">
           <div className="mx-auto max-w-6xl pt-60">
-            <h2 className="text-2xl font-bold text-text-muted px-12">에러가 발생했습니다. <br /> {error} </h2>
+            <h2 className="text-2xl font-bold text-text-muted px-12">에러가 발생했습니다. <br /> {initError} </h2>
           </div>
         </div>
 
@@ -372,7 +375,10 @@ const Profile = () => {
               <div className="flex flex-col gap-2 text-center md:text-left">
                 <h2 className="text-2xl font-bold text-text-title">{profile.name}</h2>
                 <div className="text-sm font-semibold text-text-secondary">
-                  {partNames[profile.part]} · {profile.cohort}기 {profile.isCohortLead ? '(기장)' : ''} · {positionNames[profile.position]}
+                  {profile.status === 'active' ?
+                    (<>{partNames[profile.part]} · {profile.cohort}기 {profile.isCohortLead ? '(기장)' : ''} · {positionNames[profile.position]}</>)
+                    : '준회원'
+                  }
                 </div>
                 <div className="text-xs text-text-muted font-medium">
                   가입일 : {formatDate(profile.createdAt)}
