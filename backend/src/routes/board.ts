@@ -29,7 +29,12 @@ router.post('/:boardType/posts', authenticate, (req, res, next) => {
 router.get('/posts/:postId', authenticate, getPost);
 
 // 게시글 수정
-router.put('/posts/:postId', authenticate, updatePost);
+router.put('/posts/:postId', authenticate, (req, res, next) => {
+  upload.array('files', 5)(req as any, res, (err: any) => {
+    if (err) return res.status(400).json({ error: { code: 'UPLOAD_ERROR', message: err.message } });
+    next();
+  });
+}, updatePost);
 
 // 게시글 삭제
 router.delete('/posts/:postId', authenticate, deletePost);

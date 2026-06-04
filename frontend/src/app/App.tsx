@@ -38,10 +38,11 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 
+        <Route path="/boards" element={<Navigate to="/boards/free" replace />} />
         <Route path="/boards/:boardType" element={<ProtectedRoute><BoardListPage /></ProtectedRoute>} />
-        <Route path="/boards/:boardType/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
-        <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
-        <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
+        <Route path="/posts/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
+        <Route path="/posts/:postId/edit" element={<ProtectedRoute><BoardEditPage /></ProtectedRoute>} />
+        <Route path="/posts/:postId" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
 
         <Route path="/apply" element={<MemberBlockRout><ApplicationPage /></MemberBlockRout>} />
         <Route path="/profile" element={<Profile />} />

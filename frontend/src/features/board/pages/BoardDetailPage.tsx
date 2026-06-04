@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeftIcon,
   PaperClipIcon,
@@ -55,7 +55,9 @@ function formatDateTime(iso: string) {
 
 function BoardDetailPage() {
   const navigate = useNavigate();
-  const { boardType = 'free', postId } = useParams();
+  const { postId } = useParams();
+  const location = useLocation();
+  const boardType: string = (location.state as any)?.boardType ?? 'free';
   const { member, logout } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
@@ -150,14 +152,12 @@ function BoardDetailPage() {
     <div className="min-h-screen bg-bg-light text-text-primary">
       <Header />
 
-      <div className="max-w-4xl mx-auto px-6 md:px-12 py-8">
-        {/* 브레드크럼 */}
-        <div className="text-xs text-text-muted mb-6">
+      <div className="max-w-4xl mx-auto px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
+        <div className="text-xs text-text-muted mb-4 md:mb-6">
           홈 / 게시판 / {boardName} / 게시글
         </div>
 
-        {/* 게시글 본문 */}
-        <div className="bg-bg-white border border-border-light rounded-lg px-8 py-8 mb-4 shadow-sm">
+        <div className="bg-bg-white border border-border-light rounded-lg px-4 py-5 sm:px-8 sm:py-8 mb-4 shadow-sm">
           <div className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-3">
             {boardType} board
           </div>
@@ -165,7 +165,6 @@ function BoardDetailPage() {
             {post.title}
           </h1>
 
-          {/* 작성자 정보 */}
           <div className="flex justify-between items-center pb-4 border-b border-border-light mb-6">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-bg-deep flex items-center justify-center flex-shrink-0 text-sm font-bold text-text-primary">
@@ -184,7 +183,6 @@ function BoardDetailPage() {
             </div>
           </div>
 
-          {/* 본문 내용 */}
           <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
             {post.content}
           </div>
@@ -224,7 +222,7 @@ function BoardDetailPage() {
           {isAuthor && (
             <div className="flex justify-end gap-2 pt-5 border-t border-border-light mt-5">
               <button
-                onClick={() => navigate(`/boards/${boardType}/${postId}/edit`)}
+                onClick={() => navigate(`/posts/${postId}/edit`, { state: { boardType } })}
                 className="flex items-center gap-1.5 border border-border-dark px-4 py-1.5 rounded text-xs text-text-secondary bg-bg-white hover:bg-bg-light transition-colors cursor-pointer"
               >
                 <PencilSquareIcon className="w-3.5 h-3.5" />
@@ -242,12 +240,11 @@ function BoardDetailPage() {
         </div>
 
         {/* 댓글 섹션 */}
-        <div className="bg-bg-white border border-border-light rounded-lg px-6 py-6 shadow-sm">
+        <div className="bg-bg-white border border-border-light rounded-lg px-4 py-5 sm:px-6 sm:py-6 shadow-sm">
           <div className="text-sm font-semibold text-text-primary mb-4">
             댓글 <span className="text-text-muted font-normal">{post._count.comments}</span>
           </div>
 
-          {/* 댓글 입력 */}
           <div className="border border-border-light rounded-lg p-4 flex gap-3 mb-5 bg-bg-light">
             <textarea
               value={commentText}
@@ -266,7 +263,6 @@ function BoardDetailPage() {
             </button>
           </div>
 
-          {/* 댓글 목록 */}
           {post.comments.length === 0 ? (
             <div className="text-center py-6 text-text-muted text-sm">
               첫 번째 댓글을 남겨보세요
@@ -336,7 +332,6 @@ function BoardDetailPage() {
           ))}
         </div>
 
-        {/* 목록으로 */}
         <div className="mt-4">
           <button
             onClick={() => navigate(`/boards/${boardType}`)}
