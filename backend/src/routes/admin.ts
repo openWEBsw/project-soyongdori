@@ -21,7 +21,7 @@ router.get('/members', requireLevel(5), listMembers);
 router.patch('/member/:id/position', requireLevel(6), updatePosition);
 router.patch('/member/:id/status', requireLevel(6), updateStatus);
 
-router.get('applications', requireLevel(6), listApplications);
+router.get('/applications', requireLevel(6), listApplications);
 router.post('/applications/:id/approve', requireLevel(6), approveApplication);
 router.post('/applications/:id/reject', requireLevel(6), rejectApplication);
 

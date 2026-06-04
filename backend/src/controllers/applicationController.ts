@@ -64,14 +64,102 @@ export const getMyApplication = async (req: AuthRequest, res: Response) => {
 
 
 // Admin
-export const listApplications = (req: AuthRequest, res: Response) => {
 
-}
+// 입부 신청 목록 (level≥6). query: ?status=pending (기본값)
+export const listApplications = async (req: AuthRequest, res: Response) => {
+  const status = (req.query.status as string | undefined) ?? 'pending';
+  const valid = ['pending', 'approved', 'rejected'];
 
-export const approveApplication = (req: AuthRequest, res: Response) => {
+  const where: any = {};
+  if (valid.includes(status)) where.status = status;
 
-}
+  try {
+    const apps = await prisma.joinApplication.findMany({
+      where,
+      include: {
+        member: { select: { id: true, name: true, email: true, status: true } },
+        reviewer: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.json({ data: apps });
+  } catch (error) {
+    console.error('listApplications error:', error);
+    return res.status(500).json({ error: { code: 'SERVER_ERROR', message: '서버 오류' } });
+  }
+};
 
-export const rejectApplication = (req: AuthRequest, res: Response) => {
+// 입부 신청 승인 — application.status='approved', member.status='active'+approvedAt
+export const approveApplication = async (req: AuthRequest, res: Response) => {
+  const appId = BigInt(req.params.id);
 
-}
+  try {
+    const app = await prisma.joinApplication.findUnique({
+      where: { id: appId },
+      include: { member: { select: { id: true } } },
+    });
+    if (!app) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: '신청을 찾을 수 없습니다.' } });
+    }
+    if (app.status !== 'pending') {
+      return res.status(409).json({ error: { code: 'ALREADY_REVIEWED', message: '이미 처리된 신청입니다.' } });
+    }
+
+    const now = new Date();
+    const [updatedApp] = await prisma.$transaction([
+      prisma.joinApplication.update({
+        where: { id: appId },
+        data: { status: 'approved', reviewedBy: req.memberId!, reviewedAt: now },
+      }),
+      ...(app.member
+        ? [prisma.member.update({
+            where: { id: app.member.id },
+            data: { status: 'active', approvedAt: now, position: 'member' },
+          })]
+        : []),
+    ]);
+
+    return res.json({ data: updatedApp });
+  } catch (error) {
+    console.error('approveApplication error:', error);
+    return res.status(500).json({ error: { code: 'SERVER_ERROR', message: '서버 오류' } });
+  }
+};
+
+// 입부 신청 거절 — application.status='rejected', member.status='inactive'
+export const rejectApplication = async (req: AuthRequest, res: Response) => {
+  const appId = BigInt(req.params.id);
+  const { reviewNote } = req.body ?? {};
+
+  try {
+    const app = await prisma.joinApplication.findUnique({
+      where: { id: appId },
+      include: { member: { select: { id: true } } },
+    });
+    if (!app) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: '신청을 찾을 수 없습니다.' } });
+    }
+    if (app.status !== 'pending') {
+      return res.status(409).json({ error: { code: 'ALREADY_REVIEWED', message: '이미 처리된 신청입니다.' } });
+    }
+
+    const now = new Date();
+    const [updatedApp] = await prisma.$transaction([
+      prisma.joinApplication.update({
+        where: { id: appId },
+        data: { status: 'rejected', reviewedBy: req.memberId!, reviewedAt: now, reviewNote: reviewNote ?? null },
+      }),
+      ...(app.member
+        ? [prisma.member.update({
+            where: { id: app.member.id },
+            data: { status: 'inactive' },
+          })]
+        : []),
+    ]);
+
+    return res.json({ data: updatedApp });
+  } catch (error) {
+    console.error('rejectApplication error:', error);
+    return res.status(500).json({ error: { code: 'SERVER_ERROR', message: '서버 오류' } });
+  }
+};
