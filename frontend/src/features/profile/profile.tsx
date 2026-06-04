@@ -1,5 +1,4 @@
 // TODO 고화질 이미지 업로드시 깨짐 증상 개선
-// TODO 프로필사진 지금처럼 말고 버튼 같은거 달아서 모달 뜨게 바꾸기
 
 // TODO 시간되면 할 것 
 // 0. 로딩, 에러 조금 더 예쁘게
@@ -52,7 +51,9 @@ const Profile = () => {
   const [initLoading, setinitLoading] = useState<boolean>(true);
   const [initError, setInitError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
+  const [postError, setPostError] = useState<string>('');
+  const [commentError, setCommentError] = useState<string>('');
+
   const { logout } = useAuth();
 
   // 탭 상태
@@ -89,6 +90,7 @@ const Profile = () => {
 
   const handlePostPageChange = async (page: number) => {
     setLoading(true);
+    setPostError('');
     setPostPage(page);
     await api.get('/members/me/posts', { params: { page } })
       .then((res) => {
@@ -102,7 +104,7 @@ const Profile = () => {
         }
         else {
           console.log(err);
-          setError('코드 : ' + err.response?.data?.error?.code + ' 내 게시글 정보를 불러오는 데 실패했습니다.');
+          setPostError('코드 : (' + err.response?.data?.error?.code + ') 내 게시글 정보를 불러오는 데 실패했습니다.');
         }
       })
       .finally(() => setLoading(false));
@@ -117,6 +119,7 @@ const Profile = () => {
 
   const handleCommentPageChange = async (page: number) => {
     setLoading(true);
+    setCommentError('');
     setCommentPage(page);
     await api.get('/members/me/comments', { params: { page } })
       .then((res) => {
@@ -130,15 +133,17 @@ const Profile = () => {
         }
         else {
           console.log(err);
-          setError('코드 : ' + err.response?.data?.error?.code + ' 내 댓글 정보를 불러오는 데 실패했습니다.');
+          setCommentError('코드 : (' + err.response?.data?.error?.code + ') 내 댓글 정보를 불러오는 데 실패했습니다.');
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   }
 
   useEffect(() => {
     setinitLoading(true);
-    setError('');
+    setInitError('');
     Promise.all([
       api.get('/members/me'),
       api.get('/members/me/posts'),
@@ -263,9 +268,6 @@ const Profile = () => {
     }
   };
 
-
-
-
   // 로그아웃 처리
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃 하시겠습니까?')) {
@@ -361,10 +363,15 @@ const Profile = () => {
           <div className="bg-bg-white rounded-lg border border-border-light shadow-sm p-5 md:p-8 flex flex-col md:flex-row gap-8 items-stretch text-left">
             {/* 일반 정보 영역 */}
 
-            <div className="flex-1 flex flex-col md:flex-row gap-6 items-center md:items-start">
+            <div className="flex-1 flex flex-col md:flex-row gap-6 items-center md:items-start my-auto">
               <div onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-24 rounded-full bg-bg-deep border border-border-light flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight cursor-pointer">
-                <img src={profile.profileImageUrl || defaultProfileImg} className="w-full h-full rounded-full overflow-hidden object-cover"></img>
+                className="group relative w-24 h-24 rounded-full bg-bg-dark border border-border-light flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight cursor-pointer">
+                <img src={profile.profileImageUrl || defaultProfileImg} className="w-full h-full rounded-full overflow-hidden object-cover group-hover:opacity-70 transition-opacity"></img>
+                <div className="absolute w-7 h-7 right-0 bottom-0 flex items-center justify-center  shrink-0 bg-bg-dark text-white rounded-full opacity-85 group-hover:opacity-95 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                  </svg>
+                </div>
               </div>
               <input
                 ref={fileInputRef}
@@ -469,6 +476,12 @@ const Profile = () => {
                             로딩중...
                           </td>
                         </tr>
+                      ) : postError ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-38 text-text-muted text-sm">
+                            오류가 발생했습니다 <br /> {postError}
+                          </td>
+                        </tr>
                       ) : totalPosts === 0 ? (
                         <tr>
                           <td colSpan={6} className="text-center py-25 text-text-muted text-sm">
@@ -526,13 +539,13 @@ const Profile = () => {
                     <thead>
                       <tr className="bg-bg-light text-text-primary font-bold border-b border-border-light text-center text-xs">
                         <th className="py-3 px-1 md:px-2 hidden md:w-[8%] md:table-cell whitespace-nowrap">NO.</th>
-                        <th className="py-3 px-1 md:px-2 w-[15%] md:w-[10%] whitespace-nowrap">
+                        <th className="py-3 px-1 md:px-2 w-[20%] md:w-[10%] whitespace-nowrap">
                           <span className="hidden md:inline">카테고리</span>
                           <span className="md:hidden">분류</span>
                         </th>
-                        <th className="py-3 px-2 text-left w-[45%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
-                        <th className="py-3 px-1 md:px-2 w-[20%] md:w-[16%] whitespace-nowrap">날짜</th>
-                        <th className="py-3 px-1.5 md:px-2 text-left w-[25%] md:w-[22%]">
+                        <th className="py-3 px-2 text-left w-[40%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
+                        <th className="py-3 px-1 md:px-2 w-[25%] md:w-[16%] whitespace-nowrap">날짜</th>
+                        <th className="py-3 px-1.5 md:px-2 text-left w-[20%] md:w-[22%]">
                           <span className="hidden md:inline">원본 </span>게시글<span className="hidden md:inline"> 제목</span>
                         </th>
                       </tr>
@@ -542,6 +555,12 @@ const Profile = () => {
                         <tr>
                           <td colSpan={5} className="text-center py-38 text-text-muted text-sm">
                             로딩중...
+                          </td>
+                        </tr>
+                      ) : commentError ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-38 text-text-muted text-sm">
+                            오류가 발생했습니다 <br /> {commentError}
                           </td>
                         </tr>
                       ) : totalComments === 0 ? (
@@ -564,9 +583,11 @@ const Profile = () => {
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
-                            <p className="flex items-center-safe h-[32px] md:h-[40px] text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
-                              {comment.content}
-                            </p>
+                            <div className="h-[32px] md:h-[40px] flex items-center-safe">
+                              <p className="text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
+                                {comment.content}
+                              </p>
+                            </div>
                           </td>
                           <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{formatDate(comment.createdAt)}</td>
                           <td className="py-3 px-1.5 md:px-2 text-xs font-medium">
@@ -690,7 +711,7 @@ const Profile = () => {
               </div>
 
 
-              <p className="text-xs text-text-muted leading-relaxed">
+              <p className="text-xs text-text-muted leading-relaxed break-keep">
                 ※ 이름 및 학번 등 수정 가능 항목 외의 수정이 필요하신 경우, 관리자에게 문의해 주시기 바랍니다.
               </p>
 
