@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import positionToLevel from '../utils/permission.js';
 
 export interface AuthRequest extends Request {
   memberId?: bigint;
@@ -53,4 +54,18 @@ export const optionalAuth = (req: AuthRequest, _res: Response, next: NextFunctio
     // 토큰 깨짐 -> 비회원 취급해서 통과
     next();
   }
+};
+
+export const requireLevel = (min: number) => {
+  (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (positionToLevel(req.memberPosition) < min) {
+      return res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: '권한이 없습니다.'
+        }
+      });
+    }
+    next();
+  };
 };
