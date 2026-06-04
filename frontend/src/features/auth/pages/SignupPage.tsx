@@ -93,7 +93,7 @@ function SignupPage() {
           </div>
 
           <span className="text-xs text-text-muted tracking-wider mt-12">
-            SYDR · CHUNGBUK NATIONAL UNIV
+            SYDR · CHUNGBUK NATIONAL UNIVERSITY
           </span>
         </div>
 

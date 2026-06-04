@@ -108,7 +108,7 @@ const Home: React.FC = () => {
                     <div className="max-w-lg flex flex-col gap-6">
                         <div>
                             <span className="text-text-muted text-xs tracking-widest font-medium uppercase">
-                                Chungbuk National Univ
+                                Chungbuk National University
                             </span>
                             <h1 className="text-5xl font-black tracking-tighter mt-2 text-text-title">
                                 소용돌이
@@ -166,7 +166,7 @@ const Home: React.FC = () => {
 
             {/* 공지사항 섹션 */}
             <section className="bg-bg-light border-b border-border-light">
-                <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 text-left">
+                <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 text-left">
                     <div className="flex items-end justify-between mb-8">
                         <div className="flex flex-col gap-1">
                             <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
@@ -214,7 +214,7 @@ const Home: React.FC = () => {
 
             {/* 다가오는 일정 섹션 */}
             <section className="bg-bg-white border-b border-border-light">
-                <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 text-left">
+                <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 text-left">
                     <div className="flex items-end justify-between mb-8">
                         <div className="flex flex-col gap-1">
                             <span className="text-text-muted text-xs tracking-wider uppercase font-medium">

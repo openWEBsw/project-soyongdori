@@ -169,7 +169,7 @@ const AdminPage: React.FC = () => {
                                 key={t}
                                 type="button"
                                 onClick={() => setTab(t)}
-                                className={`pb-3 text-sm font-bold border-b-2 transition-colors ${tab === t
+                                className={`pb-3 text-sm font-bold border-b-2 cursor-pointer transition-colors ${tab === t
                                     ? 'text-text-primary border-text-primary'
                                     : 'text-text-muted border-transparent hover:text-text-primary'
                                     }`}
@@ -201,7 +201,7 @@ const AdminPage: React.FC = () => {
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
+                                    className="px-3 py-2 cursor-pointer border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
                                 >
                                     <option value="">전체 상태</option>
                                     <option value="pending">대기</option>
@@ -211,7 +211,7 @@ const AdminPage: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={fetchMembers}
-                                    className="px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded-md text-sm font-bold hover:opacity-90"
+                                    className="px-4 py-2 cursor-pointer bg-btn-primary-bg text-btn-primary-text rounded-md text-sm font-bold hover:opacity-90"
                                 >
                                     검색
                                 </button>
