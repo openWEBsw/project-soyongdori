@@ -9,6 +9,7 @@ import applicationRouter from './routes/application.js';
 import calendarRouter from './routes/calendar.js'
 import adminRouter from './routes/admin.js';
 import cookieParser from 'cookie-parser';
+import memberRouter from './routes/member.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,6 +38,7 @@ app.use(express.static(publicPath));
 app.use('/api/auth', authRouter);
 app.use('/api/boards', boardRouter);
 app.use('/api/applications', applicationRouter);
+app.use('/api/members', memberRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/admin', adminRouter);
 
