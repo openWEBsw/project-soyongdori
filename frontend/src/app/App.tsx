@@ -13,7 +13,6 @@ import Profile from '../features/profile/profile';
 import ErrorPage from '../features/error/ErrorPage';
 import Calendar from '../features/calendar/Calendar';
 import AdminPage from '../features/admin/AdminPage';
-import MemberDetail from '../features/member/memberDetail';
 import { positionToLevel } from '../lib/permission';
 import MemberDetail from '../features/member/memberDetail';
 
