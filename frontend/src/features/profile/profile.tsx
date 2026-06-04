@@ -57,7 +57,7 @@ const Profile = () => {
   // 편집용 프로필 State와 실 출력용 프로필 State 분리
 
   // 유저 프로필 정보 상태 (실 출력용)
-  const [profile, setProfile] = useState<ProfileData>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
 
   // TODO 페이지네이션 처리 필요. 페이지 상태
   const [postPage, setPostPage] = useState<1 | 2>(1);
@@ -134,7 +134,7 @@ const Profile = () => {
       }));
 
       alert('프로필 정보가 수정되었습니다.');
-    } catch (err) {
+    } catch (err: any) {
       if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
         logout(); navigate('/login');
       }
