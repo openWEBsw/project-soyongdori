@@ -37,7 +37,6 @@ interface Post {
   _count: { comments: number };
 }
 
-// TODO ID는 코멘트 것으로? 포스트 것으로? 확인 필요
 interface Comment {
   id: string;
   category: string;
@@ -50,7 +49,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [initLoading, setinitLoading] = useState<boolean>(true);
   const [initError, setInitError] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const { logout } = useAuth();
 
@@ -78,7 +77,7 @@ const Profile = () => {
     profileImageUrl: '',
   });
 
-  // 페이지 상태
+  // 포스트 관련
   const [posts, setPosts] = useState<Post[]>([]);
   const [totalPosts, setTotalPosts] = useState(0)
 
@@ -106,6 +105,7 @@ const Profile = () => {
       .finally(() => setLoading(false));
   }
 
+  // 댓글 관련
   const [comments, setComments] = useState<Comment[]>([]);
   const [totalCommentPages, setTotalCommentPages] = useState(1);
 
@@ -457,7 +457,19 @@ const Profile = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {posts.map((post) => (
+                      {loading ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-25 text-text-muted text-sm">
+                            로딩중...
+                          </td>
+                        </tr>
+                      ) : totalPosts === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-25 text-text-muted text-sm">
+                            내 게시글이 없습니다
+                          </td>
+                        </tr>
+                      ) : posts.map((post) => (
                         <tr
                           key={post.id}
                           onClick={() => navigate(`/posts/${post.id}`)}
@@ -508,19 +520,31 @@ const Profile = () => {
                     <thead>
                       <tr className="bg-bg-light text-text-primary font-bold border-b border-border-light text-center text-xs">
                         <th className="py-3 px-1 md:px-2 hidden md:w-[8%] md:table-cell whitespace-nowrap">NO.</th>
-                        <th className="py-3 px-1 md:px-2 w-[10%] md:w-[10%] whitespace-nowrap">
+                        <th className="py-3 px-1 md:px-2 w-[15%] md:w-[10%] whitespace-nowrap">
                           <span className="hidden md:inline">카테고리</span>
                           <span className="md:hidden">분류</span>
                         </th>
-                        <th className="py-3 px-2 text-left w-[20%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
-                        <th className="py-3 px-1 md:px-2 w-[14%] md:w-[16%] whitespace-nowrap">날짜</th>
-                        <th className="py-3 px-1.5 md:px-2 text-left w-[12%] md:w-[22%]">
+                        <th className="py-3 px-2 text-left w-[45%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
+                        <th className="py-3 px-1 md:px-2 w-[20%] md:w-[16%] whitespace-nowrap">날짜</th>
+                        <th className="py-3 px-1.5 md:px-2 text-left w-[25%] md:w-[22%]">
                           <span className="hidden md:inline">원본 </span>게시글<span className="hidden md:inline"> 제목</span>
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {comments.map((comment) => (
+                      {loading ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-38 text-text-muted text-sm">
+                            로딩중...
+                          </td>
+                        </tr>
+                      ) : totalComments === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-38 text-text-muted text-sm">
+                            내 댓글이 없습니다
+                          </td>
+                        </tr>
+                      ) : comments.map((comment) => (
                         <tr
                           key={comment.id}
                           onClick={() => navigate(`/posts/${comment.post.id}`)}
