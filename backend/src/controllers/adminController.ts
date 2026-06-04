@@ -7,7 +7,7 @@ import { positionToLevel } from '../utils/permission.js';
 const VALID_POSITIONS = [
     'member',
     'planning_member',
-    'planning_leader',
+    'planning_lead',
     'treasurer',
     'vice_leader',
     'leader',
@@ -65,7 +65,7 @@ export const listMembers = async (req: AuthRequest, res: Response) => {
 
 // 2. 회원 직책 변경 (level≥6, 단 자기보다 낮은 레벨 대상만 + 자기 레벨 이하 직책만 부여)
 export const updatePosition = async (req: AuthRequest, res: Response) => {
-    const targetId = BigInt(req.params.id);
+    const targetId = BigInt(req.params.id as string);
     const { position } = req.body ?? {};
     const myLevel = positionToLevel(req.memberPosition);
 
@@ -118,7 +118,7 @@ export const updatePosition = async (req: AuthRequest, res: Response) => {
 
 // 3. 회원 활성/비활성 상태 변경 
 export const updateStatus = async (req: AuthRequest, res: Response) => {
-    const targetId = BigInt(req.params.id);
+    const targetId = BigInt(req.params.id as string);
     const { status } = req.body ?? {};
     const myLevel = positionToLevel(req.memberPosition);
 

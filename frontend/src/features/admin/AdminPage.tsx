@@ -37,7 +37,7 @@ interface ApplicationRow {
     reviewer: { id: string; name: string } | null;
 }
 
-const POSITION_OPTIONS = ['member', 'planning_member', 'planning_leader', 'treasurer', 'vice_leader', 'leader'];
+const POSITION_OPTIONS = ['member', 'planning_member', 'planning_lead', 'treasurer', 'vice_leader', 'leader'];
 
 type Tab = 'members' | 'applications';
 

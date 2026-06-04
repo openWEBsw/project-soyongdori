@@ -20,7 +20,7 @@ const positionToLevel = (position?: string): number => {
         case 'leader': return 7;
         case 'vice_leader': return 6;
         case 'treasurer': return 6;
-        case 'planning_leader': return 5;
+        case 'planning_lead': return 5;
         case 'planning_member': return 4;
         case 'member': return 1;
         default: return 0;

@@ -91,7 +91,7 @@ export const listApplications = async (req: AuthRequest, res: Response) => {
 
 // 입부 신청 승인 — application.status='approved', member.status='active'+approvedAt
 export const approveApplication = async (req: AuthRequest, res: Response) => {
-  const appId = BigInt(req.params.id);
+  const appId = BigInt(req.params.id as string);
 
   try {
     const app = await prisma.joinApplication.findUnique({
@@ -128,7 +128,7 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
 
 // 입부 신청 거절 — application.status='rejected', member.status='inactive'
 export const rejectApplication = async (req: AuthRequest, res: Response) => {
-  const appId = BigInt(req.params.id);
+  const appId = BigInt(req.params.id as string);
   const { reviewNote } = req.body ?? {};
 
   try {
