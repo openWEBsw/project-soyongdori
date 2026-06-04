@@ -61,3 +61,17 @@ export const getMyApplication = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ error: { code: 'SERVER_ERROR', message: '서버 오류' } });
   }
 };
+
+
+// Admin
+export const listApplications(req: AuthRequest, res: Response) => {
+
+}
+
+export const approveApplication(req: AuthRequest, res: Response) => {
+
+}
+
+export const rejectApplication(req: AuthRequest, res: Response) => {
+
+}

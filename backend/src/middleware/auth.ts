@@ -56,7 +56,7 @@ export const optionalAuth = (req: AuthRequest, _res: Response, next: NextFunctio
   }
 };
 
-export const requireLevel = (min: number) => {
+export const requireLevel = (min: number) =>
   (req: AuthRequest, res: Response, next: NextFunction) => {
     if (positionToLevel(req.memberPosition) < min) {
       return res.status(403).json({
@@ -68,4 +68,3 @@ export const requireLevel = (min: number) => {
     }
     next();
   };
-};
