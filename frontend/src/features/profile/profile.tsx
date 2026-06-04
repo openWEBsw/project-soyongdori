@@ -1,5 +1,9 @@
 // TODO 고화질 이미지 업로드시 깨짐 증상 개선
 // TODO 프로필사진 지금처럼 말고 버튼 같은거 달아서 모달 뜨게 바꾸기
+
+// TODO 시간되면 할 것 
+// 1. 페이지 갔다가 뒤로 돌아오면 보던 탭 보이게 
+// 2. 코멘트 눌러 이동시 그자리로
 import defaultProfileImg from '../../assets/default_profile_image.jpg';
 
 import React, { useRef, useState, useEffect } from 'react';
@@ -38,7 +42,7 @@ interface Comment {
   category: string;
   content: string;
   createdAt: string;
-  post: { title: string; board: { type: string } };
+  post: { id: string, title: string; board: { type: string } };
 }
 
 const Profile = () => {
@@ -71,13 +75,60 @@ const Profile = () => {
     profileImageUrl: '',
   });
 
-  // TODO 페이지네이션 처리 필요. 페이지 상태
-  const [postPage, setPostPage] = useState<1 | 2>(1);
+  // 페이지 상태
   const [posts, setPosts] = useState<Post[]>([]);
-  const [totalPosts, setTotalPosts] = useState(0); // 백엔드에서 받아올 전체 게시글 개수 가정
+  const [totalPosts, setTotalPosts] = useState(0)
+
+  const [postPage, setPostPage] = useState(1);
+  const [totalPostPages, setTotalPostPages] = useState(1);
+
+  const handlePostPageChange = async (page: number) => {
+    setLoading(true);
+    setPostPage(page);
+    await api.get('/members/me/posts', { params: { page } })
+      .then((res) => {
+        setPosts(res.data.data.posts);
+        setTotalPosts(res.data.data.pagination.total);
+        setTotalPostPages(res.data.data.pagination.totalPages);
+      })
+      .catch(err => {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+          logout(); navigate('/login');
+        }
+        else {
+          console.log(err);
+          setError('코드 : ' + err.response?.data?.error?.code + ' 내 게시글 정보를 불러오는 데 실패했습니다.');
+        }
+      })
+      .finally(() => setLoading(false));
+  }
 
   const [comments, setComments] = useState<Comment[]>([]);
-  const [totalComments, setTotalComments] = useState(0); // 백엔드에서 받아올 전체 댓글 개수 가정
+  const [totalCommentPages, setTotalCommentPages] = useState(1);
+
+  const [commentPage, setCommentPage] = useState(1);
+  const [totalComments, setTotalComments] = useState(0);
+
+  const handleCommentPageChange = async (page: number) => {
+    setLoading(true);
+    setCommentPage(page);
+    await api.get('/members/me/comments', { params: { page } })
+      .then((res) => {
+        setComments(res.data.data.comments);
+        setTotalComments(res.data.data.pagination.total);
+        setTotalCommentPages(res.data.data.pagination.totalPages);
+      })
+      .catch(err => {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+          logout(); navigate('/login');
+        }
+        else {
+          console.log(err);
+          setError('코드 : ' + err.response?.data?.error?.code + ' 내 댓글 정보를 불러오는 데 실패했습니다.');
+        }
+      })
+      .finally(() => setLoading(false));
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -89,10 +140,14 @@ const Profile = () => {
     ])
       .then(([resProfile, resPosts, resComments]) => {
         setProfile(resProfile.data.data);
+
         setPosts(resPosts.data.data.posts);
         setTotalPosts(resPosts.data.data.pagination.total);
+        setTotalPostPages(resPosts.data.data.pagination.totalPages);
+
         setComments(resComments.data.data.comments);
         setTotalComments(resComments.data.data.pagination.total);
+        setTotalCommentPages(resComments.data.data.pagination.totalPages);
       })
       .catch(err => {
         if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
@@ -370,7 +425,7 @@ const Profile = () => {
                           <td className="py-3 px-2 font-medium">
                             <p className="truncate">{post.title}</p>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{post.createdAt}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{formatDate(post.createdAt)}</td>
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.viewCount}</td>
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post._count.comments}</td>
                         </tr>
@@ -378,23 +433,20 @@ const Profile = () => {
                     </tbody>
                   </table>
                 </div>
-
-                {/* TODO 페이지네이션 */}
+                {/* 페이지네이션 */}
                 <div className="flex justify-center items-center gap-2 mt-6">
-                  <button
-                    onClick={() => setPostPage(1)}
-                    className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${postPage === 1 ? 'bg-bg-deep text-text-primary' : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
-                      }`}
-                  >
-                    1
-                  </button>
-                  <button
-                    onClick={() => setPostPage(2)}
-                    className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${postPage === 2 ? 'bg-bg-deep text-text-primary' : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
-                      }`}
-                  >
-                    2
-                  </button>
+                  {Array.from({ length: totalPostPages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => handlePostPageChange(p)}
+                      className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === postPage
+                        ? 'border border-border-light bg-bg-deep text-text-primary'
+                        : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -423,7 +475,7 @@ const Profile = () => {
                       {comments.map((comment) => (
                         <tr
                           key={comment.id}
-                          onClick={() => navigate(`/posts/${comment.id}`)}
+                          onClick={() => navigate(`/posts/${comment.post.id}`)}
                           className="border-b border-border-light hover:bg-bg-light/50 transition-colors cursor-pointer"
                         >
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{comment.id}</td>
@@ -438,7 +490,7 @@ const Profile = () => {
                               {comment.content}
                             </p>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{comment.createdAt}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{formatDate(comment.createdAt)}</td>
                           <td className="py-3 px-1.5 md:px-2 text-xs font-medium">
                             <p className="truncate">{comment.post.title}</p>
                           </td>
@@ -447,7 +499,21 @@ const Profile = () => {
                     </tbody>
                   </table>
                 </div>
-                {/* TODO 페이지네이션 */}
+                {/* 페이지네이션 */}
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  {Array.from({ length: totalCommentPages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => handleCommentPageChange(p)}
+                      className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === commentPage
+                        ? 'border border-border-light bg-bg-deep text-text-primary'
+                        : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>

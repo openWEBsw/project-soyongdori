@@ -230,7 +230,7 @@ const getCommentsByMemberId = async (req: AuthRequest, res: Response, targetId: 
                     id: true,
                     content: true,
                     createdAt: true,
-                    post: { select: { title: true, board: { select: { type: true } } } },
+                    post: { select: { id: true, title: true, board: { select: { type: true } } } },
                 },
                 orderBy: [{ createdAt: 'desc' }],
                 skip,
