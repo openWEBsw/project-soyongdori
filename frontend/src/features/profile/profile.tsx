@@ -4,6 +4,7 @@
 // TODO 시간되면 할 것 
 // 1. 페이지 갔다가 뒤로 돌아오면 보던 탭 보이게 
 // 2. 코멘트 눌러 이동시 그자리로
+
 import defaultProfileImg from '../../assets/default_profile_image.jpg';
 
 import React, { useRef, useState, useEffect } from 'react';
@@ -47,6 +48,8 @@ interface Comment {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [initLoading, setinitLoading] = useState<boolean>(true);
+  const [initError, setInitError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const { logout } = useAuth();
@@ -131,7 +134,7 @@ const Profile = () => {
   }
 
   useEffect(() => {
-    setLoading(true);
+    setinitLoading(true);
     setError('');
     Promise.all([
       api.get('/members/me'),
@@ -155,11 +158,11 @@ const Profile = () => {
         }
         else {
           console.log(err);
-          setError('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 불러오는 데 실패했습니다.');
+          setInitError('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 불러오는 데 실패했습니다.');
         }
       })
       .finally(() => {
-        setLoading(false);
+        setinitLoading(false);
       })
   }, []);
 
@@ -269,25 +272,70 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  if (initLoading) {
     return (
-      <div>
-        로딩중
+      <div className="min-h-screen bg-bg-light text-text-primary font-sans flex flex-col">
+        {/* 헤더 */}
+        <Header />
+
+        {/* 홈/마이페이지 타이틀 */}
+        <div className="bg-bg-light text-left">
+          <div className="mx-auto max-w-6xl px-4 md:px-12 pt-8">
+            <div className="flex flex-col gap-1 items-start">
+              <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
+                홈 / 마이페이지
+              </span>
+              <h2 className="text-3xl font-bold text-text-title">마이페이지</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* 본문 */}
+        <div className="flex flex-1 flex-col gap-1 items-center">
+          <div className="mx-auto max-w-6xl pt-60">
+            <h2 className="text-2xl font-bold text-text-muted px-12">로딩중...</h2>
+          </div>
+
+        </div>
+
+        <Footer />
       </div>
     )
   }
 
-  if (error) {
+  if (initError) {
     return (
-      <div>
-        에러 {error}
+      <div className="min-h-screen bg-bg-light text-text-primary font-sans flex flex-col">
+        <Header />
+
+        {/* 홈/마이페이지 타이틀 */}
+        <div className="bg-bg-light text-left">
+          <div className="mx-auto max-w-6xl px-4 md:px-12 pt-8">
+            <div className="flex flex-col gap-1 items-start">
+              <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
+                홈 / 마이페이지
+              </span>
+              <h2 className="text-3xl font-bold text-text-title">마이페이지</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* 본문 */}
+        <div className="flex flex-1 flex-col gap-1 items-center">
+          <div className="mx-auto max-w-6xl pt-60">
+            <h2 className="text-2xl font-bold text-text-muted px-12">에러가 발생했습니다. <br /> {error} </h2>
+          </div>
+        </div>
+
+        <Footer />
+
       </div>
+
     )
   }
 
   return (
     <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
-      {/* 헤더 */}
       <Header />
 
       {/* 홈/마이페이지 타이틀 */}
@@ -486,7 +534,7 @@ const Profile = () => {
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
-                            <p className="h-[32px] md:h-[40px] text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
+                            <p className="flex items-center-safe h-[32px] md:h-[40px] text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
                               {comment.content}
                             </p>
                           </td>
