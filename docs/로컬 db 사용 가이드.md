@@ -16,3 +16,10 @@
 |docker-compose -f docker-compose.local.yml stop| 잠시 정지|
 |docker-compose -f docker-compose.local.yml start| 재시작|
 
+## 3. Prisma Migrate
+
+1. cd backend
+2. npx prisma migrate deploy
+3. npx prisma generate
+4. tsx ./prisma/seed.ts
+순으로 실행하면 됨.
