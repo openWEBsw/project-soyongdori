@@ -12,12 +12,9 @@ import Introduce from '../features/introduce/introduce';
 import Profile from '../features/profile/profile';
 import ErrorPage from '../features/error/ErrorPage';
 import Calendar from '../features/calendar/Calendar';
-<<<<<<< HEAD
 import AdminPage from '../features/admin/AdminPage';
-import { positionToLevel } from '../lib/permission';
-=======
 import MemberDetail from '../features/member/memberDetail';
->>>>>>> refs/remotes/origin/dev
+import { positionToLevel } from '../lib/permission';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
