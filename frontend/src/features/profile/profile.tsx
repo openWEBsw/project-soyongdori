@@ -1,7 +1,7 @@
 // TODO 고화질 이미지 업로드시 깨짐 증상 개선
 
 // TODO 시간되면 할 것 
-// 0. edit 모달창에서 입력에 따라 즉각 반응
+// 0. 이메일, 전화번호 조건 검증 늘리고, signup과 맞추기
 // 1. 로딩, 에러 조금 더 예쁘게
 // 2. 페이지 갔다가 뒤로 돌아오면 보던 탭 보이게 
 // 3. 코멘트 눌러 이동시 그자리로
@@ -105,7 +105,8 @@ const Profile = () => {
         }
         else {
           console.log(err);
-          setPostError('코드 : (' + err.response?.data?.error?.code + ') 내 게시글 정보를 불러오는 데 실패했습니다.');
+          const errMsg = err.response?.data?.error?.message || '내 게시글 정보를 불러오는 데 실패했습니다.';
+          setPostError(errMsg);
         }
       })
       .finally(() => setLoading(false));
@@ -134,7 +135,8 @@ const Profile = () => {
         }
         else {
           console.log(err);
-          setCommentError('코드 : (' + err.response?.data?.error?.code + ') 내 댓글 정보를 불러오는 데 실패했습니다.');
+          const errMsg = err.response?.data?.error?.message || '내 댓글 정보를 불러오는 데 실패했습니다.';
+          setCommentError(errMsg);
         }
       })
       .finally(() => {
@@ -167,7 +169,8 @@ const Profile = () => {
         }
         else {
           console.log(err);
-          setInitError('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 불러오는 데 실패했습니다.');
+          const errMsg = err.response?.data?.error?.message || '프로필 정보를 불러오는 데 실패했습니다.';
+          setInitError(errMsg);
         }
       })
       .finally(() => {
@@ -223,7 +226,7 @@ const Profile = () => {
       }
       else {
         console.log(err);
-        const errMsg = ('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 수정하는 데 실패했습니다.');
+        const errMsg = err.response?.data?.error?.message || '프로필 정보를 수정하는 데 실패했습니다.';
         alert(errMsg);
       }
     }
@@ -697,8 +700,12 @@ const Profile = () => {
                   placeholder="비밀번호 변경 시에 입력해주세요"
                   value={editForm.newPassword}
                   onChange={(e) => setEditForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                  className={`w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary ${editForm.newPassword && editForm.newPassword.length < 8 ? 'focus:ring-red-300 border-red-300' : ''
+                    }`}
                 />
+                {editForm.newPassword && editForm.newPassword.length < 8 && (
+                  <p className="text-xs text-text-danger">비밀번호는 8글자 이상이어야 합니다.</p>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-text-primary">새 비밀번호 확인</label>
@@ -707,8 +714,12 @@ const Profile = () => {
                   placeholder="비밀번호 변경 시에 입력해주세요"
                   value={editForm.confirmPassword}
                   onChange={(e) => setEditForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                  className={`w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary ${editForm.confirmPassword && editForm.newPassword !== editForm.confirmPassword ? 'focus:ring-red-300 border-red-300' : ''
+                    }`}
                 />
+                {editForm.confirmPassword && editForm.newPassword !== editForm.confirmPassword && (
+                  <p className="text-xs text-text-danger">비밀번호가 일치하지 않습니다.</p>
+                )}
               </div>
 
 
