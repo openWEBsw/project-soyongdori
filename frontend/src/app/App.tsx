@@ -14,7 +14,6 @@ import ErrorPage from '../features/error/ErrorPage';
 import Calendar from '../features/calendar/Calendar';
 import AdminPage from '../features/admin/AdminPage';
 import { positionToLevel } from '../lib/permission';
-import MemberDetail from '../features/member/memberDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
