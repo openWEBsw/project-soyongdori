@@ -14,7 +14,6 @@ import ErrorPage from '../features/error/ErrorPage';
 import Calendar from '../features/calendar/Calendar';
 import AdminPage from '../features/admin/AdminPage';
 import { positionToLevel } from '../lib/permission';
-import MemberDetail from '../features/member/memberDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -56,7 +55,6 @@ function App() {
 
         <Route path="/apply" element={<MemberBlockRout><ApplicationPage /></MemberBlockRout>} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/member/:memberId" element={<MemberDetail />} />
 
         <Route path="/calendar" element={<Calendar />} />
 
