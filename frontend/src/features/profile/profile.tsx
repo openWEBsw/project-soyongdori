@@ -100,7 +100,7 @@ const Profile = () => {
         setTotalPostPages(res.data.data.pagination.totalPages);
       })
       .catch(err => {
-        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
           logout(); navigate('/login');
         }
         else {
@@ -129,7 +129,7 @@ const Profile = () => {
         setTotalCommentPages(res.data.data.pagination.totalPages);
       })
       .catch(err => {
-        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
           logout(); navigate('/login');
         }
         else {
@@ -162,7 +162,7 @@ const Profile = () => {
         setTotalCommentPages(resComments.data.data.pagination.totalPages);
       })
       .catch(err => {
-        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
           logout(); navigate('/login');
         }
         else {
@@ -214,7 +214,7 @@ const Profile = () => {
 
       alert('프로필 정보가 수정되었습니다.');
     } catch (err: any) {
-      if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+      if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
         logout(); navigate('/login');
       }
       else if (err.response?.data?.error?.code === 'INCORRECT_PASSWORD') {

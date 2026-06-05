@@ -56,7 +56,6 @@ function App() {
 
         <Route path="/apply" element={<MemberBlockRout><ApplicationPage /></MemberBlockRout>} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/member/:memberId" element={<MemberDetail />} />
 
         <Route path="/calendar" element={<Calendar />} />
 
