@@ -13,12 +13,18 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 const toBigInt = (val: string): bigint => BigInt(val);
 const toStr = (val: string | string[]): string => Array.isArray(val) ? val[0] : val;
 
+const PUBLIC_BOARDS = ['free', 'notice'];
+
 export const getPosts = async (req: AuthRequest, res: Response) => {
   const boardType = toStr(req.params.boardType);
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const skip = (page - 1) * limit;
   const year = new Date().getFullYear();
+
+  if (!PUBLIC_BOARDS.includes(boardType) && !req.memberId) {
+    return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } });
+  }
 
   try {
     const board = await prisma.board.findFirst({
@@ -33,8 +39,9 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
       prisma.post.findMany({
         where: { boardId: board.id, deletedAt: null, isHidden: false },
         include: {
-          author: { select: { name: true, part: true, cohort: true } },
+          author: { select: { name: true, part: true, cohort: true, profileImageUrl: true } },
           _count: { select: { comments: true } },
+          attachments: { where: { mimeType: { startsWith: 'image/' } }, take: 1, select: { filePath: true } },
         },
         orderBy: [{ isNotice: 'desc' }, { createdAt: 'desc' }],
         skip,
@@ -64,10 +71,11 @@ export const getPost = async (req: AuthRequest, res: Response) => {
     const post = await prisma.post.findFirst({
       where: { id: toBigInt(postId), deletedAt: null, isHidden: false },
       include: {
-        author: { select: { name: true, part: true, cohort: true } },
+        board: { select: { type: true } },
+        author: { select: { name: true, part: true, cohort: true, profileImageUrl: true } },
         comments: {
           where: { deletedAt: null },
-          include: { author: { select: { name: true, part: true, cohort: true } } },
+          include: { author: { select: { name: true, part: true, cohort: true, profileImageUrl: true } } },
           orderBy: { createdAt: 'asc' },
         },
         attachments: true,
@@ -79,12 +87,25 @@ export const getPost = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: { code: 'POST_NOT_FOUND', message: '게시글을 찾을 수 없습니다' } });
     }
 
+    if (!PUBLIC_BOARDS.includes(post.board.type) && !req.memberId) {
+      return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } });
+    }
+
+    return res.json({ data: post });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: { code: 'SERVER_ERROR', message: '서버 오류' } });
+  }
+};
+
+export const incrementView = async (req: AuthRequest, res: Response) => {
+  const postId = toStr(req.params.postId);
+  try {
     await prisma.post.update({
       where: { id: toBigInt(postId) },
       data: { viewCount: { increment: 1 } },
     });
-
-    return res.json({ data: post });
+    return res.json({ data: { ok: true } });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: { code: 'SERVER_ERROR', message: '서버 오류' } });
