@@ -77,7 +77,7 @@ export const listApplications = async (req: AuthRequest, res: Response) => {
     const apps = await prisma.joinApplication.findMany({
       where,
       include: {
-        member: { select: { id: true, name: true, email: true, status: true } },
+        member: { select: { id: true, name: true, email: true, status: true, position: true } },
         reviewer: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -90,8 +90,12 @@ export const listApplications = async (req: AuthRequest, res: Response) => {
 };
 
 // 입부 신청 승인 — application.status='approved', member.status='active'+approvedAt
+const VALID_POSITIONS = ['member', 'planning_member', 'planning_lead', 'treasurer', 'vice_leader', 'leader'];
+
 export const approveApplication = async (req: AuthRequest, res: Response) => {
   const appId = BigInt(req.params.id as string);
+  const requestedPosition = req.body?.position;
+  const position = VALID_POSITIONS.includes(requestedPosition) ? requestedPosition : 'member';
 
   try {
     const app = await prisma.joinApplication.findUnique({
@@ -114,7 +118,7 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
       ...(app.member
         ? [prisma.member.update({
             where: { id: app.member.id },
-            data: { status: 'active', approvedAt: now, position: 'member' },
+            data: { status: 'active', approvedAt: now, position },
           })]
         : []),
     ]);
