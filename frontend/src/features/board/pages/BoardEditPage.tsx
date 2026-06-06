@@ -4,6 +4,7 @@ import { ArrowRightIcon, PaperClipIcon, XMarkIcon } from '@heroicons/react/24/ou
 import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
+import Footer from '../../../shared/layout/Footer';
 
 const boardNames: Record<string, string> = {
   notice: '공지 게시판',
@@ -119,10 +120,10 @@ function BoardEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-light text-text-primary">
+    <div className="min-h-screen bg-bg-light text-text-primary flex flex-col">
       <Header />
 
-      <div className="max-w-4xl mx-auto px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
+      <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
         <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardName} / 글 수정</div>
         <h1 className="text-xl md:text-2xl font-bold text-text-title mb-4 md:mb-6">글 수정</h1>
 
@@ -257,6 +258,7 @@ function BoardEditPage() {
           </button>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
