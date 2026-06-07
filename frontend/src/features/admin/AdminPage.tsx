@@ -4,8 +4,8 @@ import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../lib/api';
 import { positionToLevel, POSITION_LABELS, STATUS_LABELS } from '../../lib/permission';
+import { partNames } from '../../shared/utils/translations';
 
-// 회원 / 신청 데이터 타입
 interface MemberRow {
     id: string;
     email: string;
@@ -33,7 +33,7 @@ interface ApplicationRow {
     reviewNote: string | null;
     reviewedAt: string | null;
     createdAt: string;
-    member: { id: string; name: string; email: string; status: string } | null;
+    member: { id: string; name: string; email: string; status: string; position: string | null } | null;
     reviewer: { id: string; name: string } | null;
 }
 
@@ -57,6 +57,9 @@ const AdminPage: React.FC = () => {
     const [apps, setApps] = useState<ApplicationRow[]>([]);
     const [appStatusFilter, setAppStatusFilter] = useState<string>('pending');
     const [appsLoading, setAppsLoading] = useState(false);
+
+    // 승인 시 선택할 직책 (appId -> position)
+    const [approvePositions, setApprovePositions] = useState<Record<string, string>>({});
 
     const [error, setError] = useState<string | null>(null);
 
@@ -109,7 +112,8 @@ const AdminPage: React.FC = () => {
 
     const toggleStatus = async (id: string, currentStatus: string) => {
         const next = currentStatus === 'active' ? 'inactive' : 'active';
-        if (!window.confirm(`${currentStatus} → ${next} 로 변경하시겠습니까?`)) return;
+        const nextLabel = next === 'active' ? '활성' : '비활성';
+        if (!window.confirm(`${STATUS_LABELS[currentStatus]} → ${nextLabel} 로 변경하시겠습니까?`)) return;
         try {
             await api.patch(`/admin/member/${id}/status`, { status: next });
             fetchMembers();
@@ -120,9 +124,11 @@ const AdminPage: React.FC = () => {
 
     // ---- 신청 액션 ----
     const approve = async (id: string) => {
-        if (!window.confirm('이 신청을 승인하시겠습니까?')) return;
+        const position = approvePositions[id] || 'member';
+        const posLabel = POSITION_LABELS[position] ?? position;
+        if (!window.confirm(`이 신청을 승인하시겠습니까?\n부여 직책: ${posLabel}`)) return;
         try {
-            await api.post(`/admin/applications/${id}/approve`);
+            await api.post(`/admin/applications/${id}/approve`, { position });
             fetchApps();
         } catch (e: any) {
             alert(e.response?.data?.error?.message || '승인 실패');
@@ -140,23 +146,27 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // ---- 권한 헬퍼: 대상이 나보다 낮은 레벨일 때만 편집 가능 ----
+    // 승인된 신청에서 직접 권한 변경
+    const changeAppMemberPosition = async (memberId: string, newPosition: string) => {
+        try {
+            await api.patch(`/admin/member/${memberId}/position`, { position: newPosition });
+            fetchApps();
+        } catch (e: any) {
+            alert(e.response?.data?.error?.message || '직책 변경 실패');
+        }
+    };
+
     const canEditMember = (m: MemberRow) => positionToLevel(m.position) < myLevel;
 
     return (
         <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
             <Header />
 
-            {/* 페이지 헤더 */}
             <section className="bg-bg-light border-b border-border-light">
                 <div className="max-w-6xl mx-auto px-6 md:px-12 py-12 text-center flex flex-col items-center">
-                    <span className="text-text-muted text-xs tracking-widest font-medium uppercase mb-3">
-                        Admin
-                    </span>
+                    <span className="text-text-muted text-xs tracking-widest font-medium uppercase mb-3">Admin</span>
                     <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-text-title">관리자 페이지</h1>
-                    <p className="text-sm text-text-secondary mt-3 max-w-md">
-                        회원 정보와 입부 신청을 관리합니다.
-                    </p>
+                    <p className="text-sm text-text-secondary mt-3 max-w-md">회원 정보와 입부 신청을 관리합니다.</p>
                 </div>
             </section>
 
@@ -180,15 +190,12 @@ const AdminPage: React.FC = () => {
                     </div>
 
                     {error && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">
-                            {error}
-                        </div>
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">{error}</div>
                     )}
 
                     {/* === 회원 관리 탭 === */}
                     {tab === 'members' && (
                         <div>
-                            {/* 검색 / 필터 */}
                             <div className="flex flex-wrap gap-3 mb-4">
                                 <input
                                     type="text"
@@ -217,7 +224,6 @@ const AdminPage: React.FC = () => {
                                 </button>
                             </div>
 
-                            {/* 회원 테이블 */}
                             <div className="border border-border-light rounded-lg overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-bg-light">
@@ -256,7 +262,7 @@ const AdminPage: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 text-text-secondary">{m.cohort ?? '-'}</td>
-                                                    <td className="px-4 py-3 text-text-secondary">{m.part ?? '-'}</td>
+                                                    <td className="px-4 py-3 text-text-secondary">{m.part ? (partNames[m.part] ?? m.part) : '-'}</td>
                                                     <td className="px-4 py-3 text-right">
                                                         {editable ? (
                                                             <div className="inline-flex items-center gap-2">
@@ -264,7 +270,7 @@ const AdminPage: React.FC = () => {
                                                                     value={m.position ?? ''}
                                                                     onChange={(e) => changePosition(m.id, e.target.value)}
                                                                     disabled={myLevel < 6}
-                                                                    className="text-xs border border-border-light rounded px-2 py-1 disabled:bg-bg-light"
+                                                                    className="text-xs border border-border-light rounded px-2 py-1 disabled:bg-bg-light cursor-pointer"
                                                                 >
                                                                     <option value="">직책 선택</option>
                                                                     {POSITION_OPTIONS.filter((p) => positionToLevel(p) < myLevel).map((p) => (
@@ -274,7 +280,7 @@ const AdminPage: React.FC = () => {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => toggleStatus(m.id, m.status)}
-                                                                    className="text-xs px-2 py-1 border border-border-dark rounded hover:bg-bg-light"
+                                                                    className="text-xs px-2 py-1 border border-border-dark rounded hover:bg-bg-light cursor-pointer"
                                                                 >
                                                                     {m.status === 'active' ? '비활성화' : '활성화'}
                                                                 </button>
@@ -295,14 +301,13 @@ const AdminPage: React.FC = () => {
                     {/* === 입부 신청 탭 === */}
                     {tab === 'applications' && (
                         <div>
-                            {/* 상태 필터 */}
                             <div className="flex gap-2 mb-4">
                                 {['pending', 'approved', 'rejected'].map((s) => (
                                     <button
                                         key={s}
                                         type="button"
                                         onClick={() => setAppStatusFilter(s)}
-                                        className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${appStatusFilter === s
+                                        className={`px-3 py-1.5 rounded text-xs font-bold transition-colors cursor-pointer ${appStatusFilter === s
                                             ? 'bg-btn-primary-bg text-btn-primary-text'
                                             : 'bg-bg-light text-text-secondary hover:bg-bg-white border border-border-light'
                                             }`}
@@ -312,11 +317,8 @@ const AdminPage: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* 신청 카드 리스트 */}
                             <div className="flex flex-col gap-3">
-                                {appsLoading && (
-                                    <div className="py-8 text-center text-text-muted">불러오는 중…</div>
-                                )}
+                                {appsLoading && <div className="py-8 text-center text-text-muted">불러오는 중…</div>}
                                 {!appsLoading && apps.length === 0 && (
                                     <div className="py-8 text-center text-text-muted">해당 상태의 신청이 없습니다.</div>
                                 )}
@@ -337,7 +339,7 @@ const AdminPage: React.FC = () => {
                                                     <span>{a.email}</span>
                                                     {a.studentId && <span>학번 {a.studentId}</span>}
                                                     {a.phone && <span>{a.phone}</span>}
-                                                    {a.part && <span>파트: {a.part}</span>}
+                                                    {a.part && <span>파트: {partNames[a.part] ?? a.part}</span>}
                                                 </div>
                                                 {a.motivation && (
                                                     <p className="text-sm text-text-secondary whitespace-pre-wrap mb-2">{a.motivation}</p>
@@ -346,24 +348,58 @@ const AdminPage: React.FC = () => {
                                                     <p className="text-xs text-text-muted italic">메모: {a.reviewNote}</p>
                                                 )}
                                                 {a.reviewer && (
-                                                    <p className="text-xs text-text-muted mt-2">
+                                                    <p className="text-xs text-text-muted mt-1">
                                                         처리자: {a.reviewer.name} · {a.reviewedAt ? new Date(a.reviewedAt).toLocaleString('ko-KR') : ''}
                                                     </p>
                                                 )}
+
+                                                {/* 승인된 신청: 회원 직책 변경 */}
+                                                {a.status === 'approved' && a.member && (
+                                                    <div className="mt-3 pt-3 border-t border-border-light flex items-center gap-2">
+                                                        <span className="text-xs text-text-muted font-medium">현재 직책:</span>
+                                                        <select
+                                                            defaultValue={a.member.position ?? 'member'}
+                                                            onChange={(e) => changeAppMemberPosition(a.member!.id, e.target.value)}
+                                                            disabled={myLevel < 6 || positionToLevel(a.member.position) >= myLevel}
+                                                            className="text-xs border border-border-light rounded px-2 py-1 disabled:bg-bg-light cursor-pointer"
+                                                        >
+                                                            {POSITION_OPTIONS.filter((p) => positionToLevel(p) < myLevel).map((p) => (
+                                                                <option key={p} value={p}>{POSITION_LABELS[p]}</option>
+                                                            ))}
+                                                        </select>
+                                                        {positionToLevel(a.member.position) >= myLevel && (
+                                                            <span className="text-xs text-text-muted">권한 없음</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
+
+                                            {/* 대기 신청: 직책 선택 후 승인/거절 */}
                                             {a.status === 'pending' && (
-                                                <div className="flex flex-col gap-2 shrink-0">
+                                                <div className="flex flex-col gap-2 shrink-0 min-w-[120px]">
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-xs text-text-muted font-medium">부여 직책</label>
+                                                        <select
+                                                            value={approvePositions[a.id] ?? 'member'}
+                                                            onChange={(e) => setApprovePositions(prev => ({ ...prev, [a.id]: e.target.value }))}
+                                                            className="text-xs border border-border-light rounded px-2 py-1 cursor-pointer"
+                                                        >
+                                                            {POSITION_OPTIONS.filter((p) => positionToLevel(p) < myLevel).map((p) => (
+                                                                <option key={p} value={p}>{POSITION_LABELS[p]}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => approve(a.id)}
-                                                        className="px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded text-xs font-bold hover:opacity-90"
+                                                        className="px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded text-xs font-bold hover:opacity-90 cursor-pointer"
                                                     >
                                                         승인
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => reject(a.id)}
-                                                        className="px-4 py-2 border border-red-200 text-text-danger rounded text-xs font-bold hover:bg-red-50"
+                                                        className="px-4 py-2 border border-red-200 text-text-danger rounded text-xs font-bold hover:bg-red-50 cursor-pointer"
                                                     >
                                                         거절
                                                     </button>

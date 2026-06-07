@@ -74,6 +74,7 @@ export const login = async (req: Request, res: Response) => {
           name: member.name,
           position: member.position,
           status: member.status,
+          profileImageUrl: member.profileImageUrl,
         },
       },
     });

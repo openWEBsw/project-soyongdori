@@ -8,6 +8,9 @@ import {
 import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
+import Footer from '../../../shared/layout/Footer';
+import { positionNames } from '../../../shared/utils/translations';
+import defaultProfileImg from '../../../assets/default_profile_image.jpg';
 
 const boardNames: Record<string, string> = {
   notice: '공지 게시판',
@@ -26,6 +29,7 @@ interface Post {
   createdAt: string;
   author: { name: string; part: string | null; cohort: number | null };
   _count: { comments: number };
+  attachments: { filePath: string }[];
 }
 
 function formatDate(iso: string) {
@@ -35,7 +39,7 @@ function formatDate(iso: string) {
 function BoardListPage() {
   const navigate = useNavigate();
   const { boardType = 'free' } = useParams();
-  const { member } = useAuth();
+  const { member, isAuthenticated } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -45,9 +49,15 @@ function BoardListPage() {
   const [error, setError] = useState('');
   const { logout } = useAuth();
 
+  const PUBLIC_BOARDS = ['free', 'notice'];
+
   useEffect(() => { setPage(1); }, [boardType]);
 
   useEffect(() => {
+    if (!isAuthenticated && !PUBLIC_BOARDS.includes(boardType)) {
+      navigate('/login');
+      return;
+    }
     setLoading(true);
     setError('');
     api.get(`/boards/${boardType}/posts?page=${page}&limit=10`)
@@ -63,10 +73,10 @@ function BoardListPage() {
   }, [boardType, page]);
 
   return (
-    <div className="min-h-screen bg-bg-light text-text-primary">
+    <div className="min-h-screen bg-bg-light text-text-primary flex flex-col">
       <Header />
 
-      <div className="max-w-6xl mx-auto px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
         {/* 브레드크럼 */}
         <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardName}</div>
         <h1 className="text-xl md:text-2xl font-bold text-text-title mb-4 md:mb-6">{boardName}</h1>
@@ -129,12 +139,13 @@ function BoardListPage() {
 
               {member && (
                 <div className="mt-4 pt-4 border-t border-border-light flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-bg-deep flex items-center justify-center flex-shrink-0 text-xs font-bold text-text-primary">
-                    {member.name[0]}
-                  </div>
+                  <img
+                    src={member.profileImageUrl || defaultProfileImg}
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-bg-deep"
+                  />
                   <div>
                     <div className="text-xs font-semibold text-text-primary">{member.name}</div>
-                    <div className="text-[10px] text-text-muted">{member.position}</div>
+                    <div className="text-[10px] text-text-muted">{positionNames[member.position] ?? member.position}</div>
                   </div>
                 </div>
               )}
@@ -151,13 +162,15 @@ function BoardListPage() {
                   className="w-full border border-border-light rounded-lg pl-9 pr-4 py-2.5 text-sm bg-bg-white text-text-primary outline-none focus:border-border-dark transition-colors"
                 />
               </div>
-              <button
-                onClick={() => navigate('/posts/write', { state: { boardType } })}
-                className="flex items-center gap-1.5 bg-btn-primary-bg text-btn-primary-text px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
-              >
-                <PencilSquareIcon className="w-4 h-4" />
-                글쓰기
-              </button>
+              {isAuthenticated && (
+                <button
+                  onClick={() => navigate('/posts/write', { state: { boardType } })}
+                  className="flex items-center gap-1.5 bg-btn-primary-bg text-btn-primary-text px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+                >
+                  <PencilSquareIcon className="w-4 h-4" />
+                  글쓰기
+                </button>
+              )}
             </div>
 
             <div className="bg-bg-white border border-border-light rounded-lg overflow-hidden shadow-sm">
@@ -165,6 +178,40 @@ function BoardListPage() {
                 <div className="text-center py-16 text-text-muted text-sm">불러오는 중...</div>
               ) : error ? (
                 <div className="text-center py-16 text-text-danger text-sm">{error}</div>
+              ) : boardType === 'photo' ? (
+                /* 사진 게시판 갤러리 그리드 */
+                posts.length === 0 ? (
+                  <div className="text-center py-16 text-text-muted text-sm">게시글이 없습니다</div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-0.5 p-0.5">
+                    {posts.map((post) => {
+                      const imgSrc = post.attachments[0]?.filePath;
+                      return (
+                        <div
+                          key={post.id}
+                          onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
+                          className="relative aspect-square overflow-hidden cursor-pointer group bg-bg-deep"
+                        >
+                          {imgSrc ? (
+                            <img
+                              src={imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`}
+                              alt={post.title}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-text-muted text-xs">
+                              이미지 없음
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                            <p className="text-white text-xs font-semibold truncate">{post.title}</p>
+                            <p className="text-white/70 text-[10px] mt-0.5">{post.author.name} · {formatDate(post.createdAt)}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
               ) : (
                 <>
                   {/* 모바일 카드 목록 */}
@@ -282,6 +329,7 @@ function BoardListPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
