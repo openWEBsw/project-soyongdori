@@ -1,0 +1,55 @@
+import { Router } from 'express';
+import { authenticate } from '../middleware/auth.js';
+import { upload } from '../middleware/upload.js';
+import {
+  getPosts,
+  getRecentNotices,
+  getPost,
+  createPost,
+  updatePost,
+  deletePost,
+  createComment,
+  updateComment,
+  deleteComment,
+} from '../controllers/boardController.js';
+
+const router = Router();
+
+// 홈 화면 공지 미리보기 
+router.get('/notice/recent', getRecentNotices);
+
+// 게시글 목록
+router.get('/:boardType/posts', authenticate, getPosts);
+
+// 게시글 작성
+router.post('/:boardType/posts', authenticate, (req, res, next) => {
+  upload.array('files', 5)(req as any, res, (err: any) => {
+    if (err) return res.status(400).json({ error: { code: 'UPLOAD_ERROR', message: err.message } });
+    next();
+  });
+}, createPost);
+
+// 게시글 상세
+router.get('/posts/:postId', authenticate, getPost);
+
+// 게시글 수정
+router.put('/posts/:postId', authenticate, (req, res, next) => {
+  upload.array('files', 5)(req as any, res, (err: any) => {
+    if (err) return res.status(400).json({ error: { code: 'UPLOAD_ERROR', message: err.message } });
+    next();
+  });
+}, updatePost);
+
+// 게시글 삭제
+router.delete('/posts/:postId', authenticate, deletePost);
+
+// 댓글 작성
+router.post('/posts/:postId/comments', authenticate, createComment);
+
+// 댓글 수정
+router.put('/comments/:commentId', authenticate, updateComment);
+
+// 댓글 삭제
+router.delete('/comments/:commentId', authenticate, deleteComment);
+
+export default router;

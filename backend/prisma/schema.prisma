@@ -82,10 +82,11 @@ model Member {
   name            String           @db.VarChar(50)
   studentId       String?          @unique @map("student_id") @db.VarChar(30)
   phone           String?          @db.VarChar(30)
+  department      String?          @db.VarChar(100)
   part            ApplicationPart?
   position        MemberPosition?
   cohort          Int?             @db.UnsignedInt
-  isCohortLead    Boolean          @default(false) @map("is_cohort_lead") // TODO 적절한지 체크!
+  isCohortLead    Boolean          @default(false) @map("is_cohort_lead")
   status          MemberStatus     @default(pending)
   birthday        DateTime?        @db.Date
   profileImageUrl String?          @map("profile_image_url") @db.VarChar(500) // TODO 현재는 로컬 파일 주소. 추후 여유시 MinIO와 연결
@@ -138,7 +139,7 @@ model Board {
   minWriteLevel Int       @default(1) @map("min_write_level") @db.UnsignedInt
   sortOrder     Int       @default(0) @map("sort_order") // 직접 게시판간 표시 순서 조절용
 
-  // TODO 연도별 관리를 위함. 체크 필요!
+  // TODO 연도별 관리를 위함. (추후 필요시 사용)
   isHidden Boolean @default(false) @map("is_hidden")
   year     Int     @db.UnsignedInt
 

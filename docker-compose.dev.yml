@@ -14,11 +14,14 @@ services:
     environment:
       - NODE_ENV=production
       - APP_ENV=${APP_ENV:-development}
-      - DB_HOST=db
-      - DB_USER=${MYSQL_USER}
-      - DB_PASS=${MYSQL_PASSWORD}
-      - DB_NAME=${MYSQL_DATABASE:-soyongdori_db}
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_HOST=db
+      - DATABASE_USER=${MYSQL_USER}
+      - DATABASE_PASSWORD=${MYSQL_PASSWORD}
+      - DATABASE_NAME=${MYSQL_DATABASE:-soyongdori_db}
       - PORT=3000
+    volumes:
+      - ./uploads:/usr/src/uploads
     networks:
       - app-network
     depends_on:
@@ -43,7 +46,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
