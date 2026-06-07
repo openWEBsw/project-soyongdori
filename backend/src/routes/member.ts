@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { uploadImage } from '../middleware/upload.js';
-import { getMyProfile, updateProfile, updateProfileImage, getMyPosts, getMyComments, getMemberProfile } from '../controllers/profileController.js';
+import { getMyProfile, updateProfile, updateProfileImage, getMyPosts, getMyComments, getMemberProfile, getMemberStats } from '../controllers/profileController.js';
 
 const router = Router();
+
+// 홈 화면 통계  
+router.get('/stats', getMemberStats);
 
 // 내 프로필 조회 (프로필 이미지포함)
 router.get('/me', authenticate, getMyProfile);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../lib/api';
 import hero1 from '../../assets/hero_1.jpeg';
 import hero2 from '../../assets/hero_2.jpeg';
 import hero3 from '../../assets/hero_3.jpeg';
@@ -60,12 +61,6 @@ const eventsData = [
     },
 ];
 
-const statsData = [
-    { value: '50+', label: 'YEARS' },
-    { value: '5', label: 'PARTS' },
-    { value: '500+', label: 'MEMBERS' },
-];
-
 // TODO: API 연동 시 다음 공연/합주 일정으로 자동 교체
 const heroHighlights = [
     { label: '다음 무대', value: '2026 상반기 정기공연 (5/19)' },
@@ -75,6 +70,7 @@ const heroHighlights = [
 const Home: React.FC = () => {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
+    const [memberCount, setMemberCount] = useState<number | null>(null);
 
     useEffect(() => {
         if (heroImages.length <= 1) return;
@@ -83,6 +79,19 @@ const Home: React.FC = () => {
         }, HERO_INTERVAL_MS);
         return () => clearInterval(id);
     }, []);
+
+    // 현재 활동 회원 수만 DB에서 가져옴 (YEARS·PARTS는 상수)
+    useEffect(() => {
+        api.get('/members/stats')
+            .then((res) => setMemberCount(res.data.data.memberCount))
+            .catch(() => setMemberCount(null));
+    }, []);
+
+    const statsData = [
+        { value: '50+', label: 'YEARS' },
+        { value: '5', label: 'PARTS' },
+        { value: memberCount === null ? '—' : `${memberCount}`, label: 'MEMBERS' },
+    ];
 
     return (
         <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
