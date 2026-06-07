@@ -72,7 +72,7 @@ export const getMemberProfile = async (req: AuthRequest, res: Response) => {
 }
 
 // 홈 화면 통계  - 현재 활동 회원 수
-export const getMemberStats = async (_req: AuthRequest, res: Response) => {
+export const getMemberStats = async (req: AuthRequest, res: Response) => {
     try {
         const memberCount = await prisma.member.count({
             where: { status: 'active' },
