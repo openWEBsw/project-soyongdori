@@ -1,5 +1,11 @@
 // TODO 고화질 이미지 업로드시 깨짐 증상 개선
-// TODO 프로필사진 지금처럼 말고 버튼 같은거 달아서 모달 뜨게 바꾸기
+
+// TODO 시간되면 할 것 
+// 0. 이메일, 전화번호 조건 검증 늘리고, signup과 맞추기
+// 1. 로딩, 에러 조금 더 예쁘게
+// 2. 페이지 갔다가 뒤로 돌아오면 보던 탭 보이게 
+// 3. 코멘트 눌러 이동시 그자리로
+
 import defaultProfileImg from '../../assets/default_profile_image.jpg';
 
 import React, { useRef, useState, useEffect } from 'react';
@@ -11,6 +17,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ProfileData {
+  status: string;
   name: string;
   part: string;
   position: string;
@@ -32,19 +39,22 @@ interface Post {
   _count: { comments: number };
 }
 
-// TODO ID는 코멘트 것으로? 포스트 것으로? 확인 필요
 interface Comment {
   id: string;
   category: string;
   content: string;
   createdAt: string;
-  post: { title: string; board: { type: string } };
+  post: { id: string, title: string; board: { type: string } };
 }
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+  const [initLoading, setinitLoading] = useState<boolean>(true);
+  const [initError, setInitError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [postError, setPostError] = useState<string>('');
+  const [commentError, setCommentError] = useState<string>('');
+
   const { logout } = useAuth();
 
   // 탭 상태
@@ -58,6 +68,7 @@ const Profile = () => {
 
   // 유저 프로필 정보 상태 (실 출력용)
   const [profile, setProfile] = useState<ProfileData>({
+    status: '',
     name: '',
     part: '',
     position: '',
@@ -71,17 +82,71 @@ const Profile = () => {
     profileImageUrl: '',
   });
 
-  // TODO 페이지네이션 처리 필요. 페이지 상태
-  const [postPage, setPostPage] = useState<1 | 2>(1);
+  // 포스트 관련
   const [posts, setPosts] = useState<Post[]>([]);
-  const [totalPosts, setTotalPosts] = useState(0); // 백엔드에서 받아올 전체 게시글 개수 가정
+  const [totalPosts, setTotalPosts] = useState(0)
 
+  const [postPage, setPostPage] = useState(1);
+  const [totalPostPages, setTotalPostPages] = useState(1);
+
+  const handlePostPageChange = async (page: number) => {
+    setLoading(true);
+    setPostError('');
+    setPostPage(page);
+    await api.get('/members/me/posts', { params: { page } })
+      .then((res) => {
+        setPosts(res.data.data.posts);
+        setTotalPosts(res.data.data.pagination.total);
+        setTotalPostPages(res.data.data.pagination.totalPages);
+      })
+      .catch(err => {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
+          logout(); navigate('/login');
+        }
+        else {
+          console.log(err);
+          const errMsg = err.response?.data?.error?.message || '내 게시글 정보를 불러오는 데 실패했습니다.';
+          setPostError(errMsg);
+        }
+      })
+      .finally(() => setLoading(false));
+  }
+
+  // 댓글 관련
   const [comments, setComments] = useState<Comment[]>([]);
-  const [totalComments, setTotalComments] = useState(0); // 백엔드에서 받아올 전체 댓글 개수 가정
+  const [totalCommentPages, setTotalCommentPages] = useState(1);
+
+  const [commentPage, setCommentPage] = useState(1);
+  const [totalComments, setTotalComments] = useState(0);
+
+  const handleCommentPageChange = async (page: number) => {
+    setLoading(true);
+    setCommentError('');
+    setCommentPage(page);
+    await api.get('/members/me/comments', { params: { page } })
+      .then((res) => {
+        setComments(res.data.data.comments);
+        setTotalComments(res.data.data.pagination.total);
+        setTotalCommentPages(res.data.data.pagination.totalPages);
+      })
+      .catch(err => {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
+          logout(); navigate('/login');
+        }
+        else {
+          console.log(err);
+          const errMsg = err.response?.data?.error?.message || '내 댓글 정보를 불러오는 데 실패했습니다.';
+          setCommentError(errMsg);
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }
 
   useEffect(() => {
-    setLoading(true);
-    setError('');
+    setinitLoading(true);
+    setInitError('');
     Promise.all([
       api.get('/members/me'),
       api.get('/members/me/posts'),
@@ -89,22 +154,27 @@ const Profile = () => {
     ])
       .then(([resProfile, resPosts, resComments]) => {
         setProfile(resProfile.data.data);
+
         setPosts(resPosts.data.data.posts);
         setTotalPosts(resPosts.data.data.pagination.total);
+        setTotalPostPages(resPosts.data.data.pagination.totalPages);
+
         setComments(resComments.data.data.comments);
         setTotalComments(resComments.data.data.pagination.total);
+        setTotalCommentPages(resComments.data.data.pagination.totalPages);
       })
       .catch(err => {
-        if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+        if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
           logout(); navigate('/login');
         }
         else {
           console.log(err);
-          setError('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 불러오는 데 실패했습니다.');
+          const errMsg = err.response?.data?.error?.message || '프로필 정보를 불러오는 데 실패했습니다.';
+          setInitError(errMsg);
         }
       })
       .finally(() => {
-        setLoading(false);
+        setinitLoading(false);
       })
   }, []);
 
@@ -147,7 +217,7 @@ const Profile = () => {
 
       alert('프로필 정보가 수정되었습니다.');
     } catch (err: any) {
-      if (err.response?.data?.error?.code === 'UNAUTHORIZED') {
+      if (err.response?.data?.error?.code === 'UNAUTHORIZED' || err.response?.data?.error?.code === 'INVALID_TOKEN') {
         logout(); navigate('/login');
       }
       else if (err.response?.data?.error?.code === 'INCORRECT_PASSWORD') {
@@ -156,7 +226,7 @@ const Profile = () => {
       }
       else {
         console.log(err);
-        const errMsg = ('코드 : ' + err.response?.data?.error?.code + ' 프로필 정보를 수정하는 데 실패했습니다.');
+        const errMsg = err.response?.data?.error?.message || '프로필 정보를 수정하는 데 실패했습니다.';
         alert(errMsg);
       }
     }
@@ -202,9 +272,6 @@ const Profile = () => {
     }
   };
 
-
-
-
   // 로그아웃 처리
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃 하시겠습니까?')) {
@@ -214,25 +281,70 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  if (initLoading) {
     return (
-      <div>
-        로딩중
+      <div className="min-h-screen bg-bg-light text-text-primary font-sans flex flex-col">
+        {/* 헤더 */}
+        <Header />
+
+        {/* 홈/마이페이지 타이틀 */}
+        <div className="bg-bg-light text-left">
+          <div className="mx-auto max-w-6xl px-4 md:px-12 pt-8">
+            <div className="flex flex-col gap-1 items-start">
+              <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
+                홈 / 마이페이지
+              </span>
+              <h2 className="text-3xl font-bold text-text-title">마이페이지</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* 본문 */}
+        <div className="flex flex-1 flex-col gap-1 items-center">
+          <div className="mx-auto max-w-6xl pt-60">
+            <h2 className="text-2xl font-bold text-text-muted px-12">로딩중...</h2>
+          </div>
+
+        </div>
+
+        <Footer />
       </div>
     )
   }
 
-  if (error) {
+  if (initError) {
     return (
-      <div>
-        에러 {error}
+      <div className="min-h-screen bg-bg-light text-text-primary font-sans flex flex-col">
+        <Header />
+
+        {/* 홈/마이페이지 타이틀 */}
+        <div className="bg-bg-light text-left">
+          <div className="mx-auto max-w-6xl px-4 md:px-12 pt-8">
+            <div className="flex flex-col gap-1 items-start">
+              <span className="text-text-muted text-xs tracking-wider uppercase font-medium">
+                홈 / 마이페이지
+              </span>
+              <h2 className="text-3xl font-bold text-text-title">마이페이지</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* 본문 */}
+        <div className="flex flex-1 flex-col gap-1 items-center">
+          <div className="mx-auto max-w-6xl pt-60">
+            <h2 className="text-2xl font-bold text-text-muted px-12">에러가 발생했습니다. <br /> {initError} </h2>
+          </div>
+        </div>
+
+        <Footer />
+
       </div>
+
     )
   }
 
   return (
     <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
-      {/* 헤더 */}
       <Header />
 
       {/* 홈/마이페이지 타이틀 */}
@@ -255,10 +367,15 @@ const Profile = () => {
           <div className="bg-bg-white rounded-lg border border-border-light shadow-sm p-5 md:p-8 flex flex-col md:flex-row gap-8 items-stretch text-left">
             {/* 일반 정보 영역 */}
 
-            <div className="flex-1 flex flex-col md:flex-row gap-6 items-center md:items-start">
+            <div className="flex-1 flex flex-col md:flex-row gap-6 items-center md:items-start my-auto">
               <div onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-24 rounded-full bg-bg-deep border border-border-light flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight cursor-pointer">
-                <img src={profile.profileImageUrl || defaultProfileImg} className="w-full h-full rounded-full overflow-hidden object-cover"></img>
+                className="group relative w-24 h-24 rounded-full bg-bg-dark border border-border-light flex items-center justify-center shrink-0 text-text-muted text-xs font-semibold text-center select-none leading-tight cursor-pointer">
+                <img src={profile.profileImageUrl || defaultProfileImg} className="w-full h-full rounded-full overflow-hidden object-cover group-hover:opacity-70 transition-opacity"></img>
+                <div className="absolute w-7 h-7 right-0 bottom-0 flex items-center justify-center  shrink-0 bg-bg-dark text-white rounded-full opacity-85 group-hover:opacity-95 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                  </svg>
+                </div>
               </div>
               <input
                 ref={fileInputRef}
@@ -269,7 +386,10 @@ const Profile = () => {
               <div className="flex flex-col gap-2 text-center md:text-left">
                 <h2 className="text-2xl font-bold text-text-title">{profile.name}</h2>
                 <div className="text-sm font-semibold text-text-secondary">
-                  {partNames[profile.part]} · {profile.cohort}기 {profile.isCohortLead ? '(기장)' : ''} · {positionNames[profile.position]}
+                  {profile.status === 'active' ?
+                    (<>{partNames[profile.part]} · {profile.cohort}기 {profile.isCohortLead ? '(기장)' : ''} · {positionNames[profile.position]}</>)
+                    : '준회원'
+                  }
                 </div>
                 <div className="text-xs text-text-muted font-medium">
                   가입일 : {formatDate(profile.createdAt)}
@@ -354,7 +474,25 @@ const Profile = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {posts.map((post) => (
+                      {loading ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-25 text-text-muted text-sm">
+                            로딩중...
+                          </td>
+                        </tr>
+                      ) : postError ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-38 text-text-muted text-sm">
+                            오류가 발생했습니다 <br /> {postError}
+                          </td>
+                        </tr>
+                      ) : totalPosts === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-25 text-text-muted text-sm">
+                            내 게시글이 없습니다
+                          </td>
+                        </tr>
+                      ) : posts.map((post) => (
                         <tr
                           key={post.id}
                           onClick={() => navigate(`/posts/${post.id}`)}
@@ -370,7 +508,7 @@ const Profile = () => {
                           <td className="py-3 px-2 font-medium">
                             <p className="truncate">{post.title}</p>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{post.createdAt}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{formatDate(post.createdAt)}</td>
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post.viewCount}</td>
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{post._count.comments}</td>
                         </tr>
@@ -378,23 +516,20 @@ const Profile = () => {
                     </tbody>
                   </table>
                 </div>
-
-                {/* TODO 페이지네이션 */}
+                {/* 페이지네이션 */}
                 <div className="flex justify-center items-center gap-2 mt-6">
-                  <button
-                    onClick={() => setPostPage(1)}
-                    className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${postPage === 1 ? 'bg-bg-deep text-text-primary' : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
-                      }`}
-                  >
-                    1
-                  </button>
-                  <button
-                    onClick={() => setPostPage(2)}
-                    className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${postPage === 2 ? 'bg-bg-deep text-text-primary' : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
-                      }`}
-                  >
-                    2
-                  </button>
+                  {Array.from({ length: totalPostPages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => handlePostPageChange(p)}
+                      className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === postPage
+                        ? 'border border-border-light bg-bg-deep text-text-primary'
+                        : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -408,22 +543,40 @@ const Profile = () => {
                     <thead>
                       <tr className="bg-bg-light text-text-primary font-bold border-b border-border-light text-center text-xs">
                         <th className="py-3 px-1 md:px-2 hidden md:w-[8%] md:table-cell whitespace-nowrap">NO.</th>
-                        <th className="py-3 px-1 md:px-2 w-[10%] md:w-[10%] whitespace-nowrap">
+                        <th className="py-3 px-1 md:px-2 w-[20%] md:w-[10%] whitespace-nowrap">
                           <span className="hidden md:inline">카테고리</span>
                           <span className="md:hidden">분류</span>
                         </th>
-                        <th className="py-3 px-2 text-left w-[20%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
-                        <th className="py-3 px-1 md:px-2 w-[14%] md:w-[16%] whitespace-nowrap">날짜</th>
-                        <th className="py-3 px-1.5 md:px-2 text-left w-[12%] md:w-[22%]">
+                        <th className="py-3 px-2 text-left w-[40%] md:w-[44%] whitespace-nowrap">댓글 내용</th>
+                        <th className="py-3 px-1 md:px-2 w-[25%] md:w-[16%] whitespace-nowrap">날짜</th>
+                        <th className="py-3 px-1.5 md:px-2 text-left w-[20%] md:w-[22%]">
                           <span className="hidden md:inline">원본 </span>게시글<span className="hidden md:inline"> 제목</span>
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {comments.map((comment) => (
+                      {loading ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-38 text-text-muted text-sm">
+                            로딩중...
+                          </td>
+                        </tr>
+                      ) : commentError ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-38 text-text-muted text-sm">
+                            오류가 발생했습니다 <br /> {commentError}
+                          </td>
+                        </tr>
+                      ) : totalComments === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-38 text-text-muted text-sm">
+                            내 댓글이 없습니다
+                          </td>
+                        </tr>
+                      ) : comments.map((comment) => (
                         <tr
                           key={comment.id}
-                          onClick={() => navigate(`/posts/${comment.id}`)}
+                          onClick={() => navigate(`/posts/${comment.post.id}`)}
                           className="border-b border-border-light hover:bg-bg-light/50 transition-colors cursor-pointer"
                         >
                           <td className="py-3 px-1 md:px-2 text-center text-xs font-medium hidden md:table-cell whitespace-nowrap">{comment.id}</td>
@@ -434,11 +587,13 @@ const Profile = () => {
                             </span>
                           </td>
                           <td className="py-3 px-2 font-medium">
-                            <p className="h-[32px] md:h-[40px] text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
-                              {comment.content}
-                            </p>
+                            <div className="h-[32px] md:h-[40px] flex items-center-safe">
+                              <p className="text-xs md:text-sm leading-4 md:leading-5 line-clamp-2 break-all ">
+                                {comment.content}
+                              </p>
+                            </div>
                           </td>
-                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{comment.createdAt}</td>
+                          <td className="py-3 px-1 md:px-2 text-center text-xs whitespace-nowrap">{formatDate(comment.createdAt)}</td>
                           <td className="py-3 px-1.5 md:px-2 text-xs font-medium">
                             <p className="truncate">{comment.post.title}</p>
                           </td>
@@ -447,7 +602,21 @@ const Profile = () => {
                     </tbody>
                   </table>
                 </div>
-                {/* TODO 페이지네이션 */}
+                {/* 페이지네이션 */}
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  {Array.from({ length: totalCommentPages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => handleCommentPageChange(p)}
+                      className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === commentPage
+                        ? 'border border-border-light bg-bg-deep text-text-primary'
+                        : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -531,8 +700,12 @@ const Profile = () => {
                   placeholder="비밀번호 변경 시에 입력해주세요"
                   value={editForm.newPassword}
                   onChange={(e) => setEditForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                  className={`w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary ${editForm.newPassword && editForm.newPassword.length < 8 ? 'focus:ring-red-300 border-red-300' : ''
+                    }`}
                 />
+                {editForm.newPassword && editForm.newPassword.length < 8 && (
+                  <p className="text-xs text-text-danger">비밀번호는 8글자 이상이어야 합니다.</p>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-text-primary">새 비밀번호 확인</label>
@@ -541,12 +714,16 @@ const Profile = () => {
                   placeholder="비밀번호 변경 시에 입력해주세요"
                   value={editForm.confirmPassword}
                   onChange={(e) => setEditForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
+                  className={`w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary ${editForm.confirmPassword && editForm.newPassword !== editForm.confirmPassword ? 'focus:ring-red-300 border-red-300' : ''
+                    }`}
                 />
+                {editForm.confirmPassword && editForm.newPassword !== editForm.confirmPassword && (
+                  <p className="text-xs text-text-danger">비밀번호가 일치하지 않습니다.</p>
+                )}
               </div>
 
 
-              <p className="text-xs text-text-muted leading-relaxed">
+              <p className="text-xs text-text-muted leading-relaxed break-keep">
                 ※ 이름 및 학번 등 수정 가능 항목 외의 수정이 필요하신 경우, 관리자에게 문의해 주시기 바랍니다.
               </p>
 

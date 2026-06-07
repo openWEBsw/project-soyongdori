@@ -15,6 +15,7 @@ const getProfile = async (req: AuthRequest, res: Response, targetId: bigint, isM
         const member = await prisma.member.findUnique({
             where: { id: targetId },
             select: {
+                status: true,
                 name: true,
                 part: true,
                 position: true,
@@ -170,13 +171,32 @@ export const updateProfileImage = async (req: AuthRequest, res: Response) => {
     }
 
     try {
+        const currentMember = await prisma.member.findUnique({
+            where: { id: memberId },
+            select: { profileImageUrl: true }
+        });
+
+        try {
+
+            if (currentMember?.profileImageUrl && currentMember.profileImageUrl.startsWith('/uploads/')) {
+                const oldFileName = currentMember.profileImageUrl.replace('/uploads/', '');
+                const oldFilePath = path.join(uploadsDir, oldFileName);
+                if (fs.existsSync(oldFilePath)) {
+                    await fs.promises.unlink(oldFilePath);
+                }
+            }
+        } catch (err) {
+            console.log('에러 : ' + err + '이전 프로필 파일 삭제중 오류 발생');
+        }
+
+
         const ext = path.extname(newProfileImage.originalname);
         const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
         await fs.promises.writeFile(path.join(uploadsDir, filename), newProfileImage.buffer);
 
         const profileImageUrl = `/uploads/${filename}`;
 
-        // TODO 이전 파일 삭제 로직 구현
+
 
         const update = await prisma.member.update({
             where: { id: memberId },
@@ -244,7 +264,7 @@ const getCommentsByMemberId = async (req: AuthRequest, res: Response, targetId: 
                     id: true,
                     content: true,
                     createdAt: true,
-                    post: { select: { title: true, board: { select: { type: true } } } },
+                    post: { select: { id: true, title: true, board: { select: { type: true } } } },
                 },
                 orderBy: [{ createdAt: 'desc' }],
                 skip,
