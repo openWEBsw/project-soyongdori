@@ -63,8 +63,8 @@ const eventsData = [
 
 // TODO: API 연동 시 다음 공연/합주 일정으로 자동 교체
 const heroHighlights = [
-    { label: '다음 무대', value: '2026 상반기 정기공연 (5/19)' },
-    { label: '정기 합주', value: '매주 수·금 19:00' },
+    { label: '다음 무대', value: '2026 충북 청소년 밴드 연합 캠프 (7/5)' },
+    { label: '정기 합주', value: '매주 화·수 18:00' },
 ];
 
 const Home: React.FC = () => {
