@@ -1,6 +1,7 @@
 # Soyongdori Club Website Project
 
 Chungbuk National University Soyongdori Club web platform.
+<img width="1222" height="1155" alt="image" src="https://github.com/user-attachments/assets/d5546a8a-47f2-4f0c-aa1d-15568327dd94" />
 
 ## Project Information
 
