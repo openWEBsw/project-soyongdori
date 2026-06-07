@@ -7,6 +7,7 @@ interface AuthMember {
   name: string;
   position: string;
   status: string;
+  profileImageUrl: string | null;
 }
 
 interface AuthContextValue {

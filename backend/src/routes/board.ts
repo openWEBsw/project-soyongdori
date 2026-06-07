@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 import {
   getPosts,
   getRecentNotices,
   getPost,
+  incrementView,
   createPost,
   updatePost,
   deletePost,
@@ -19,7 +20,7 @@ const router = Router();
 router.get('/notice/recent', getRecentNotices);
 
 // 게시글 목록
-router.get('/:boardType/posts', authenticate, getPosts);
+router.get('/:boardType/posts', optionalAuth, getPosts);
 
 // 게시글 작성
 router.post('/:boardType/posts', authenticate, (req, res, next) => {
@@ -30,7 +31,10 @@ router.post('/:boardType/posts', authenticate, (req, res, next) => {
 }, createPost);
 
 // 게시글 상세
-router.get('/posts/:postId', authenticate, getPost);
+router.get('/posts/:postId', optionalAuth, getPost);
+
+// 조회수 증가
+router.patch('/posts/:postId/view', optionalAuth, incrementView);
 
 // 게시글 수정
 router.put('/posts/:postId', authenticate, (req, res, next) => {

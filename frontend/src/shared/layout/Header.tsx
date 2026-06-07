@@ -36,21 +36,21 @@ const Header: React.FC = () => {
             to="/home"
             end
             className={({ isActive }) =>
-              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
+              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent hover:border-text-primary'
               }`}
           >
             홈
           </NavLink>
           <NavLink
             to="/boards/free"
-            className={`px-1 py-2 transition-colors border-b-2 ${isBoardActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'}`}
+            className={`px-1 py-2 transition-colors border-b-2 ${isBoardActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent hover:border-text-primary'}`}
           >
             게시판
           </NavLink>
           <NavLink
             to="/introduce"
             className={({ isActive }) =>
-              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
+              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent hover:border-text-primary'
               }`}
           >
             소개
@@ -58,7 +58,7 @@ const Header: React.FC = () => {
           <NavLink
             to="/calendar"
             className={({ isActive }) =>
-              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
+              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent hover:border-text-primary'
               }`}
           >
             캘린더
@@ -66,7 +66,7 @@ const Header: React.FC = () => {
           {!(isAuthenticated && member?.status === 'active') && (<NavLink
             to="/apply"
             className={({ isActive }) =>
-              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent'
+              `px-1 py-2 transition-colors border-b-2 ${isActive ? 'text-text-primary font-bold border-text-primary' : 'text-text-secondary hover:text-text-primary border-transparent hover:border-text-primary'
               }`}
           >
             입부신청
