@@ -3,6 +3,7 @@ import { authenticate } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 import {
   getPosts,
+  getRecentNotices,
   getPost,
   createPost,
   updatePost,
@@ -13,6 +14,9 @@ import {
 } from '../controllers/boardController.js';
 
 const router = Router();
+
+// 홈 화면 공지 미리보기 
+router.get('/notice/recent', getRecentNotices);
 
 // 게시글 목록
 router.get('/:boardType/posts', authenticate, getPosts);

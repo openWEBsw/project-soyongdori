@@ -57,6 +57,39 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// 홈 화면 공지 미리보기 - 최근 공지글 3개
+export const getRecentNotices = async (req: AuthRequest, res: Response) => {
+  const year = new Date().getFullYear();
+
+  try {
+    const board = await prisma.board.findFirst({
+      where: { type: 'notice', year },
+    });
+
+    if (!board) {
+      return res.json({ data: [] });
+    }
+
+    const posts = await prisma.post.findMany({
+      where: { boardId: board.id, deletedAt: null, isHidden: false },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        viewCount: true,
+        createdAt: true,
+      },
+      orderBy: [{ isNotice: 'desc' }, { createdAt: 'desc' }],
+      take: 3,
+    });
+
+    return res.json({ data: posts });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: { code: 'SERVER_ERROR', message: '서버 오류' } });
+  }
+};
+
 export const getPost = async (req: AuthRequest, res: Response) => {
   const postId = toStr(req.params.postId);
 

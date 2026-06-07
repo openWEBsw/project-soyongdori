@@ -16,54 +16,39 @@ const HERO_INTERVAL_MS = 5000;
 const FOUNDING_YEAR = 1978; // 1기
 const clubYears = new Date().getFullYear() - FOUNDING_YEAR + 1;
 
-// TODO: — 추후 API로 교체
-const noticesData = [
-    {
-        id: 1,
-        badge: '공지',
-        badgeType: 'notice' as const,
-        title: '2026 상반기 정기공연 안내',
-        description: '공연 일정과 참여 방법을 안내드립니다...',
-        date: '2026.05.10',
-        views: 142,
-    },
-    {
-        id: 2,
-        badge: '공지',
-        badgeType: 'notice' as const,
-        title: '동방 사용 규칙 변경',
-        description: '동방 사용시간 및 예약 방식이 변경됩니다',
-        date: '2026.05.08',
-        views: 98,
-    },
-    {
-        id: 3,
-        badge: 'HOT',
-        badgeType: 'hot' as const,
-        title: '신입 부원 모집 (~5/31)',
-        description: '2026 상반기 신입 부원을 모집합니다',
-        date: '2026.05.01',
-        views: 312,
-    },
-];
+// 공지/일정 타입
+interface Notice {
+    id: string;
+    title: string;
+    content: string;
+    viewCount: number;
+    createdAt: string;
+}
 
-// TODO: — 추후 API로 교체
-const eventsData = [
-    {
-        month: 'MAY',
-        day: 19,
-        title: '정기 합주 연습',
-        time: '19:00 — 22:00',
-        location: '동아리실',
-    },
-    {
-        month: 'MAY',
-        day: 25,
-        title: '신입 환영회',
-        time: '18:00 — 21:00',
-        location: '학생회관 1층 세미나실',
-    },
-];
+interface EventItem {
+    id: string;
+    title: string;
+    startAt: string;
+    endAt: string | null;
+    allDay: boolean;
+    location: string | null;
+}
+
+// 일정 날짜/시간 표시용
+function getMonth(iso: string) {
+    return new Date(iso).toLocaleString('en-US', { month: 'short' }).toUpperCase();
+}
+function getDay(iso: string) {
+    return new Date(iso).getDate();
+}
+function formatTime(event: EventItem) {
+    if (event.allDay) return '종일';
+    const start = new Date(event.startAt).toTimeString().slice(0, 5);
+    if (event.endAt) {
+        return start + ' — ' + new Date(event.endAt).toTimeString().slice(0, 5);
+    }
+    return start;
+}
 
 // TODO: API 연동 시 다음 공연/합주 일정으로 자동 교체
 const heroHighlights = [
@@ -85,6 +70,8 @@ const Home: React.FC = () => {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
     const [memberCount, setMemberCount] = useState(0);
+    const [notices, setNotices] = useState<Notice[]>([]);
+    const [events, setEvents] = useState<EventItem[]>([]);
 
     useEffect(() => {
         if (heroImages.length <= 1) return;
@@ -94,10 +81,17 @@ const Home: React.FC = () => {
         return () => clearInterval(id);
     }, []);
 
-    // 활동 회원 수 가져오기
+    // 홈 화면 데이터 가져오기
     useEffect(() => {
         api.get('/members/stats')
             .then((res) => setMemberCount(res.data.data.memberCount));
+
+        api.get('/boards/notice/recent')
+            .then((res) => setNotices(res.data.data));
+
+        const today = new Date().toISOString();
+        api.get('/calendar/events?start=' + today)
+            .then((res) => setEvents(res.data.data.slice(0, 2)));
     }, []);
 
     const statsData = [
@@ -205,28 +199,25 @@ const Home: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {noticesData.map((notice) => (
+                        {notices.length === 0 ? (
+                            <p className="text-sm text-text-muted">등록된 공지가 없습니다</p>
+                        ) : notices.map((notice) => (
                             <Link
                                 key={notice.id}
-                                to={`/boards/notice/${notice.id}`}
+                                to={`/posts/${notice.id}`}
                                 className="bg-bg-white border border-border-light rounded-lg p-6 flex flex-col gap-3 hover:shadow-sm transition-shadow"
                             >
-                                <span
-                                    className={`text-xs font-bold px-2.5 py-1 rounded self-start ${notice.badgeType === 'hot'
-                                        ? 'bg-red-50 text-text-danger'
-                                        : 'bg-bg-light text-text-secondary'
-                                        }`}
-                                >
-                                    {notice.badge}
+                                <span className="text-xs font-bold px-2.5 py-1 rounded self-start bg-bg-light text-text-secondary">
+                                    공지
                                 </span>
                                 <h3 className="text-base font-bold text-text-title leading-snug">
                                     {notice.title}
                                 </h3>
                                 <p className="text-sm text-text-muted font-light leading-relaxed">
-                                    {notice.description}
+                                    {notice.content.slice(0, 50)}
                                 </p>
                                 <span className="text-xs text-text-muted mt-auto pt-2">
-                                    {notice.date} · 조회 {notice.views}
+                                    {notice.createdAt.slice(0, 10).replace(/-/g, '.')} · 조회 {notice.viewCount}
                                 </span>
                             </Link>
                         ))}
@@ -253,25 +244,29 @@ const Home: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {eventsData.map((event, index) => (
+                        {events.length === 0 ? (
+                            <p className="text-sm text-text-muted">다가오는 일정이 없습니다</p>
+                        ) : events.map((event) => (
                             <div
-                                key={index}
+                                key={event.id}
                                 className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white"
                             >
                                 {/* 날짜 */}
                                 <div className="flex flex-col items-center justify-center min-w-[72px] border-r border-border-light pr-6">
                                     <span className="text-xs font-bold text-text-danger tracking-wider">
-                                        {event.month}
+                                        {getMonth(event.startAt)}
                                     </span>
                                     <span className="text-4xl font-black text-text-title leading-tight">
-                                        {event.day}
+                                        {getDay(event.startAt)}
                                     </span>
                                 </div>
                                 {/* 정보 */}
                                 <div className="flex flex-col gap-1">
                                     <h3 className="text-base font-bold text-text-title">{event.title}</h3>
-                                    <span className="text-sm text-text-secondary">{event.time}</span>
-                                    <span className="text-xs text-text-muted">📍 {event.location}</span>
+                                    <span className="text-sm text-text-secondary">{formatTime(event)}</span>
+                                    {event.location && (
+                                        <span className="text-xs text-text-muted">📍 {event.location}</span>
+                                    )}
                                 </div>
                             </div>
                         ))}
