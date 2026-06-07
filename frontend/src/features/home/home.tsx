@@ -12,6 +12,10 @@ import hero4 from '../../assets/hero_4.jpeg';
 const heroImages = [hero1, hero2, hero3, hero4];
 const HERO_INTERVAL_MS = 5000;
 
+// 현재 연도 기준으로 년수 계산
+const FOUNDING_YEAR = 1978; // 1기
+const clubYears = new Date().getFullYear() - FOUNDING_YEAR + 1;
+
 // TODO: — 추후 API로 교체
 const noticesData = [
     {
@@ -88,7 +92,7 @@ const Home: React.FC = () => {
     }, []);
 
     const statsData = [
-        { value: '50+', label: 'YEARS' },
+        { value: `${clubYears}`, label: 'YEARS' },
         { value: '5', label: 'PARTS' },
         { value: memberCount === null ? '—' : `${memberCount}`, label: 'MEMBERS' },
     ];
