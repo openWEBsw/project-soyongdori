@@ -10,6 +10,7 @@ import calendarRouter from './routes/calendar.js'
 import adminRouter from './routes/admin.js';
 import cookieParser from 'cookie-parser';
 import memberRouter from './routes/member.js';
+import receiptAnalyzeRouter from './routes/receiptAnalyzer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +42,7 @@ app.use('/api/applications', applicationRouter);
 app.use('/api/members', memberRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/receipt', receiptAnalyzeRouter);
 
 // SPA fallback
 app.get('*path', (req, res, next) => {
