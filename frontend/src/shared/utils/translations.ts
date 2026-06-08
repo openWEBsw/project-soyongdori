@@ -31,3 +31,24 @@ export const formatDate = (dateString: string): string => {
   if (!dateString) return '';
   return dateString.substring(0, 10).replaceAll('-', '.');
 };
+
+type MemberLike = { position: string; status: string } | null;
+
+const FULL_ACCESS = ['vice_leader', 'leader', 'super_admin'];
+const PLANNING_ACCESS = ['planning_member', 'planning_lead', ...FULL_ACCESS];
+const BUDGET_ACCESS = ['treasurer', ...FULL_ACCESS];
+const MEMBER_ACCESS = ['member', ...PLANNING_ACCESS, 'treasurer'];
+
+export function canAccessBoard(boardType: string, member: MemberLike): boolean {
+  if (['notice', 'free'].includes(boardType)) return true;
+  if (!member || member.status !== 'active') return false;
+  if (['resource', 'photo'].includes(boardType)) return MEMBER_ACCESS.includes(member.position);
+  if (boardType === 'planning') return PLANNING_ACCESS.includes(member.position);
+  if (boardType === 'budget') return BUDGET_ACCESS.includes(member.position);
+  return false;
+}
+
+export function canWriteBoard(boardType: string, member: MemberLike): boolean {
+  if (!member || member.status !== 'active') return false;
+  return canAccessBoard(boardType, member);
+}

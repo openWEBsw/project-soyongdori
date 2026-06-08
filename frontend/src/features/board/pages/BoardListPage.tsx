@@ -9,7 +9,7 @@ import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
-import { positionNames } from '../../../shared/utils/translations';
+import { positionNames, canAccessBoard, canWriteBoard } from '../../../shared/utils/translations';
 import defaultProfileImg from '../../../assets/default_profile_image.jpg';
 
 const boardNames: Record<string, string> = {
@@ -39,7 +39,7 @@ function formatDate(iso: string) {
 function BoardListPage() {
   const navigate = useNavigate();
   const { boardType = 'free' } = useParams();
-  const { member, isAuthenticated } = useAuth();
+  const { member, logout } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -47,15 +47,16 @@ function BoardListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { logout } = useAuth();
-
-  const PUBLIC_BOARDS = ['free', 'notice'];
 
   useEffect(() => { setPage(1); }, [boardType]);
 
   useEffect(() => {
-    if (!isAuthenticated && !PUBLIC_BOARDS.includes(boardType)) {
+    if (!member && !['notice', 'free'].includes(boardType)) {
       navigate('/login');
+      return;
+    }
+    if (!canAccessBoard(boardType, member)) {
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -116,12 +117,7 @@ function BoardListPage() {
                   }`}
                 >
                   <span>{name}</span>
-                  {['resource', 'photo'].includes(key) && (
-                    <span className="text-[10px] text-text-muted bg-bg-light rounded px-1.5 py-0.5">
-                      회원+
-                    </span>
-                  )}
-                  {['planning', 'budget'].includes(key) && (
+                  {!canAccessBoard(key, member) && (
                     <LockClosedIcon className="w-3 h-3 text-text-muted" />
                   )}
                 </button>
@@ -162,7 +158,7 @@ function BoardListPage() {
                   className="w-full border border-border-light rounded-lg pl-9 pr-4 py-2.5 text-sm bg-bg-white text-text-primary outline-none focus:border-border-dark transition-colors"
                 />
               </div>
-              {isAuthenticated && (
+              {canWriteBoard(boardType, member) && (
                 <button
                   onClick={() => navigate('/posts/write', { state: { boardType } })}
                   className="flex items-center gap-1.5 bg-btn-primary-bg text-btn-primary-text px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
@@ -174,7 +170,17 @@ function BoardListPage() {
             </div>
 
             <div className="bg-bg-white border border-border-light rounded-lg overflow-hidden shadow-sm">
-              {loading ? (
+              {!canAccessBoard(boardType, member) ? (
+                <div className="text-center py-16 px-6 flex flex-col items-center gap-3">
+                  <LockClosedIcon className="w-8 h-8 text-text-muted" />
+                  <p className="text-sm font-semibold text-text-primary">접근 권한이 없습니다</p>
+                  <p className="text-xs text-text-muted">
+                    {boardType === 'planning' && '기획부원 이상의 권한이 필요합니다'}
+                    {boardType === 'budget' && '총무 이상의 권한이 필요합니다'}
+                    {['resource', 'photo'].includes(boardType) && '일반회원 이상의 권한이 필요합니다'}
+                  </p>
+                </div>
+              ) : loading ? (
                 <div className="text-center py-16 text-text-muted text-sm">불러오는 중...</div>
               ) : error ? (
                 <div className="text-center py-16 text-text-danger text-sm">{error}</div>
@@ -183,14 +189,15 @@ function BoardListPage() {
                 posts.length === 0 ? (
                   <div className="text-center py-16 text-text-muted text-sm">게시글이 없습니다</div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-0.5 p-0.5">
+                  <div className="p-4 md:p-5">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                     {posts.map((post) => {
                       const imgSrc = post.attachments[0]?.filePath;
                       return (
                         <div
                           key={post.id}
                           onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
-                          className="relative aspect-square overflow-hidden cursor-pointer group bg-bg-deep"
+                          className="relative aspect-square overflow-hidden cursor-pointer group bg-bg-deep rounded-xl"
                         >
                           {imgSrc ? (
                             <img
@@ -210,6 +217,7 @@ function BoardListPage() {
                         </div>
                       );
                     })}
+                    </div>
                   </div>
                 )
               ) : (

@@ -11,7 +11,7 @@ import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
-import { partNames } from '../../../shared/utils/translations';
+import { partNames, canWriteBoard } from '../../../shared/utils/translations';
 import defaultProfileImg from '../../../assets/default_profile_image.jpg';
 
 const boardNames: Record<string, string> = {
@@ -61,7 +61,7 @@ function BoardDetailPage() {
   const { postId } = useParams();
   const location = useLocation();
   const boardType: string = (location.state as any)?.boardType ?? 'free';
-  const { member, logout, isAuthenticated } = useAuth();
+  const { member, logout } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
   const [post, setPost] = useState<Post | null>(null);
@@ -71,6 +71,13 @@ function BoardDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+
+  useEffect(() => {
+    // 비로그인 + 비공개 게시판 → 로그인 페이지로
+    if (!member && !['notice', 'free'].includes(boardType)) {
+      navigate('/login');
+    }
+  }, [boardType, member]);
 
   const fetchPost = () => {
     api.get(`/boards/posts/${postId}`)
@@ -271,7 +278,7 @@ function BoardDetailPage() {
             댓글 <span className="text-text-muted font-normal">{post._count.comments}</span>
           </div>
 
-          {isAuthenticated ? (
+          {canWriteBoard(boardType, member) ? (
             <div className="border border-border-light rounded-lg p-4 flex gap-3 mb-5 bg-bg-light">
               <textarea
                 value={commentText}
