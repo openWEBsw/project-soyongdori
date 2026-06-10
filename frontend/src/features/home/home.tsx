@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
@@ -66,13 +66,14 @@ const clubLocation = {
         'https://www.openstreetmap.org/export/embed.html?bbox=127.4502997%2C36.6249934%2C127.4582997%2C36.6309934&layer=mapnik&marker=36.6279934%2C127.4542997',
 };
 
-const Home: React.FC = () => {
+function Home() {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
     const [memberCount, setMemberCount] = useState(0);
     const [notices, setNotices] = useState<Notice[]>([]);
     const [events, setEvents] = useState<EventItem[]>([]);
 
+    // 슬라이드쇼 자동 전환
     useEffect(() => {
         if (heroImages.length <= 1) return;
         const id = setInterval(() => {
@@ -94,6 +95,7 @@ const Home: React.FC = () => {
             .then((res) => setEvents(res.data.data.slice(0, 2)));
     }, []);
 
+    // 통계
     const statsData = [
         { value: `${clubYears}`, label: 'YEARS' },
         { value: '5', label: 'PARTS' },
@@ -331,6 +333,6 @@ const Home: React.FC = () => {
             <Footer />
         </div>
     );
-};
+}
 
 export default Home;

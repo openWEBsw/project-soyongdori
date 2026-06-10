@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,7 +41,7 @@ const POSITION_OPTIONS = ['member', 'planning_member', 'planning_lead', 'treasur
 
 type Tab = 'members' | 'applications';
 
-const AdminPage: React.FC = () => {
+function AdminPage() {
     const { member } = useAuth();
     const myLevel = positionToLevel(member?.position);
 
@@ -156,6 +156,7 @@ const AdminPage: React.FC = () => {
         }
     };
 
+    // 내 레벨보다 낮은 회원만 수정 가능
     const canEditMember = (m: MemberRow) => positionToLevel(m.position) < myLevel;
 
     return (
@@ -419,6 +420,6 @@ const AdminPage: React.FC = () => {
             <Footer />
         </div>
     );
-};
+}
 
 export default AdminPage;

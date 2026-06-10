@@ -1,6 +1,6 @@
 // https://velog.io/@sohyun32253/FullCalendar-%EC%82%AC%EC%9A%A9%EB%B2%95-feat.-react-typescript
 
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, FormEvent } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -10,22 +10,8 @@ import type { EventClickArg, DatesSetArg } from '@fullcalendar/core';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
+import { positionToLevel } from '../../lib/permission';
 import api from '../../lib/api';
-
-
-// 직책 → 권한 레벨 매핑 (BE의 positionToLevel과 동일)
-const positionToLevel = (position?: string): number => {
-    switch (position) {
-        case 'super_admin': return 8;
-        case 'leader': return 7;
-        case 'vice_leader': return 6;
-        case 'treasurer': return 6;
-        case 'planning_lead': return 5;
-        case 'planning_member': return 4;
-        case 'member': return 1;
-        default: return 0;
-    }
-};
 
 // 타입 정의: 백엔드 응답 형태와 모달 폼 상태
 type Visibility = 'personal' | 'group' | 'public';
@@ -85,22 +71,22 @@ const emptyForm = (date?: string): FormState => ({
     color: COLORS[0].value,
 });
 
-const Calendar: React.FC = () => {
+function Calendar() {
     // 로그인 정보 + 권한 계산
     const { member } = useAuth();
     const level = positionToLevel(member?.position);
     const canCreate = level >= 1;
 
-    // useState
-    const [events, setEvents] = useState<CalendarEvent[]>([]); // 현재 일정 목록
-    const [error, setError] = useState<string | null>(null); // 에러 메시지
-    const [loading, setLoading] = useState(false); // 로딩 상태
+    // 일정 목록, 로딩, 에러
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
     // 모달 상태
-    const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null); // 모달 모드
-    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null); // 선택된 일정
-    const [form, setForm] = useState<FormState>(emptyForm()); // 폼 상태
-    const [submitting, setSubmitting] = useState(false); // 제출 중 상태
+    const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+    const [form, setForm] = useState<FormState>(emptyForm());
+    const [submitting, setSubmitting] = useState(false);
 
     // 현재 조회 중인 날짜 범위
     const rangeRef = useRef<{ start: string; end: string } | null>(null);
@@ -154,6 +140,7 @@ const Calendar: React.FC = () => {
         setModalMode('edit');
     };
 
+    // 모달 닫기
     const closeModal = () => {
         setModalMode(null);
         setSelectedEvent(null);
@@ -167,7 +154,7 @@ const Calendar: React.FC = () => {
     const readOnly = modalMode === 'edit' && !canEdit;
 
     // 생성/수정 폼 제출 → POST 또는 PATCH
-    const submit = async (e: React.FormEvent) => {
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
         if (!form.title || !form.startAt) {
             setError('제목과 시작일은 필수입니다');
@@ -480,6 +467,6 @@ const Calendar: React.FC = () => {
             <Footer />
         </div>
     );
-};
+}
 
 export default Calendar;
