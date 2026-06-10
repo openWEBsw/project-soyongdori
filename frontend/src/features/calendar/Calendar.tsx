@@ -278,7 +278,8 @@ const Calendar: React.FC = () => {
                     )}
 
                     {/* 캘린더 */}
-                    <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6">
+                    <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6 overflow-x-auto">
+                    <div className="min-w-[600px]">
                         <FullCalendar
                             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                             initialView="dayGridMonth"
@@ -301,6 +302,7 @@ const Calendar: React.FC = () => {
                             height="auto"
                             dayMaxEvents={3}
                         />
+                    </div>
                     </div>
                 </div>
             </main>
