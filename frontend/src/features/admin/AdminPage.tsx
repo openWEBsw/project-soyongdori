@@ -196,32 +196,34 @@ const AdminPage: React.FC = () => {
                     {/* === 회원 관리 탭 === */}
                     {tab === 'members' && (
                         <div>
-                            <div className="flex flex-wrap gap-3 mb-4">
-                                <input
-                                    type="text"
-                                    placeholder="이름 또는 이메일 검색"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && fetchMembers()}
-                                    className="flex-1 min-w-[200px] px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
-                                />
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-3 py-2 cursor-pointer border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
-                                >
-                                    <option value="">전체 상태</option>
-                                    <option value="pending">대기</option>
-                                    <option value="active">활성</option>
-                                    <option value="inactive">비활성</option>
-                                </select>
-                                <button
-                                    type="button"
-                                    onClick={fetchMembers}
-                                    className="px-4 py-2 cursor-pointer bg-btn-primary-bg text-btn-primary-text rounded-md text-sm font-bold hover:opacity-90"
-                                >
-                                    검색
-                                </button>
+                            <div className="overflow-x-auto mb-4">
+                                <div className="flex gap-3 min-w-max">
+                                    <input
+                                        type="text"
+                                        placeholder="이름 또는 이메일 검색"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && fetchMembers()}
+                                        className="w-52 shrink-0 px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
+                                    />
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                        className="px-3 py-2 cursor-pointer border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
+                                    >
+                                        <option value="">전체 상태</option>
+                                        <option value="pending">대기</option>
+                                        <option value="active">활성</option>
+                                        <option value="inactive">비활성</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={fetchMembers}
+                                        className="px-4 py-2 cursor-pointer bg-btn-primary-bg text-btn-primary-text rounded-md text-sm font-bold hover:opacity-90"
+                                    >
+                                        검색
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="border border-border-light rounded-lg overflow-x-auto">
@@ -248,10 +250,10 @@ const AdminPage: React.FC = () => {
                                             const editable = canEditMember(m);
                                             return (
                                                 <tr key={m.id} className="border-t border-border-light hover:bg-bg-light/40">
-                                                    <td className="px-4 py-3 font-medium text-text-title">{m.name}</td>
+                                                    <td className="px-4 py-3 font-medium text-text-title whitespace-nowrap">{m.name}</td>
                                                     <td className="px-4 py-3 text-text-secondary">{m.email}</td>
-                                                    <td className="px-4 py-3 text-text-secondary">{m.position ? POSITION_LABELS[m.position] ?? m.position : '-'}</td>
-                                                    <td className="px-4 py-3">
+                                                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{m.position ? POSITION_LABELS[m.position] ?? m.position : '-'}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap">
                                                         <span className={`px-2 py-0.5 rounded text-xs font-bold ${m.status === 'active'
                                                             ? 'bg-emerald-50 text-emerald-700'
                                                             : m.status === 'pending'
@@ -280,7 +282,7 @@ const AdminPage: React.FC = () => {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => toggleStatus(m.id, m.status)}
-                                                                    className="text-xs px-2 py-1 border border-border-dark rounded hover:bg-bg-light cursor-pointer"
+                                                                    className="text-xs px-2 py-1 border border-border-dark rounded hover:bg-bg-light cursor-pointer whitespace-nowrap"
                                                                 >
                                                                     {m.status === 'active' ? '비활성화' : '활성화'}
                                                                 </button>
