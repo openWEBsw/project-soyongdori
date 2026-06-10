@@ -7,7 +7,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 //회원가입
 export const signup = async (req: Request, res: Response) => {
   console.log('signup called', req.body);
-  const { email, password, name, studentId, phone } = req.body;
+  const { email, password, name, studentId, phone, department } = req.body;
 
   if (!email || !password || !name) {
     return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'email, password, name required' } });
@@ -26,7 +26,7 @@ export const signup = async (req: Request, res: Response) => {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const member = await prisma.member.create({
-      data: { email, passwordHash, name, studentId, phone },
+      data: { email, passwordHash, name, studentId, phone, department },
       select: { id: true, email: true, name: true, status: true, createdAt: true },
     });
     return res.status(201).json({ success: true, data: member });

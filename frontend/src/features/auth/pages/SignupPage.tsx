@@ -13,7 +13,7 @@ const processSteps = [
 
 function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '', studentId: '', phone: '' });
+  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '', studentId: '', phone: '', department: '' });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,6 +34,7 @@ function SignupPage() {
         name: form.name,
         studentId: form.studentId || undefined,
         phone: form.phone || undefined,
+        department: form.department || undefined,
       });
       navigate('/login', { state: { signed: true } });
     } catch (err: any) {
@@ -185,19 +186,33 @@ function SignupPage() {
                 </div>
               </div>
 
-              {/* 전화번호 */}
-              <div className="mb-6">
-                <label className="text-xs font-semibold text-text-secondary block mb-1.5">
-                  전화번호 <span className="text-text-danger">*</span>
-                </label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={set('phone')}
-                  placeholder="010-0000-0000"
-                  required
-                  className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
-                />
+              {/* 전화번호 + 학과  */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1.5">
+                    전화번호 <span className="text-text-danger">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={set('phone')}
+                    placeholder="010-0000-0000"
+                    required
+                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1.5">
+                    학과
+                  </label>
+                  <input
+                    type="text"
+                    value={form.department}
+                    onChange={set('department')}
+                    placeholder="소프트웨어학과"
+                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                  />
+                </div>
               </div>
 
               {/* 개인정보 동의 */}
