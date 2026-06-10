@@ -11,12 +11,14 @@ interface ReceiptAnalyzerProps {
     setAnalyzerResult: (value: string) => void;
 }
 
-// 포스트 수정, 작성 페이지 로직 그대로 활용하되, ai기능의 엔트리포인트 컴포넌트로써 사용
+// 포스트 작성 페이지 로직 그대로 활용하되, ai기능의 엔트리포인트 컴포넌트로써 사용
 const ReceiptAnalyzer = ({ isOpen, onClose, files, analyzeResult, setAnalyzerResult }: ReceiptAnalyzerProps) => {
 
-    // TODO 백엔드부 완성 후 테스트
+    // TODO 나중에
+    // 1. 복사버튼 제작
+    // 2. 파일 선택 로직
+    // 3. ui/ux 개선
 
-    // TODO 시간되면 복사버튼 제작
     const { logout } = useAuth();
     const navigate = useNavigate();
 
@@ -26,7 +28,7 @@ const ReceiptAnalyzer = ({ isOpen, onClose, files, analyzeResult, setAnalyzerRes
         files.forEach(file => {
             formData.append('files', file);
         })
-        await api.post('/receipt/analyze', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        await api.post('/receipt/analyze', formData)
             .then((res) => {
                 setAnalyzerResult(res.data.data);
             })
@@ -73,7 +75,7 @@ const ReceiptAnalyzer = ({ isOpen, onClose, files, analyzeResult, setAnalyzerRes
                         onClick={onClose}
                         className="px-4 py-2 bg-bg-dark text-white rounded text-xs font-bold hover:opacity-90 cursor-pointer"
                     >
-                        저장
+                        확인
                     </button>
                 </div>
             </div>

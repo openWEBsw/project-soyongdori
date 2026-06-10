@@ -31,17 +31,18 @@ function formatBytes(bytes: number) {
 function BoardWritePage() {
 
   // 영수증 분석 관련 js 부분
-  // // 영수증 분석 관련 로직
-  // const [analyzerResult, setAnalyzerResult] = useState('영수증을 모두 첨부한 후 분석 버튼을 눌러주세요.');
-  // const [isReceiptAnalyzerOpen, setIsReceiptAnalyzerOpen] = useState(false);
+  // 영수증 분석 관련 로직
+  const [analyzerResult, setAnalyzerResult] = useState('영수증을 모두 첨부한 후 분석 버튼을 눌러주세요. \n결과가 출력되면 복사하여 사용해주세요.');
+  const [isReceiptAnalyzerOpen, setIsReceiptAnalyzerOpen] = useState(false);
 
-  // const handleReceiptAnalyzer = () => {
-  //   setIsReceiptAnalyzerOpen(true);
-  // };
+  const handleReceiptAnalyzer = () => {
+    setIsReceiptAnalyzerOpen(true);
+  };
 
-  // const handleReceiptAnalyzerClose = () => {
-  //   setIsReceiptAnalyzerOpen(false);
-  // };
+  const handleReceiptAnalyzerClose = () => {
+    setIsReceiptAnalyzerOpen(false);
+  };
+  //
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -222,14 +223,14 @@ function BoardWritePage() {
 
 
           </button>
-          {/* 영수증 분석 관련 테스트 버튼 (TODO 추후 제대로 삽입) */}
-          {/* <button
+          {/* 영수증 분석 관련 테스트 버튼 (TODO 추후 제대로 삽입, 권한 및 표시조건 수정) */}
+          <button
             onClick={handleReceiptAnalyzer}
             className="px-4 py-2 bg-bg-dark text-white rounded text-xs font-bold hover:opacity-90 cursor-pointer"
           >
             열어서 테스트
           </button>
-          {isReceiptAnalyzerOpen && (<ReceiptAnalyzer isOpen={isReceiptAnalyzerOpen} onClose={handleReceiptAnalyzerClose} files={files} analyzeResult={analyzerResult} setAnalyzerResult={setAnalyzerResult} />)} */}
+          {isReceiptAnalyzerOpen && (<ReceiptAnalyzer isOpen={isReceiptAnalyzerOpen} onClose={handleReceiptAnalyzerClose} files={files} analyzeResult={analyzerResult} setAnalyzerResult={setAnalyzerResult} />)}
         </div>
       </div>
     </div >
