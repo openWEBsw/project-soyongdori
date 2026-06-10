@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../prisma/client.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 
 //회원가입
@@ -16,6 +17,12 @@ export const signup = async (req: Request, res: Response) => {
     const exists = await prisma.member.findUnique({ where: { email } });
     if (exists) {
       return res.status(409).json({ success: false, error: { code: 'EMAIL_DUPLICATE', message: 'email already exists' } });
+    }
+    if (studentId) {
+      const idExists = await prisma.member.findUnique({ where: { studentId } });
+      if (idExists) {
+        return res.status(409).json({ success: false, error: { code: 'STUDENT_ID_DUPLICATE', message: 'student id already exists' } });
+      }
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const member = await prisma.member.create({

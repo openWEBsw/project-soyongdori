@@ -39,6 +39,7 @@ function SignupPage() {
     } catch (err: any) {
       const code = err.response?.data?.error?.code;
       if (code === 'EMAIL_DUPLICATE') setError('이미 사용 중인 이메일입니다');
+      else if (code === 'STUDENT_ID_DUPLICATE') setError('이미 사용 중인 학번입니다');
       else setError('회원가입에 실패했습니다');
     } finally {
       setLoading(false);
