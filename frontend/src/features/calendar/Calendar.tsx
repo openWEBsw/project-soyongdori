@@ -428,7 +428,7 @@ function Calendar() {
                                             type="button"
                                             onClick={() => !readOnly && setForm({ ...form, color: c.value })}
                                             disabled={readOnly}
-                                            className={`w-7 h-7 rounded-full transition-transform cursor-pointer disabled:cursor-not-allowed ${form.color === c.value ? 'ring-2 ring-offset-2 ring-text-primary scale-110' : ''
+                                            className={`w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-110 duration-150 disabled:cursor-not-allowed ${form.color === c.value ? 'ring-2 ring-offset-2 ring-text-primary scale-110' : ''
                                                 }`}
                                             style={{ backgroundColor: c.value }}
                                             aria-label={c.name}
