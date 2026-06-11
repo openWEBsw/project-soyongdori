@@ -54,7 +54,7 @@ const Profile = () => {
   const [postError, setPostError] = useState<string>('');
   const [commentError, setCommentError] = useState<string>('');
 
-  const { logout } = useAuth();
+  const { logout, updateMember } = useAuth();
 
   // 탭 상태
   const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts');
@@ -259,6 +259,7 @@ const Profile = () => {
 
       const newImageUrl = res.data.data.profileImageUrl;
       setProfile(prev => ({ ...prev, profileImageUrl: newImageUrl }));
+      updateMember({ profileImageUrl: newImageUrl });
       alert('프로필 이미지가 성공적으로 변경되었습니다.');
     } catch (err: any) {
       console.error(err);
