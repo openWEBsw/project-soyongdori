@@ -8,6 +8,7 @@ import {
 import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
+import ReceiptAnalyzer from '../../receipt/receiptAnalyzer';
 import Footer from '../../../shared/layout/Footer';
 
 const boardNames: Record<string, string> = {
@@ -29,6 +30,21 @@ function formatBytes(bytes: number) {
 }
 
 function BoardWritePage() {
+
+  // 영수증 분석 관련 js 부분
+  // 영수증 분석 관련 로직
+  const [analyzerResult, setAnalyzerResult] = useState('영수증을 모두 첨부한 후 분석 버튼을 눌러주세요. \n결과가 출력되면 복사하여 사용해주세요.');
+  const [isReceiptAnalyzerOpen, setIsReceiptAnalyzerOpen] = useState(false);
+
+  const handleReceiptAnalyzer = () => {
+    setIsReceiptAnalyzerOpen(true);
+  };
+
+  const handleReceiptAnalyzerClose = () => {
+    setIsReceiptAnalyzerOpen(false);
+  };
+  //
+
   const navigate = useNavigate();
   const location = useLocation();
   const initialBoardType: string = (location.state as any)?.boardType ?? 'free';
@@ -146,11 +162,10 @@ function BoardWritePage() {
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={e => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
-              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                dragOver
-                  ? 'border-border-dark bg-bg-deep'
-                  : 'border-border-light bg-bg-light hover:border-border-dark hover:bg-bg-deep'
-              }`}
+              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${dragOver
+                ? 'border-border-dark bg-bg-deep'
+                : 'border-border-light bg-bg-light hover:border-border-dark hover:bg-bg-deep'
+                }`}
             >
               <PaperClipIcon className="w-6 h-6 text-text-muted mx-auto mb-2" />
               <div className="text-sm text-text-secondary">클릭하거나 파일을 드래그하여 첨부</div>
@@ -206,7 +221,17 @@ function BoardWritePage() {
             {loading ? '등록 중...' : (
               <>등록 <ArrowRightIcon className="w-4 h-4" /></>
             )}
+
+
           </button>
+          {/* 영수증 분석 관련 테스트 버튼 (TODO 추후 제대로 삽입, 권한 및 표시조건 수정) */}
+          <button
+            onClick={handleReceiptAnalyzer}
+            className="px-4 py-2 bg-bg-dark text-white rounded text-xs font-bold hover:opacity-90 cursor-pointer"
+          >
+            열어서 테스트
+          </button>
+          {isReceiptAnalyzerOpen && (<ReceiptAnalyzer isOpen={isReceiptAnalyzerOpen} onClose={handleReceiptAnalyzerClose} files={files} analyzeResult={analyzerResult} setAnalyzerResult={setAnalyzerResult} />)}
         </div>
       </div>
       <Footer />
