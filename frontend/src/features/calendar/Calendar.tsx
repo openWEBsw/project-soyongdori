@@ -123,8 +123,9 @@ function Calendar() {
         setModalMode('create');
     };
 
-    // 기존 이벤트 클릭 
     const handleEventClick = (arg: EventClickArg) => {
+        // 더보기 팝오버가 열려 있으면 닫기
+        document.querySelector<HTMLElement>('.fc-popover-close')?.click();
         const ev = events.find((e) => String(e.id) === String(arg.event.id));
         if (!ev) return;
         setSelectedEvent(ev);
