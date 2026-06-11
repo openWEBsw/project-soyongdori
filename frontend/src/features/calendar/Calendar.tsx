@@ -252,7 +252,7 @@ function Calendar() {
                                     setForm(emptyForm(today));
                                     setModalMode('create');
                                 }}
-                                className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-sm font-bold hover:opacity-90 transition-opacity"
+                                className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-sm font-bold hover:opacity-90 transition-opacity cursor-pointer"
                             >
                                 일정 추가 +
                             </button>
@@ -317,7 +317,7 @@ function Calendar() {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="text-text-muted hover:text-text-primary text-2xl leading-none"
+                                className="text-text-muted hover:text-text-primary text-2xl leading-none cursor-pointer"
                                 aria-label="닫기"
                             >
                                 ×
@@ -359,32 +359,33 @@ function Calendar() {
                                 <div>
                                     <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">시작 *</label>
                                     <input
-                                        type="datetime-local"
-                                        value={form.startAt}
-                                        onChange={(e) => setForm({ ...form, startAt: e.target.value })}
+                                        type={form.allDay ? 'date' : 'datetime-local'}
+                                        value={form.allDay ? form.startAt.slice(0, 10) : form.startAt}
+                                        onChange={(e) => setForm({ ...form, startAt: form.allDay ? `${e.target.value}T00:00` : e.target.value })}
                                         required
                                         disabled={readOnly}
-                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
+                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">종료</label>
                                     <input
-                                        type="datetime-local"
-                                        value={form.endAt}
-                                        onChange={(e) => setForm({ ...form, endAt: e.target.value })}
+                                        type={form.allDay ? 'date' : 'datetime-local'}
+                                        value={form.allDay ? form.endAt.slice(0, 10) : form.endAt}
+                                        onChange={(e) => setForm({ ...form, endAt: form.allDay && e.target.value ? `${e.target.value}T00:00` : e.target.value })}
                                         disabled={readOnly}
-                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
+                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                     />
                                 </div>
                             </div>
 
-                            <label className="flex items-center gap-2 text-sm text-text-secondary">
+                            <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={form.allDay}
                                     onChange={(e) => setForm({ ...form, allDay: e.target.checked })}
                                     disabled={readOnly}
+                                    className="cursor-pointer disabled:cursor-default"
                                 />
                                 종일 일정
                             </label>
@@ -395,7 +396,7 @@ function Calendar() {
                                     value={form.visibility}
                                     onChange={(e) => setForm({ ...form, visibility: e.target.value as Visibility })}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
+                                    className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                 >
                                     <option value="personal">개인 공개</option>
                                     <option value="group">멤버 공개</option>
@@ -423,7 +424,7 @@ function Calendar() {
                                             type="button"
                                             onClick={() => !readOnly && setForm({ ...form, color: c.value })}
                                             disabled={readOnly}
-                                            className={`w-7 h-7 rounded-full transition-transform disabled:cursor-not-allowed ${form.color === c.value ? 'ring-2 ring-offset-2 ring-text-primary scale-110' : ''
+                                            className={`w-7 h-7 rounded-full transition-transform cursor-pointer disabled:cursor-not-allowed ${form.color === c.value ? 'ring-2 ring-offset-2 ring-text-primary scale-110' : ''
                                                 }`}
                                             style={{ backgroundColor: c.value }}
                                             aria-label={c.name}
@@ -445,7 +446,7 @@ function Calendar() {
                                         type="button"
                                         onClick={remove}
                                         disabled={submitting}
-                                        className="px-4 py-2 text-sm font-bold text-text-danger border border-red-200 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-bold text-text-danger border border-red-200 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
                                     >
                                         삭제
                                     </button>
@@ -453,7 +454,7 @@ function Calendar() {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="px-4 py-2 text-sm font-bold text-text-secondary border border-border-dark rounded-md hover:bg-bg-light transition-colors"
+                                    className="px-4 py-2 text-sm font-bold text-text-secondary border border-border-dark rounded-md hover:bg-bg-light transition-colors cursor-pointer"
                                 >
                                     {readOnly ? '닫기' : '취소'}
                                 </button>
@@ -461,7 +462,7 @@ function Calendar() {
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="px-4 py-2 text-sm font-bold bg-btn-primary-bg text-btn-primary-text rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-bold bg-btn-primary-bg text-btn-primary-text rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
                                     >
                                         {submitting ? '저장 중...' : modalMode === 'create' ? '추가' : '수정'}
                                     </button>
