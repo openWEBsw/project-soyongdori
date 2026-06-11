@@ -228,7 +228,7 @@ function Calendar() {
             {/* 페이지 헤더 */}
             <section className="relative bg-bg-light border-b border-border-light overflow-hidden">
                 <img src={calendarBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white via-50% to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-r from-bg-light/40 via-bg-light/90 to-bg-light/40" />
                 <div className="relative max-w-6xl mx-auto px-6 md:px-12 py-24 text-center flex flex-col items-center">
                     <span className="text-text-muted text-xs tracking-widest font-medium uppercase mb-3">
                         Calendar
