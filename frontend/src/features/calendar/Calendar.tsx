@@ -266,30 +266,31 @@ function Calendar() {
 
                     {/* 캘린더 */}
                     <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6 overflow-x-auto">
-                    <div className="min-w-[600px]">
-                        <FullCalendar
-                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                            initialView="dayGridMonth"
-                            locale="ko"
-                            headerToolbar={{
-                                left: 'prev,next today',
-                                center: 'title',
-                                right: 'dayGridMonth,timeGridWeek,timeGridDay',
-                            }}
-                            buttonText={{
-                                today: '오늘',
-                                month: '월',
-                                week: '주',
-                                day: '일',
-                            }}
-                            events={fcEvents}
-                            datesSet={handleDatesSet}
-                            dateClick={handleDateClick}
-                            eventClick={handleEventClick}
-                            height="auto"
-                            dayMaxEvents={3}
-                        />
-                    </div>
+                        <div className="min-w-[600px]">
+                            <FullCalendar
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                locale="ko"
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                                }}
+                                buttonText={{
+                                    today: '오늘',
+                                    month: '월',
+                                    week: '주',
+                                    day: '일',
+                                }}
+                                events={fcEvents}
+                                datesSet={handleDatesSet}
+                                dateClick={handleDateClick}
+                                eventClick={handleEventClick}
+                                height={720}
+                                dayMaxEvents={true}
+                                moreLinkText={(n) => `+${n} 더보기`}
+                            />
+                        </div>
                     </div>
                 </div>
             </main>
