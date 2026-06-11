@@ -273,7 +273,19 @@ function Calendar() {
                     {/* 캘린더 */}
                     <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6 overflow-x-auto">
                         {/* 일정 제목이 길면 한 줄 말줄임 처리 */}
-                        <div className="min-w-[600px] text-sm [--fc-button-bg-color:#333333] [--fc-button-border-color:#333333] [--fc-button-hover-bg-color:#1a1a1a] [--fc-button-hover-border-color:#1a1a1a] [--fc-button-active-bg-color:#000000] [--fc-button-active-border-color:#000000] [--fc-today-bg-color:#f2f2f2] [--fc-border-color:#e5e7eb] [&_.fc-daygrid-day]:cursor-pointer [&_.fc-daygrid-day]:transition-colors [&_.fc-daygrid-day:hover]:bg-[#ebebeb] [&_.fc-event-title]:truncate [&_.fc-toolbar-title]:text-xl [&_.fc-toolbar-title]:font-bold [&_.fc-toolbar-title]:text-text-title">
+                        <div
+                            style={{
+                                '--fc-button-bg-color': '#333333',
+                                '--fc-button-border-color': '#333333',
+                                '--fc-button-hover-bg-color': '#1a1a1a',
+                                '--fc-button-hover-border-color': '#1a1a1a',
+                                '--fc-button-active-bg-color': '#000000',
+                                '--fc-button-active-border-color': '#000000',
+                                '--fc-today-bg-color': '#f2f2f2',
+                                '--fc-border-color': '#e5e7eb',
+                            } as React.CSSProperties}
+                            className="min-w-[600px] text-sm [&_.fc-daygrid-day]:cursor-pointer [&_.fc-daygrid-day]:transition-colors [&_.fc-daygrid-day:hover]:bg-bg-deep [&_.fc-event-title]:truncate [&_.fc-toolbar-title]:text-xl [&_.fc-toolbar-title]:font-bold [&_.fc-toolbar-title]:text-text-title"
+                        >
                             <FullCalendar
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                 initialView="dayGridMonth"
