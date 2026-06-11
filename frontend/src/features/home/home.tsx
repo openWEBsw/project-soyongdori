@@ -267,9 +267,10 @@ function Home() {
                         {events.length === 0 ? (
                             <p className="text-sm text-text-muted">다가오는 일정이 없습니다</p>
                         ) : events.map((event) => (
-                            <div
+                            <Link
+                                to="/calendar"
                                 key={event.id}
-                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white"
+                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white hover:shadow-sm transition-shadow"
                             >
                                 {/* 날짜 */}
                                 <div className="flex flex-col items-center justify-center min-w-[72px] border-r border-border-light pr-6">
@@ -288,7 +289,7 @@ function Home() {
                                         <span className="text-xs text-text-muted">📍 {event.location}</span>
                                     )}
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
