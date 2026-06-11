@@ -102,9 +102,12 @@ function AdminPage() {
 
     // ---- 회원 액션 ----
     const changePosition = async (id: string, newPosition: string) => {
+        const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
+        if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
         try {
             await api.patch(`/admin/member/${id}/position`, { position: newPosition });
             fetchMembers();
+            alert('변경되었습니다.');
         } catch (e: any) {
             alert(e.response?.data?.error?.message || '직책 변경 실패');
         }
@@ -148,9 +151,12 @@ function AdminPage() {
 
     // 승인된 신청에서 직접 권한 변경
     const changeAppMemberPosition = async (memberId: string, newPosition: string) => {
+        const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
+        if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
         try {
             await api.patch(`/admin/member/${memberId}/position`, { position: newPosition });
             fetchApps();
+            alert('변경되었습니다.');
         } catch (e: any) {
             alert(e.response?.data?.error?.message || '직책 변경 실패');
         }
