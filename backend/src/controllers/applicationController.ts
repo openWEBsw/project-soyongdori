@@ -106,7 +106,7 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
   try {
     const app = await prisma.joinApplication.findUnique({
       where: { id: appId },
-      include: { member: { select: { id: true } } },
+      select: { id: true, status: true, part: true, member: { select: { id: true } } },
     });
     if (!app) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: '신청을 찾을 수 없습니다.' } });
@@ -124,7 +124,7 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
       ...(app.member
         ? [prisma.member.update({
           where: { id: app.member.id },
-          data: { status: 'active', approvedAt: now, position, cohort },
+          data: { status: 'active', approvedAt: now, position, cohort, ...(app.part ? { part: app.part } : {}) },
         })]
         : []),
     ]);
