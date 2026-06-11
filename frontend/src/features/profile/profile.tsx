@@ -7,7 +7,6 @@
 // 3. 코멘트 눌러 이동시 그자리로
 
 import defaultProfileImg from '../../assets/default_profile_image.jpg';
-
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
@@ -256,11 +255,7 @@ const Profile = () => {
     formData.append('profileImage', file);
 
     try {
-      const res = await api.post('/members/me/profile-image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res = await api.post('/members/me/profile-image', formData);
 
       const newImageUrl = res.data.data.profileImageUrl;
       setProfile(prev => ({ ...prev, profileImageUrl: newImageUrl }));
