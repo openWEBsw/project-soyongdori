@@ -268,7 +268,8 @@ function Calendar() {
 
                     {/* 캘린더 */}
                     <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6 overflow-x-auto">
-                        <div className="min-w-[600px]">
+                        {/* 일정 제목이 길면 한 줄 말줄임 처리 */}
+                        <div className="min-w-[600px] [&_.fc-event-title]:truncate">
                             <FullCalendar
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                 initialView="dayGridMonth"
@@ -285,6 +286,7 @@ function Calendar() {
                                     day: '일',
                                 }}
                                 events={fcEvents}
+                                eventClassNames="cursor-pointer"
                                 datesSet={handleDatesSet}
                                 dateClick={handleDateClick}
                                 eventClick={handleEventClick}

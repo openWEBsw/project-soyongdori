@@ -62,9 +62,3 @@
 body {
   margin: 0;
 }
-
-.fc-event-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
