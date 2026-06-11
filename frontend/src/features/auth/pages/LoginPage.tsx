@@ -4,6 +4,7 @@ import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
+import loginBg from '../../../assets/login_bg.png';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -40,8 +41,11 @@ function LoginPage() {
       {/* 메인 2컬럼 */}
       <div className="flex flex-1 flex-col md:flex-row">
         {/* 좌측: 환영 메시지 */}
-        <div className="bg-bg-light flex-1 flex flex-col justify-between px-8 md:px-16 py-12 md:py-20">
-          <div>
+        <div className="relative bg-bg-light flex-1 flex flex-col justify-between px-8 md:px-16 py-12 md:py-20 overflow-hidden">
+          <img src={loginBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-l from-white via-white/90 to-transparent" />
+
+          <div className="relative">
             <span className="text-text-muted text-xs tracking-widest font-medium uppercase">
               Welcome Back
             </span>
@@ -54,7 +58,7 @@ function LoginPage() {
             </div>
           </div>
 
-          <span className="text-xs text-text-muted tracking-wider mt-12">
+          <span className="relative text-xs text-text-muted tracking-wider mt-12">
             SYDR · CHUNGBUK NATIONAL UNIVERSITY
           </span>
         </div>
