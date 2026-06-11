@@ -1,16 +1,21 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
 import introduceHero from '../../assets/introduce_hero.jpeg';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
+import introduceHero2 from '../../assets/introduce_hero_2.jpg';
+import vocal from '../../assets/vocal.jpg';
+import guitar from '../../assets/guitar.jpg';
+import drum from '../../assets/drum.jpg';
+import keyboard from '../../assets/keyboard.jpg';
+import bass from '../../assets/bass.jpg';
 
 const partsData = [
-  { name: '보컬', english: 'Vocal', desc: '밴드의 목소리' },
-  { name: '일렉기타', english: 'Electric Guitar', desc: '리프와 솔로의 핵심' },
-  { name: '베이스', english: 'Bass', desc: '리듬의 뿌리' },
-  { name: '드럼', english: 'Drum', desc: '비트를 이끄는 심장' },
-  { name: '키보드', english: 'Keyboard', desc: '사운드의 색채' },
+  { name: '보컬', english: 'Vocal', desc: '밴드의 목소리', img: vocal },
+  { name: '일렉기타', english: 'Electric Guitar', desc: '리프와 솔로의 핵심', img: guitar },
+  { name: '베이스', english: 'Bass', desc: '리듬의 뿌리', img: bass },
+  { name: '드럼', english: 'Drum', desc: '비트를 이끄는 심장', img: drum },
+  { name: '키보드', english: 'Keyboard', desc: '사운드의 색채', img: keyboard, pos: 'object-bottom' },
 ];
 
 const timelineData = [
@@ -22,7 +27,7 @@ const timelineData = [
   { date: '12월', activity: '임원 선거\n악기수여식' },
 ];
 
-const Introduce: React.FC = () => {
+const Introduce = () => {
   const { isAuthenticated, member } = useAuth();
 
   return (
@@ -30,9 +35,11 @@ const Introduce: React.FC = () => {
       <Header />
 
       {/* 메인 챕터 */}
-      {/* TODO 이미지로 교체 등 시선 끌기 */}
-      <section className="bg-bg-light border-b border-border-light">
-        <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 text-center flex flex-col items-center">
+      <section className="relative overflow-hidden bg-bg-light border-b border-border-light">
+        <img src={introduceHero2} alt="소용돌이 메인"
+          className="absolute inset-0 w-full h-full object-cover opacity-95" />
+        <div className="absolute inset-0 bg-linear-to-r from-bg-light/40 via-bg-light/90 to-bg-light/40" />
+        <div className="relative max-w-6xl mx-auto px-6 md:px-12 py-16 text-center flex flex-col items-center">
           <span className="text-text-muted text-xs tracking-widest font-medium mb-3">
             ABOUT SYDR
           </span>
@@ -87,8 +94,8 @@ const Introduce: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-8">
             {partsData.map((part, index) => (
               <div key={index} className="rounded-lg shadow-sm overflow-hidden bg-bg-white flex flex-col border border-border-light">
-                <div className="bg-bg-dark text-center text-white py-4 px-3">
-                  <h3 className="text-base md:text-lg font-bold">{part.name}</h3>
+                <div className="bg-bg-white aspect-4/3 overflow-hidden">
+                  <img className={`transition-transform duration-300 scale-[1.01] hover:scale-105 object-cover w-full h-full ${part.pos ? part.pos : 'object-center'}`} src={part.img} alt={part.name} />
                 </div>
                 <div className="bg-bg-white flex flex-col items-center justify-center py-5 px-3 gap-1 text-center flex-1">
                   <span className="text-sm font-semibold text-text-secondary">{part.english}</span>
