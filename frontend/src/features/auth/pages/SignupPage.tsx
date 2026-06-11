@@ -24,6 +24,7 @@ function SignupPage() {
   const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError('');
+    if (form.password.length < 8) { setError('비밀번호는 8자리 이상이어야 합니다.'); return; }
     if (form.password !== form.passwordConfirm) { setError('비밀번호가 일치하지 않습니다'); return; }
     if (!agree) { setError('개인정보 수집 이용에 동의해주세요'); return; }
     setLoading(true);
@@ -138,8 +139,12 @@ function SignupPage() {
                     onChange={set('password')}
                     placeholder="8자 이상, 영문/숫자 조합"
                     required
-                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                    className={`w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border ${form.password && form.password.length < 8 ? 'border-red-300 focus:border-red-300' : ''
+                      }`}
                   />
+                  {form.password && form.password.length < 8 && (
+                    <p className="text-xs text-text-danger mt-1.5">비밀번호는 8글자 이상이어야 합니다.</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-text-secondary block mb-1.5">
@@ -151,8 +156,12 @@ function SignupPage() {
                     onChange={set('passwordConfirm')}
                     placeholder="비밀번호 확인"
                     required
-                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                    className={`w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border ${form.passwordConfirm && form.password !== form.passwordConfirm ? 'border-red-300 focus:border-red-300' : ''
+                      }`}
                   />
+                  {form.passwordConfirm && form.password !== form.passwordConfirm && (
+                    <p className="text-xs text-text-danger mt-1.5">비밀번호가 일치하지 않습니다.</p>
+                  )}
                 </div>
               </div>
 
