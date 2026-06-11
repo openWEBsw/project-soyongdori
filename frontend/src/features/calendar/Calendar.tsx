@@ -1,6 +1,7 @@
 // https://velog.io/@sohyun32253/FullCalendar-%EC%82%AC%EC%9A%A9%EB%B2%95-feat.-react-typescript
 
-import { useState, useCallback, useRef, FormEvent } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import type { SubmitEvent } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -154,7 +155,7 @@ function Calendar() {
     const readOnly = modalMode === 'edit' && !canEdit;
 
     // 생성/수정 폼 제출 → POST 또는 PATCH
-    const submit = async (e: FormEvent) => {
+    const submit = async (e: SubmitEvent) => {
         e.preventDefault();
         if (!form.title || !form.startAt) {
             setError('제목과 시작일은 필수입니다');
@@ -258,6 +259,7 @@ function Calendar() {
                         )}
                     </div>
 
+                    {/* 에러 메시지 */}
                     {error && !modalMode && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">
                             {error}
@@ -295,6 +297,7 @@ function Calendar() {
                 </div>
             </main>
 
+            {/* 일정 추가/수정 모달 */}
             {modalMode && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -304,6 +307,7 @@ function Calendar() {
                         className="bg-bg-white rounded-lg shadow-xl w-full max-w-lg border border-border-light max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* 모달 헤더 */}
                         <div className="px-6 py-4 border-b border-border-light flex items-center justify-between">
                             <h2 className="text-lg font-bold text-text-title">
                                 {modalMode === 'create' ? '일정 추가' : readOnly ? '일정 상세' : '일정 수정'}
@@ -318,6 +322,7 @@ function Calendar() {
                             </button>
                         </div>
 
+                        {/* 일정 입력 폼 */}
                         <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-4">
                             {error && (
                                 <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">
