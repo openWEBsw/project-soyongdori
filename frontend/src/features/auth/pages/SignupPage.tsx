@@ -204,8 +204,9 @@ function SignupPage() {
                   <input
                     type="tel"
                     value={form.phone}
-                    onChange={set('phone')}
+                    onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value.replace(/\D/g, '') }))}
                     placeholder="010-0000-0000"
+                    maxLength={11}
                     required
                     className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
                   />
