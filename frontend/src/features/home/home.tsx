@@ -56,15 +56,20 @@ const heroHighlights = [
     { label: '정기 합주', value: '매주 화·수 18:00' },
 ];
 
-// 동아리실 위치 
+// 동아리실 위치
 const clubLocation = {
     name: '충북대학교 제2학생회관 101호',
     roadAddress: '충북 청주시 서원구 성봉로242번길 57',
     mapUrl: 'https://naver.me/x3HduAZg',
-    // OpenStreetMap 
+    lat: 36.6279934,
+    lng: 127.4542997,
+    // 네이버 지도 키 없을 때 대체용 OpenStreetMap
     embedUrl:
         'https://www.openstreetmap.org/export/embed.html?bbox=127.4502997%2C36.6249934%2C127.4582997%2C36.6309934&layer=mapnik&marker=36.6279934%2C127.4542997',
 };
+
+// 네이버 지도 클라이언트 키 (네이버 클라우드 플랫폼에서 발급)
+const naverMapKey = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
 
 function Home() {
     const { isAuthenticated, member } = useAuth();
@@ -80,6 +85,18 @@ function Home() {
             setHeroIndex((i) => (i + 1) % heroImages.length);
         }, HERO_INTERVAL_MS);
         return () => clearInterval(id);
+    }, []);
+
+    // 네이버 지도 그리기 (index.html에서 로드된 naver 객체 사용)
+    useEffect(() => {
+        const { naver } = window as any;
+        if (!naverMapKey || !naver) return;
+        const center = new naver.maps.LatLng(clubLocation.lat, clubLocation.lng);
+        const map = new naver.maps.Map('club-map', {
+            center,
+            zoom: 16,
+        });
+        new naver.maps.Marker({ position: center, map });
     }, []);
 
     // 홈 화면 데이터 가져오기
@@ -296,13 +313,17 @@ function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* 지도 */}
+                        {/* 지도 (네이버 지도, 키 없으면 OSM) */}
                         <div className="border border-border-light rounded-lg overflow-hidden bg-bg-white">
-                            <iframe
-                                title="동아리실 위치"
-                                src={clubLocation.embedUrl}
-                                className="w-full h-64 border-0"
-                            />
+                            {naverMapKey ? (
+                                <div id="club-map" className="w-full h-64" />
+                            ) : (
+                                <iframe
+                                    title="동아리실 위치"
+                                    src={clubLocation.embedUrl}
+                                    className="w-full h-64 border-0"
+                                />
+                            )}
                         </div>
                         {/* 정보 */}
                         <div className="border border-border-light rounded-lg p-6 flex flex-col gap-1 bg-bg-white">

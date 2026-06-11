@@ -1,0 +1,8 @@
+DATABASE_URL="mysql://user:userpassword@host:3306/database"
+
+JWT_SECRET=abcdefg
+JWT_REFRESH_SECRET=abcdefg
+JWT_ACCESS_EXPIRE=nnm
+JWT_REFRESH_EXPIRE=nd
+
+GEMINI_API_KEY=abcdefg
