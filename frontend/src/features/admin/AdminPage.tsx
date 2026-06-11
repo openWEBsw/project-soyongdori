@@ -217,6 +217,7 @@ function AdminPage() {
                                         <option value="active">활성</option>
                                         <option value="inactive">비활성</option>
                                     </select>
+                                    {/* 검색 버튼
                                     <button
                                         type="button"
                                         onClick={fetchMembers}
@@ -224,6 +225,7 @@ function AdminPage() {
                                     >
                                         검색
                                     </button>
+                                    */}
                                 </div>
                             </div>
 
