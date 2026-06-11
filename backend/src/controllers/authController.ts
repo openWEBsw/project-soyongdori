@@ -6,7 +6,6 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 
 //회원가입
 export const signup = async (req: Request, res: Response) => {
-  console.log('signup called', req.body);
   const { email, password, name, studentId, phone, department } = req.body;
 
   if (!email || !password || !name) {
