@@ -87,7 +87,7 @@ function Home() {
         return () => clearInterval(id);
     }, []);
 
-    // 네이버 지도 그리기 (index.html에서 로드된 naver 객체 사용)
+    // 네이버 지도 그리기 (index.html에서 로드)
     useEffect(() => {
         const { naver } = window as any;
         if (!naverMapKey || !naver) return;
@@ -95,6 +95,7 @@ function Home() {
         const map = new naver.maps.Map('club-map', {
             center,
             zoom: 16,
+            scaleControl: false,
         });
         new naver.maps.Marker({ position: center, map });
     }, []);
