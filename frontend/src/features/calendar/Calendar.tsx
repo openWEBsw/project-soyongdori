@@ -13,6 +13,7 @@ import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
 import { positionToLevel } from '../../lib/permission';
 import api from '../../lib/api';
+import calendarBg from '../../assets/calendar_bg.jpeg';
 
 // 타입 정의: 백엔드 응답 형태와 모달 폼 상태
 type Visibility = 'personal' | 'group' | 'public';
@@ -225,8 +226,10 @@ function Calendar() {
             <Header />
 
             {/* 페이지 헤더 */}
-            <section className="bg-bg-light border-b border-border-light">
-                <div className="max-w-6xl mx-auto px-6 md:px-12 py-12 text-center flex flex-col items-center">
+            <section className="relative bg-bg-light border-b border-border-light overflow-hidden">
+                <img src={calendarBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-l from-white via-white/90 to-transparent" />
+                <div className="relative max-w-6xl mx-auto px-6 md:px-12 py-24 text-center flex flex-col items-center">
                     <span className="text-text-muted text-xs tracking-widest font-medium uppercase mb-3">
                         Calendar
                     </span>
