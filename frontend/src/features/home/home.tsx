@@ -8,8 +8,9 @@ import hero1 from '../../assets/hero_1.jpeg';
 import hero2 from '../../assets/hero_2.jpeg';
 import hero3 from '../../assets/hero_3.jpeg';
 import hero4 from '../../assets/hero_4.jpeg';
+import hero5 from '../../assets/hero_5.jpeg';
 
-const heroImages = [hero1, hero2, hero3, hero4];
+const heroImages = [hero1, hero2, hero3, hero4, hero5];
 const HERO_INTERVAL_MS = 5000;
 
 // 현재 연도 기준으로 년수 계산
