@@ -97,6 +97,12 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
   const requestedPosition = req.body?.position;
   const position = VALID_POSITIONS.includes(requestedPosition) ? requestedPosition : 'member';
 
+  // 기수
+  const requestedCohort = Number(req.body?.cohort);
+  const cohort = Number.isInteger(requestedCohort) && requestedCohort > 0
+    ? requestedCohort
+    : new Date().getFullYear() - 1977;
+
   try {
     const app = await prisma.joinApplication.findUnique({
       where: { id: appId },
@@ -117,9 +123,9 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
       }),
       ...(app.member
         ? [prisma.member.update({
-            where: { id: app.member.id },
-            data: { status: 'active', approvedAt: now, position },
-          })]
+          where: { id: app.member.id },
+          data: { status: 'active', approvedAt: now, position, cohort },
+        })]
         : []),
     ]);
 
@@ -155,9 +161,9 @@ export const rejectApplication = async (req: AuthRequest, res: Response) => {
       }),
       ...(app.member
         ? [prisma.member.update({
-            where: { id: app.member.id },
-            data: { status: 'inactive' },
-          })]
+          where: { id: app.member.id },
+          data: { status: 'inactive' },
+        })]
         : []),
     ]);
 

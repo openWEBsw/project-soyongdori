@@ -56,7 +56,7 @@ function SignupPage() {
       {/* 메인 2컬럼 */}
       <div className="flex flex-1 flex-col md:flex-row">
         {/* 좌측: 안내 */}
-        <div className="relative bg-bg-light flex-1 flex flex-col justify-between px-8 md:px-16 py-12 md:py-20 overflow-hidden">
+        <div className="relative bg-bg-light flex-1 flex flex-col justify-between items-end text-right px-8 md:px-16 py-12 md:py-20 overflow-hidden">
           <img src={signupBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-l from-white via-white/90 to-transparent" />
 
@@ -80,7 +80,7 @@ function SignupPage() {
               </span>
               <div className="mt-4 flex flex-col gap-5">
                 {processSteps.map((s) => (
-                  <div key={s.step} className="flex items-start gap-4">
+                  <div key={s.step} className="flex flex-row-reverse items-start gap-4">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${s.active
                         ? 'bg-btn-primary-bg text-btn-primary-text'
@@ -105,7 +105,7 @@ function SignupPage() {
         </div>
 
         {/* 우측: 회원가입 폼 */}
-        <div className="bg-bg-white flex-[3] flex items-start justify-center px-8 md:px-16 py-12 md:py-20 overflow-y-auto">
+        <div className="bg-bg-white flex-[3] flex items-center justify-center px-8 md:px-16 py-12 md:py-20 overflow-y-auto">
           <div className="w-full max-w-lg">
             <span className="text-text-muted text-xs tracking-widest font-medium uppercase">
               Sign Up

@@ -61,6 +61,10 @@ function AdminPage() {
     // 승인 시 선택할 직책 (appId -> position)
     const [approvePositions, setApprovePositions] = useState<Record<string, string>>({});
 
+    // 승인 시 부여할 기수 (appId -> cohort)
+    const DEFAULT_COHORT = new Date().getFullYear() - 1977;
+    const [approveCohorts, setApproveCohorts] = useState<Record<string, string>>({});
+
     const [error, setError] = useState<string | null>(null);
 
     // 회원 조회
@@ -129,9 +133,10 @@ function AdminPage() {
     const approve = async (id: string) => {
         const position = approvePositions[id] || 'member';
         const posLabel = POSITION_LABELS[position] ?? position;
-        if (!window.confirm(`이 신청을 승인하시겠습니까?\n부여 직책: ${posLabel}`)) return;
+        const cohort = Number(approveCohorts[id] ?? DEFAULT_COHORT);
+        if (!window.confirm(`이 신청을 승인하시겠습니까?\n부여 직책: ${posLabel}\n기수: ${cohort}기`)) return;
         try {
-            await api.post(`/admin/applications/${id}/approve`, { position });
+            await api.post(`/admin/applications/${id}/approve`, { position, cohort });
             fetchApps();
         } catch (e: any) {
             alert(e.response?.data?.error?.message || '승인 실패');
@@ -399,6 +404,16 @@ function AdminPage() {
                                                                 <option key={p} value={p}>{POSITION_LABELS[p]}</option>
                                                             ))}
                                                         </select>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-xs text-text-muted font-medium">기수</label>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            value={approveCohorts[a.id] ?? DEFAULT_COHORT}
+                                                            onChange={(e) => setApproveCohorts(prev => ({ ...prev, [a.id]: e.target.value }))}
+                                                            className="text-xs border border-border-light rounded px-2 py-1"
+                                                        />
                                                     </div>
                                                     <button
                                                         type="button"

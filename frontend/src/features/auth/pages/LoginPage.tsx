@@ -41,7 +41,7 @@ function LoginPage() {
       {/* 메인 2컬럼 */}
       <div className="flex flex-1 flex-col md:flex-row">
         {/* 좌측: 환영 메시지 */}
-        <div className="relative bg-bg-light flex-1 flex flex-col justify-between px-8 md:px-16 py-12 md:py-20 overflow-hidden">
+        <div className="relative bg-bg-light flex-1 flex flex-col justify-between items-end text-right px-8 md:px-16 py-12 md:py-20 overflow-hidden">
           <img src={loginBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-l from-white via-white/90 to-transparent" />
 
