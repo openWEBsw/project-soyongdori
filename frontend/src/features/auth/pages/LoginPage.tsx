@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -6,21 +6,23 @@ import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
 import loginBg from '../../../assets/login_bg.png';
 
-function LoginPage() {
+const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // 폼 상태
+  const [form, setForm] = useState({ email: '', password: '' });
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: { preventDefault(): void }) => {
+  // 로그인 요청
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email: form.email, password: form.password });
       const { token, member } = res.data.data;
       login(token, member);
       navigate('/home');
@@ -82,8 +84,8 @@ function LoginPage() {
                 </label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  value={form.email}
+                  onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="your@email.com"
                   required
                   className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
@@ -97,8 +99,8 @@ function LoginPage() {
                 </label>
                 <input
                   type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  value={form.password}
+                  onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="비밀번호를 입력하세요"
                   required
                   className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
@@ -111,7 +113,7 @@ function LoginPage() {
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 border border-border-dark rounded accent-bg-dark"
                   />
                   <span className="text-xs text-text-secondary">로그인 상태 유지</span>
@@ -154,6 +156,6 @@ function LoginPage() {
       <Footer />
     </div>
   );
-}
+};
 
 export default LoginPage;
