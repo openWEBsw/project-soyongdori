@@ -38,6 +38,7 @@ interface ApplicationRow {
 }
 
 const POSITION_OPTIONS = ['member', 'planning_member', 'planning_lead', 'treasurer', 'vice_leader', 'leader'];
+const PAGE_SIZE = 30;
 
 type Tab = 'members' | 'applications';
 
@@ -52,11 +53,13 @@ function AdminPage() {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [membersLoading, setMembersLoading] = useState(false);
+    const [memberPage, setMemberPage] = useState(1);
 
     // ---- 신청 관리 상태 ----
     const [apps, setApps] = useState<ApplicationRow[]>([]);
     const [appStatusFilter, setAppStatusFilter] = useState<string>('pending');
     const [appsLoading, setAppsLoading] = useState(false);
+    const [appPage, setAppPage] = useState(1);
 
     // 승인 시 선택할 직책 (appId -> position)
     const [approvePositions, setApprovePositions] = useState<Record<string, string>>({});
@@ -103,6 +106,16 @@ function AdminPage() {
         if (tab === 'members') fetchMembers();
         else fetchApps();
     }, [tab, fetchMembers, fetchApps]);
+
+    // 필터 바뀌면 페이지 초기화
+    useEffect(() => { setMemberPage(1); }, [search, statusFilter]);
+    useEffect(() => { setAppPage(1); }, [appStatusFilter]);
+
+    // 페이징 슬라이스
+    const totalMemberPages = Math.max(1, Math.ceil(members.length / PAGE_SIZE));
+    const pagedMembers = members.slice((memberPage - 1) * PAGE_SIZE, memberPage * PAGE_SIZE);
+    const totalAppPages = Math.max(1, Math.ceil(apps.length / PAGE_SIZE));
+    const pagedApps = apps.slice((appPage - 1) * PAGE_SIZE, appPage * PAGE_SIZE);
 
     // ---- 회원 액션 ----
     const changePosition = async (id: string, newPosition: string) => {
@@ -260,7 +273,7 @@ function AdminPage() {
                                         {!membersLoading && members.length === 0 && (
                                             <tr><td colSpan={7} className="px-4 py-8 text-center text-text-muted">검색 결과가 없습니다.</td></tr>
                                         )}
-                                        {!membersLoading && members.map((m) => {
+                                        {!membersLoading && pagedMembers.map((m) => {
                                             const editable = canEditMember(m);
                                             return (
                                                 <tr key={m.id} className="border-t border-border-light hover:bg-bg-light/40">
@@ -311,6 +324,23 @@ function AdminPage() {
                                     </tbody>
                                 </table>
                             </div>
+                            {totalMemberPages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-6">
+                                    {Array.from({ length: totalMemberPages }, (_, i) => i + 1).map(p => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setMemberPage(p)}
+                                            className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === memberPage
+                                                ? 'border border-border-light bg-bg-deep text-text-primary'
+                                                : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                                                }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -338,7 +368,7 @@ function AdminPage() {
                                 {!appsLoading && apps.length === 0 && (
                                     <div className="py-8 text-center text-text-muted">해당 상태의 신청이 없습니다.</div>
                                 )}
-                                {!appsLoading && apps.map((a) => (
+                                {!appsLoading && pagedApps.map((a) => (
                                     <div key={a.id} className="border border-border-light rounded-lg p-5 bg-bg-white">
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex-1">
@@ -435,6 +465,23 @@ function AdminPage() {
                                     </div>
                                 ))}
                             </div>
+                            {totalAppPages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-6">
+                                    {Array.from({ length: totalAppPages }, (_, i) => i + 1).map(p => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setAppPage(p)}
+                                            className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === appPage
+                                                ? 'border border-border-light bg-bg-deep text-text-primary'
+                                                : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                                                }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
