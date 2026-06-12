@@ -11,6 +11,9 @@ type Position = typeof VALID_POSITIONS[number];
 const VALID_STATUSES = ['pending', 'active', 'inactive'] as const;
 type Status = typeof VALID_STATUSES[number];
 
+const VALID_PARTS = ['vocal', 'drum', 'electric', 'keyboard', 'bass', 'etc'] as const;
+type Part = typeof VALID_PARTS[number];
+
 // 회원 목록 조회
 export const listMembers = async (params: {
     search: string;
@@ -66,6 +69,60 @@ export const updatePosition = async (params: {
         where: { id: targetId },
         data: { position: position as Position },
         select: { id: true, name: true, position: true, status: true },
+    });
+};
+
+// 파트 변경
+export const updatePart = async (params: {
+    targetId: bigint;
+    part: string;
+    myLevel: number;
+}) => {
+    const { targetId, part, myLevel } = params;
+
+    if (!part || !VALID_PARTS.includes(part as Part)) {
+        throw new ServiceError(400, 'VALIDATION_ERROR', '잘못된 파트입니다.');
+    }
+
+    const target = await prisma.member.findUnique({
+        where: { id: targetId },
+        select: { id: true, position: true },
+    });
+    if (!target) throw new ServiceError(404, 'NOT_FOUND', '회원을 찾을 수 없습니다.');
+    if (positionToLevel(target.position) >= myLevel)
+        throw new ServiceError(403, 'FORBIDDEN', '자기 이상 직책의 회원은 변경할 수 없습니다.');
+
+    return prisma.member.update({
+        where: { id: targetId },
+        data: { part: part as Part },
+        select: { id: true, name: true, part: true },
+    });
+};
+
+// 기수 변경
+export const updateCohort = async (params: {
+    targetId: bigint;
+    cohort: number;
+    myLevel: number;
+}) => {
+    const { targetId, cohort, myLevel } = params;
+
+    if (!Number.isInteger(cohort) || cohort < 1) {
+        throw new ServiceError(400, 'VALIDATION_ERROR', '잘못된 기수입니다.');
+    }
+
+    const target = await prisma.member.findUnique({
+        where: { id: targetId },
+        select: { id: true, position: true },
+    });
+    if (!target) throw new ServiceError(404, 'NOT_FOUND', '회원을 찾을 수 없습니다.');
+    if (positionToLevel(target.position) >= myLevel)
+        throw new ServiceError(403, 'FORBIDDEN', '자기 이상 직책의 회원은 변경할 수 없습니다.');
+
+    return prisma.member.update({
+        where: { id: targetId },
+        data: { cohort },
+        select: { id: true, name: true, cohort: true },
     });
 };
 

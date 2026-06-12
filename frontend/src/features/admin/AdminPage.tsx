@@ -142,6 +142,31 @@ function AdminPage() {
         }
     };
 
+    const changePart = async (id: string, newPart: string) => {
+        const partLabel = partNames[newPart] ?? newPart;
+        if (!window.confirm(`파트를 ${partLabel}(으)로 변경하시겠습니까?`)) return;
+        try {
+            await api.patch(`/admin/member/${id}/part`, { part: newPart });
+            fetchMembers();
+            alert('변경되었습니다.');
+        } catch (e: any) {
+            alert(e.response?.data?.error?.message || '파트 변경 실패');
+        }
+    };
+
+    const changeCohort = async (id: string, newCohort: string) => {
+        const cohort = Number(newCohort);
+        if (!cohort || cohort < 1) return;
+        if (!window.confirm(`기수를 ${cohort}기로 변경하시겠습니까?`)) return;
+        try {
+            await api.patch(`/admin/member/${id}/cohort`, { cohort });
+            fetchMembers();
+            alert('변경되었습니다.');
+        } catch (e: any) {
+            alert(e.response?.data?.error?.message || '기수 변경 실패');
+        }
+    };
+
     // ---- 신청 액션 ----
     const approve = async (id: string) => {
         const position = approvePositions[id] || 'member';
@@ -294,7 +319,7 @@ function AdminPage() {
                                                     <td className="px-4 py-3 text-text-secondary">{m.part ? (partNames[m.part] ?? m.part) : '-'}</td>
                                                     <td className="px-4 py-3 text-right">
                                                         {editable ? (
-                                                            <div className="inline-flex items-center gap-2">
+                                                            <div className="inline-flex flex-wrap items-center gap-2 justify-end">
                                                                 <select
                                                                     value={m.position ?? ''}
                                                                     onChange={(e) => changePosition(m.id, e.target.value)}
@@ -306,6 +331,28 @@ function AdminPage() {
                                                                         <option key={p} value={p}>{POSITION_LABELS[p]}</option>
                                                                     ))}
                                                                 </select>
+                                                                <select
+                                                                    value={m.part ?? ''}
+                                                                    onChange={(e) => changePart(m.id, e.target.value)}
+                                                                    className="text-xs border border-border-light rounded px-2 py-1 cursor-pointer"
+                                                                >
+                                                                    <option value="">파트 선택</option>
+                                                                    {Object.entries(partNames).map(([val, label]) => (
+                                                                        <option key={val} value={val}>{label}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <input
+                                                                    type="number"
+                                                                    min={1}
+                                                                    defaultValue={m.cohort ?? ''}
+                                                                    placeholder="기수"
+                                                                    onBlur={(e) => {
+                                                                        if (e.target.value && Number(e.target.value) !== m.cohort) {
+                                                                            changeCohort(m.id, e.target.value);
+                                                                        }
+                                                                    }}
+                                                                    className="text-xs border border-border-light rounded px-2 py-1 w-14"
+                                                                />
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => toggleStatus(m.id, m.status)}
