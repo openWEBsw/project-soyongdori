@@ -34,8 +34,10 @@ function BoardWritePage() {
 
   // 영수증 분석 관련 js 부분
   // 영수증 분석 관련 로직
-  const [analyzerResult, setAnalyzerResult] = useState('영수증을 모두 첨부한 후 분석 버튼을 눌러주세요. \n결과가 출력되면 복사하여 사용해주세요.');
+  const [analyzerResult, setAnalyzerResult] = useState('');
   const [isReceiptAnalyzerOpen, setIsReceiptAnalyzerOpen] = useState(false);
+  const [isReceiptLoading, setIsReceiptLoading] = useState(false);
+  const [isReceiptError, setIsReceiptError] = useState(false);
 
   const handleReceiptAnalyzer = () => {
     setIsReceiptAnalyzerOpen(true);
@@ -158,10 +160,20 @@ function BoardWritePage() {
 
           {/* 첨부파일 */}
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-2">
-              첨부파일
-              <span className="text-xs text-text-muted font-normal ml-2">최대 {MAX_FILES}개 · 파일당 10MB 이하</span>
-            </label>
+            <div className="flex justify-between items-center text-xs font-semibold text-text-secondary mb-2">
+              <div>
+                <span>첨부파일</span>
+                <span className="text-xs text-text-muted font-normal ml-2">최대 {MAX_FILES}개 · 파일당 10MB 이하</span>
+              </div>
+              {selectedBoard === 'budget' && canWriteBoard('budget', member) && (
+                <button
+                  onClick={handleReceiptAnalyzer}
+                  className="px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded-lg text-xs font-bold hover:opacity-90 cursor-pointer"
+                >
+                  영수증 분석
+                </button>
+              )}
+            </div>
 
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -230,15 +242,7 @@ function BoardWritePage() {
 
 
           </button>
-          {selectedBoard === 'budget' && canWriteBoard('budget', member) && (
-            <button
-              onClick={handleReceiptAnalyzer}
-              className="px-4 py-2 bg-bg-dark text-white rounded text-xs font-bold hover:opacity-90 cursor-pointer"
-            >
-              영수증 분석
-            </button>
-          )}
-          {isReceiptAnalyzerOpen && (<ReceiptAnalyzer isOpen={isReceiptAnalyzerOpen} onClose={handleReceiptAnalyzerClose} files={files} analyzeResult={analyzerResult} setAnalyzerResult={setAnalyzerResult} />)}
+          {isReceiptAnalyzerOpen && (<ReceiptAnalyzer isOpen={isReceiptAnalyzerOpen} onClose={handleReceiptAnalyzerClose} files={files} analyzeResult={analyzerResult} setAnalyzerResult={setAnalyzerResult} isLoading={isReceiptLoading} setIsLoading={setIsReceiptLoading} isError={isReceiptError} setIsError={setIsReceiptError} />)}
         </div>
       </div>
       <Footer />

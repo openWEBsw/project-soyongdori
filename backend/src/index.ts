@@ -26,10 +26,10 @@ app.use(cookieParser());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log(`${req.method} ${req.path}`);
+//   next();
+// });
 
 // 정적 파일 서빙
 const publicPath = path.join(__dirname, '../public');
