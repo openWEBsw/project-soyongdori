@@ -709,6 +709,7 @@ const Profile = () => {
                 <input
                   type="email"
                   required
+                  placeholder="your@email.com"
                   value={editForm.email}
                   onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
@@ -720,7 +721,8 @@ const Profile = () => {
                   type="text"
                   required
                   value={editForm.phone}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder='01000000000'
+                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value.replace(/\D/g, '') }))}
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />
               </div>
@@ -730,6 +732,7 @@ const Profile = () => {
                   type="text"
                   required
                   value={editForm.department}
+                  placeholder="소프트웨어학과"
                   onChange={(e) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />
