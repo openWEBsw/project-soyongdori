@@ -114,11 +114,24 @@ const Home = () => {
             .then((res) => setEvents(res.data.data.slice(0, 2)));
     }, []);
 
+    // 통계 숫자 올라감
+    const [countUp, setCountUp] = useState(0);
+    useEffect(() => {
+        setCountUp(0);
+        let frame = 0;
+        const id = setInterval(() => {
+            frame += 1;
+            setCountUp(frame / 30);
+            if (frame >= 30) clearInterval(id);
+        }, 30);
+        return () => clearInterval(id);
+    }, [memberCount]);
+
     // 통계
     const statsData = [
-        { value: `${clubYears}`, label: 'YEARS' },
-        { value: '5', label: 'PARTS' },
-        { value: `${memberCount}`, label: 'MEMBERS' },
+        { value: `${Math.round(clubYears * countUp)}`, label: 'YEARS' },
+        { value: `${Math.round(5 * countUp)}`, label: 'PARTS' },
+        { value: `${Math.round(memberCount * countUp)}`, label: 'MEMBERS' },
     ];
 
     return (
@@ -133,7 +146,7 @@ const Home = () => {
                         key={i}
                         src={src}
                         alt={`소용돌이 ${i + 1}`}
-                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIndex ? 'opacity-100' : 'opacity-0'
+                        className={`absolute inset-0 w-full h-full object-cover [transition:opacity_1s,scale_6s] ${i === heroIndex ? 'opacity-100 scale-120' : 'opacity-0 scale-100'
                             }`}
                     />
                 ))}
@@ -172,14 +185,14 @@ const Home = () => {
                             {!(isAuthenticated && member?.status === 'active') && (
                                 <Link
                                     to="/apply"
-                                    className="bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 transition duration-500"
+                                    className="group bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                                 >
-                                    입부 신청 →
+                                    입부 신청 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                                 </Link>
                             )}
                             <Link
                                 to="/introduce"
-                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light hover:scale-115 transition duration-500"
+                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light hover:scale-115 active:scale-95 transition duration-500"
                             >
                                 소개 보기
                             </Link>
@@ -213,9 +226,9 @@ const Home = () => {
                         </div>
                         <Link
                             to="/boards/notice"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 transition duration-500"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            전체보기 →
+                            전체보기 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
 
@@ -258,9 +271,9 @@ const Home = () => {
                         </div>
                         <Link
                             to="/calendar"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 transition duration-500"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            캘린더 →
+                            캘린더 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
 
@@ -309,9 +322,9 @@ const Home = () => {
                         <a
                             href={clubLocation.mapUrl}
                             target="_blank"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 transition duration-500"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            네이버 지도 →
+                            네이버 지도 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </a>
                     </div>
 
@@ -346,9 +359,9 @@ const Home = () => {
                         </h2>
                         <Link
                             to="/apply"
-                            className="bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 transition duration-500 whitespace-nowrap"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500 whitespace-nowrap"
                         >
-                            입부 신청하기 →
+                            입부 신청하기 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
                 </section>
