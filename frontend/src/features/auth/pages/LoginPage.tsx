@@ -134,7 +134,7 @@ const LoginPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90 hover:scale-105 duration-500'}`}
+                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity transition-transform ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90 hover:scale-105 duration-500'}`}
               >
                 {loading ? '로그인 중...' : '로그인 →'}
               </button>
