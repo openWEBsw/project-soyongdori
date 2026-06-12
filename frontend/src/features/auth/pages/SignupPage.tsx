@@ -17,7 +17,7 @@ const SignupPage = () => {
   const navigate = useNavigate();
 
   // 폼 상태
-  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '', studentId: '', phone: '', department: '' });
+  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '', studentId: '', phone: '', department: '', birthday: '' });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,6 +38,7 @@ const SignupPage = () => {
         studentId: form.studentId || undefined,
         phone: form.phone || undefined,
         department: form.department || undefined,
+        birthday: form.birthday || undefined,
       });
       navigate('/login', { state: { signed: true } });
     } catch (err: any) {
@@ -81,7 +82,7 @@ const SignupPage = () => {
               </span>
               <div className="mt-4 flex flex-col gap-5">
                 {processSteps.map((s) => (
-                  <div key={s.step} className="flex flex-row-reverse items-start gap-4">
+                  <div key={s.step} className="flex flex-row-reverse items-start gap-4 hover:scale-110 duration-500">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${s.active
                         ? 'bg-btn-primary-bg text-btn-primary-text'
@@ -201,7 +202,7 @@ const SignupPage = () => {
               </div>
 
               {/* 전화번호 + 학과 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="text-xs font-semibold text-text-secondary block mb-1.5">
                     전화번호 <span className="text-text-danger">*</span>
@@ -230,6 +231,21 @@ const SignupPage = () => {
                 </div>
               </div>
 
+              {/* 생일 */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1.5">
+                    생일
+                  </label>
+                  <input
+                    type="date"
+                    value={form.birthday}
+                    onChange={(e) => setForm(prev => ({ ...prev, birthday: e.target.value }))}
+                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border cursor-pointer"
+                  />
+                </div>
+              </div>
+
               {/* 개인정보 동의 */}
               <div className="flex items-center justify-between mb-6 border-t border-border-light pt-5">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -237,7 +253,7 @@ const SignupPage = () => {
                     type="checkbox"
                     checked={agree}
                     onChange={(e) => setAgree(e.target.checked)}
-                    className="w-4 h-4 border border-border-dark rounded accent-bg-dark"
+                    className="w-4 h-4 border border-border-dark rounded accent-bg-dark cursor-pointer"
                   />
                   <span className="text-xs text-text-secondary">(필수) 개인정보 수집 이용에 동의합니다</span>
                 </label>
@@ -257,7 +273,7 @@ const SignupPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90'}`}
+                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90 hover:scale-102 duration-550'}`}
               >
                 {loading ? '처리 중...' : '회원가입 →'}
               </button>

@@ -172,14 +172,14 @@ const Home = () => {
                             {!(isAuthenticated && member?.status === 'active') && (
                                 <Link
                                     to="/apply"
-                                    className="bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity"
+                                    className="bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 transition duration-500"
                                 >
                                     입부 신청 →
                                 </Link>
                             )}
                             <Link
                                 to="/introduce"
-                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light transition-colors"
+                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light hover:scale-115 transition duration-500"
                             >
                                 소개 보기
                             </Link>
@@ -190,10 +190,10 @@ const Home = () => {
                             {statsData.map((stat, index) => (
                                 <div
                                     key={index}
-                                    className="border border-border-light rounded-lg px-5 py-3 text-center bg-white/70 backdrop-blur-sm"
+                                    className="border border-border-light rounded-lg px-5 py-3 text-center bg-white/70 backdrop-blur-sm hover:scale-115 transition duration-500"
                                 >
-                                    <span className="text-xl font-black text-text-title block">{stat.value}</span>
-                                    <span className="text-xs font-medium text-text-muted tracking-wider">{stat.label}</span>
+                                    <span className="text-xl font-black text-text-title block hover:scale-115 duration-500">{stat.value}</span>
+                                    <span className="text-xs font-medium text-text-muted tracking-wider hover:scale-115 duration-500">{stat.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -213,7 +213,7 @@ const Home = () => {
                         </div>
                         <Link
                             to="/boards/notice"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 transition duration-500"
                         >
                             전체보기 →
                         </Link>
@@ -226,7 +226,7 @@ const Home = () => {
                             <Link
                                 key={notice.id}
                                 to={`/posts/${notice.id}`}
-                                className="bg-bg-white border border-border-light rounded-lg p-6 flex flex-col gap-3 hover:shadow-sm transition-shadow"
+                                className="bg-bg-white border border-border-light rounded-lg p-6 flex flex-col gap-3 hover:shadow-sm hover:scale-108 transition duration-500"
                             >
                                 <span className="text-xs font-bold px-2.5 py-1 rounded self-start bg-bg-light text-text-secondary">
                                     공지
@@ -258,7 +258,7 @@ const Home = () => {
                         </div>
                         <Link
                             to="/calendar"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 transition duration-500"
                         >
                             캘린더 →
                         </Link>
@@ -271,7 +271,7 @@ const Home = () => {
                             <Link
                                 to="/calendar"
                                 key={event.id}
-                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white hover:shadow-sm transition-shadow"
+                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white hover:shadow-sm hover:scale-105 transition duration-500"
                             >
                                 {/* 날짜 */}
                                 <div className="flex flex-col items-center justify-center min-w-[72px] border-r border-border-light pr-6">
@@ -309,7 +309,7 @@ const Home = () => {
                         <a
                             href={clubLocation.mapUrl}
                             target="_blank"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 transition duration-500"
                         >
                             네이버 지도 →
                         </a>
@@ -346,7 +346,7 @@ const Home = () => {
                         </h2>
                         <Link
                             to="/apply"
-                            className="bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
+                            className="bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 transition duration-500 whitespace-nowrap"
                         >
                             입부 신청하기 →
                         </Link>
