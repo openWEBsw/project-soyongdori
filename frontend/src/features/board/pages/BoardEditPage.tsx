@@ -22,7 +22,7 @@ interface ExistingAttachment {
 }
 
 const MAX_SIZE = 10 * 1024 * 1024;
-const MAX_FILES = 5;
+const MAX_FILES = 20;
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
@@ -90,6 +90,7 @@ function BoardEditPage() {
   const handleSubmit = async () => {
     if (!title.trim()) { setError('제목을 입력해주세요'); return; }
     if (!content.trim()) { setError('내용을 입력해주세요'); return; }
+    if (!confirm('게시글을 저장하시겠습니까?')) return;
     setError('');
     setSaving(true);
     try {

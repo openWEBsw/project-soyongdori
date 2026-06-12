@@ -4,7 +4,7 @@ export const positionToLevel = (position?: string | null): number => {
         case 'super_admin': return 8;
         case 'leader': return 7;
         case 'vice_leader': return 6;
-        case 'treasurer': return 6;
+        case 'treasurer': return 5;
         case 'planning_lead': return 5;
         case 'planning_member': return 4;
         case 'member': return 1;

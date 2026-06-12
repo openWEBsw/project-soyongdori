@@ -19,7 +19,7 @@ router.use(authenticate);
 
 router.get('/members', requireLevel(5), listMembers);
 router.patch('/member/:id/position', requireLevel(6), updatePosition);
-router.patch('/member/:id/status', requireLevel(6), updateStatus);
+router.patch('/member/:id/status', requireLevel(5), updateStatus);
 
 router.get('/applications', requireLevel(6), listApplications);
 router.post('/applications/:id/approve', requireLevel(6), approveApplication);

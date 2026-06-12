@@ -45,7 +45,7 @@ function ApplicationPage() {
       <div className="min-h-screen bg-bg-light flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center bg-bg-white border border-border-light rounded-lg px-12 py-14 shadow-sm">
+          <div className="text-center bg-bg-white border border-border-light rounded-lg px-8 py-10 sm:px-12 sm:py-14 shadow-sm w-full max-w-sm">
             <CheckCircleIcon className="w-14 h-14 text-text-muted mx-auto mb-5" />
             <h2 className="text-xl font-bold text-text-title mb-2">입부신청 완료!</h2>
             <p className="text-sm text-text-muted mb-8">검토 후 승인 연락이 갈 예정입니다.</p>

@@ -4,6 +4,8 @@ import {
   MagnifyingGlassIcon,
   PencilSquareIcon,
   LockClosedIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -11,6 +13,7 @@ import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
 import { positionNames, canAccessBoard, canWriteBoard } from '../../../shared/utils/translations';
 import defaultProfileImg from '../../../assets/default_profile_image.jpg';
+import MemberDetail from '../../member/memberDetail';
 
 const boardNames: Record<string, string> = {
   notice: '공지 게시판',
@@ -27,13 +30,60 @@ interface Post {
   isNotice: boolean;
   viewCount: number;
   createdAt: string;
+  authorId: string;
   author: { name: string; part: string | null; cohort: number | null };
   _count: { comments: number };
   attachments: { filePath: string }[];
 }
 
+const PAGE_WINDOW = 10;
+
 function formatDate(iso: string) {
   return iso.slice(0, 10).replace(/-/g, '.');
+}
+
+function Pagination({ page, totalPages, onPageChange }: {
+  page: number;
+  totalPages: number;
+  onPageChange: (p: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  const half = Math.floor(PAGE_WINDOW / 2);
+  const start = Math.max(1, Math.min(page - half, totalPages - PAGE_WINDOW + 1));
+  const end = Math.min(totalPages, start + PAGE_WINDOW - 1);
+  const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+  const btnBase = 'w-8 h-8 rounded-md text-xs font-medium cursor-pointer transition-colors';
+  const active = 'bg-bg-dark text-white border border-bg-dark';
+  const inactive = 'bg-bg-white text-text-secondary border border-border-light hover:bg-bg-light';
+  const nav = 'w-8 h-8 rounded-md text-xs cursor-pointer transition-colors flex items-center justify-center border border-border-light bg-bg-white hover:bg-bg-light disabled:opacity-40 disabled:cursor-not-allowed';
+
+  return (
+    <div className="flex justify-center items-center gap-1 mt-5">
+      <button onClick={() => onPageChange(page - 1)} disabled={page === 1} className={nav}>
+        <ChevronLeftIcon className="w-4 h-4" />
+      </button>
+      {start > 1 && (
+        <>
+          <button onClick={() => onPageChange(1)} className={`${btnBase} ${inactive}`}>1</button>
+          {start > 2 && <span className="text-text-muted text-xs px-1">...</span>}
+        </>
+      )}
+      {pages.map(p => (
+        <button key={p} onClick={() => onPageChange(p)} className={`${btnBase} ${p === page ? active : inactive}`}>{p}</button>
+      ))}
+      {end < totalPages && (
+        <>
+          {end < totalPages - 1 && <span className="text-text-muted text-xs px-1">...</span>}
+          <button onClick={() => onPageChange(totalPages)} className={`${btnBase} ${inactive}`}>{totalPages}</button>
+        </>
+      )}
+      <button onClick={() => onPageChange(page + 1)} disabled={page === totalPages} className={nav}>
+        <ChevronRightIcon className="w-4 h-4" />
+      </button>
+    </div>
+  );
 }
 
 function BoardListPage() {
@@ -45,10 +95,21 @@ function BoardListPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [searchField, setSearchField] = useState('title');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [appliedSearchField, setAppliedSearchField] = useState('title');
+  const [memberModalId, setMemberModalId] = useState<string | null>(null);
 
-  useEffect(() => { setPage(1); }, [boardType]);
+  useEffect(() => {
+    setPage(1);
+    setSearch('');
+    setAppliedSearch('');
+    setAppliedSearchField('title');
+  }, [boardType]);
 
   useEffect(() => {
     if (!member && !['notice', 'free'].includes(boardType)) {
@@ -61,44 +122,49 @@ function BoardListPage() {
     }
     setLoading(true);
     setError('');
-    api.get(`/boards/${boardType}/posts?page=${page}&limit=10`)
+    const params = new URLSearchParams({ page: String(page), limit: '10' });
+    if (appliedSearch) {
+      params.set('search', appliedSearch);
+      params.set('searchField', appliedSearchField);
+    }
+    api.get(`/boards/${boardType}/posts?${params}`)
       .then(res => {
         setPosts(res.data.data.posts);
         setTotalPages(res.data.data.pagination.totalPages || 1);
+        setTotalPosts(res.data.data.pagination.total || 0);
       })
       .catch(err => {
         if (err.response?.status === 401) { logout(); navigate('/login'); }
         else setError('게시글을 불러오지 못했습니다');
       })
       .finally(() => setLoading(false));
-  }, [boardType, page]);
+  }, [boardType, page, appliedSearch, appliedSearchField]);
+
+  const handleSearch = () => {
+    setAppliedSearch(search);
+    setAppliedSearchField(searchField);
+    setPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-bg-light text-text-primary flex flex-col">
       <Header />
 
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
-        {/* 브레드크럼 */}
         <div className="text-xs text-text-muted mb-2">홈 / 게시판 / {boardName}</div>
         <h1 className="text-xl md:text-2xl font-bold text-text-title mb-4 md:mb-6">{boardName}</h1>
 
-        {/* 모바일 카테고리 탭 */}
-        <div className="md:hidden -mx-4 px-4 overflow-x-auto pb-1 mb-4">
-          <div className="flex gap-2 w-max">
+        {/* 모바일 카테고리 select */}
+        <div className="md:hidden mb-4">
+          <select
+            value={boardType}
+            onChange={e => navigate(`/boards/${e.target.value}`)}
+            className="w-full border border-border-light rounded-lg px-3 py-2.5 text-sm bg-bg-white text-text-primary outline-none cursor-pointer focus:border-border-dark transition-colors"
+          >
             {Object.entries(boardNames).map(([key, name]) => (
-              <button
-                key={key}
-                onClick={() => navigate(`/boards/${key}`)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                  boardType === key
-                    ? 'bg-bg-dark text-white'
-                    : 'bg-bg-white border border-border-light text-text-secondary'
-                }`}
-              >
-                {name}
-              </button>
+              <option key={key} value={key}>{name}</option>
             ))}
-          </div>
+          </select>
         </div>
 
         <div className="flex gap-5">
@@ -128,7 +194,7 @@ function BoardListPage() {
                 <ul className="text-xs text-text-muted space-y-1 leading-relaxed">
                   <li>공지/자유: 전체</li>
                   <li>자료/사진: 회원+</li>
-                  <li>기획부: 기획부원+</li>
+                  <li>기획부: 기획부원+/총무</li>
                   <li>동아리비: 총무+</li>
                 </ul>
               </div>
@@ -150,14 +216,32 @@ function BoardListPage() {
 
           <div className="flex-1 min-w-0">
             <div className="flex gap-2 mb-4">
+              <select
+                value={searchField}
+                onChange={e => setSearchField(e.target.value)}
+                className="border border-border-light rounded-lg px-2 py-2.5 text-xs bg-bg-white text-text-secondary outline-none cursor-pointer focus:border-border-dark transition-colors shrink-0"
+              >
+                <option value="title">제목</option>
+                <option value="content">내용</option>
+                <option value="author">작성자</option>
+              </select>
               <div className="relative flex-1">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                 <input
                   type="text"
-                  placeholder="제목 또는 내용으로 검색"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
+                  placeholder="검색어를 입력하세요"
                   className="w-full border border-border-light rounded-lg pl-9 pr-4 py-2.5 text-sm bg-bg-white text-text-primary outline-none focus:border-border-dark transition-colors"
                 />
               </div>
+              <button
+                onClick={handleSearch}
+                className="flex items-center border border-border-light bg-bg-white text-text-secondary px-3 py-2.5 rounded-lg text-sm hover:bg-bg-light transition-colors cursor-pointer whitespace-nowrap"
+              >
+                검색
+              </button>
               {canWriteBoard(boardType, member) && (
                 <button
                   onClick={() => navigate('/posts/write', { state: { boardType } })}
@@ -185,38 +269,37 @@ function BoardListPage() {
               ) : error ? (
                 <div className="text-center py-16 text-text-danger text-sm">{error}</div>
               ) : boardType === 'photo' ? (
-                /* 사진 게시판 갤러리 그리드 */
                 posts.length === 0 ? (
                   <div className="text-center py-16 text-text-muted text-sm">게시글이 없습니다</div>
                 ) : (
                   <div className="p-4 md:p-5">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
-                    {posts.map((post) => {
-                      const imgSrc = post.attachments[0]?.filePath;
-                      return (
-                        <div
-                          key={post.id}
-                          onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
-                          className="relative aspect-square overflow-hidden cursor-pointer group bg-bg-deep rounded-xl"
-                        >
-                          {imgSrc ? (
-                            <img
-                              src={imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`}
-                              alt={post.title}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-text-muted text-xs">
-                              이미지 없음
+                      {posts.map((post) => {
+                        const imgSrc = post.attachments[0]?.filePath;
+                        return (
+                          <div
+                            key={post.id}
+                            onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
+                            className="relative aspect-square overflow-hidden cursor-pointer group bg-bg-deep rounded-xl"
+                          >
+                            {imgSrc ? (
+                              <img
+                                src={imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`}
+                                alt={post.title}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-text-muted text-xs">
+                                이미지 없음
+                              </div>
+                            )}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                              <p className="text-white text-xs font-semibold truncate">{post.title}</p>
+                              <p className="text-white/70 text-[10px] mt-0.5">{post.author.name} · {formatDate(post.createdAt)}</p>
                             </div>
-                          )}
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                            <p className="text-white text-xs font-semibold truncate">{post.title}</p>
-                            <p className="text-white/70 text-[10px] mt-0.5">{post.author.name} · {formatDate(post.createdAt)}</p>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </div>
                 )
@@ -236,7 +319,7 @@ function BoardListPage() {
                           {post.isNotice ? (
                             <span className="flex-shrink-0 bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold mt-0.5">공지</span>
                           ) : (
-                            <span className="flex-shrink-0 text-[10px] text-text-muted mt-0.5 w-5 text-center">{(page - 1) * 10 + idx + 1}</span>
+                            <span className="flex-shrink-0 text-[10px] text-text-muted mt-0.5 w-5 text-center">{totalPosts - (page - 1) * 10 - idx}</span>
                           )}
                           <span className="text-sm text-text-primary leading-snug">
                             {post.title}
@@ -246,7 +329,12 @@ function BoardListPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-text-muted ml-7">
-                          <span>{post.author.name}</span>
+                          <button
+                            className="hover:underline cursor-pointer"
+                            onClick={e => { e.stopPropagation(); setMemberModalId(post.authorId); }}
+                          >
+                            {post.author.name}
+                          </button>
                           <span>·</span>
                           <span>{formatDate(post.createdAt)}</span>
                           <span>·</span>
@@ -264,8 +352,8 @@ function BoardListPage() {
                         <th className="py-3 px-4 text-left">제목</th>
                         <th className="py-3 px-4 text-center w-20">작성자</th>
                         <th className="py-3 px-4 text-center w-24">날짜</th>
-                        <th className="py-3 px-4 text-center w-12">조회</th>
-                        <th className="py-3 px-4 text-center w-12">댓글</th>
+                        <th className="py-3 px-4 text-center w-16 whitespace-nowrap">조회</th>
+                        <th className="py-3 px-4 text-center w-16 whitespace-nowrap">댓글</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -283,21 +371,22 @@ function BoardListPage() {
                         >
                           <td className="py-3.5 px-4 text-center text-xs text-text-muted">
                             {post.isNotice ? (
-                              <span className="bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold">
-                                공지
-                              </span>
-                            ) : (page - 1) * 10 + idx + 1}
+                              <span className="bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold">공지</span>
+                            ) : totalPosts - (page - 1) * 10 - idx}
                           </td>
                           <td className="py-3.5 px-4 text-text-primary">
                             {post.title}
                             {post._count.comments > 0 && (
-                              <span className="text-xs text-text-muted font-semibold ml-1.5">
-                                [{post._count.comments}]
-                              </span>
+                              <span className="text-xs text-text-muted font-semibold ml-1.5">[{post._count.comments}]</span>
                             )}
                           </td>
                           <td className="py-3.5 px-4 text-center text-xs text-text-secondary">
-                            {post.author.name}
+                            <button
+                              className="hover:underline cursor-pointer"
+                              onClick={e => { e.stopPropagation(); setMemberModalId(post.authorId); }}
+                            >
+                              {post.author.name}
+                            </button>
                           </td>
                           <td className="py-3.5 px-4 text-center text-xs text-text-muted">
                             {formatDate(post.createdAt)}
@@ -316,27 +405,18 @@ function BoardListPage() {
               )}
             </div>
 
-            {/* 페이지네이션 */}
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-1.5 mt-5">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`w-8 h-8 rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                      p === page
-                        ? 'bg-bg-dark text-white border border-bg-dark'
-                        : 'bg-bg-white text-text-secondary border border-border-light hover:bg-bg-light'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            )}
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
       </div>
+
+      {memberModalId && (
+        <MemberDetail
+          isOpen={true}
+          onClose={() => setMemberModalId(null)}
+          memberId={memberModalId}
+        />
+      )}
       <Footer />
     </div>
   );

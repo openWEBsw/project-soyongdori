@@ -45,15 +45,14 @@ function AdminPage() {
     const { member } = useAuth();
     const myLevel = positionToLevel(member?.position);
 
+    const canManageApplications = myLevel >= 6;
     const [tab, setTab] = useState<Tab>('members');
 
-    // ---- 회원 관리 상태 ----
     const [members, setMembers] = useState<MemberRow[]>([]);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [membersLoading, setMembersLoading] = useState(false);
 
-    // ---- 신청 관리 상태 ----
     const [apps, setApps] = useState<ApplicationRow[]>([]);
     const [appStatusFilter, setAppStatusFilter] = useState<string>('pending');
     const [appsLoading, setAppsLoading] = useState(false);
@@ -67,7 +66,6 @@ function AdminPage() {
 
     const [error, setError] = useState<string | null>(null);
 
-    // 회원 조회
     const fetchMembers = useCallback(async () => {
         setMembersLoading(true);
         setError(null);
@@ -84,7 +82,6 @@ function AdminPage() {
         }
     }, [search, statusFilter]);
 
-    // 신청 조회
     const fetchApps = useCallback(async () => {
         setAppsLoading(true);
         setError(null);
@@ -104,7 +101,6 @@ function AdminPage() {
         else fetchApps();
     }, [tab, fetchMembers, fetchApps]);
 
-    // ---- 회원 액션 ----
     const changePosition = async (id: string, newPosition: string) => {
         const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
         if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
@@ -129,7 +125,6 @@ function AdminPage() {
         }
     };
 
-    // ---- 신청 액션 ----
     const approve = async (id: string) => {
         const position = approvePositions[id] || 'member';
         const posLabel = POSITION_LABELS[position] ?? position;
@@ -154,7 +149,6 @@ function AdminPage() {
         }
     };
 
-    // 승인된 신청에서 직접 권한 변경
     const changeAppMemberPosition = async (memberId: string, newPosition: string) => {
         const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
         if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
@@ -184,9 +178,8 @@ function AdminPage() {
 
             <main className="flex-1 bg-bg-white">
                 <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
-                    {/* 탭 */}
                     <div className="flex gap-6 border-b border-border-light mb-6">
-                        {(['members', 'applications'] as Tab[]).map((t) => (
+                        {(['members', ...(canManageApplications ? ['applications'] : [])] as Tab[]).map((t) => (
                             <button
                                 key={t}
                                 type="button"
@@ -205,7 +198,6 @@ function AdminPage() {
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">{error}</div>
                     )}
 
-                    {/* === 회원 관리 탭 === */}
                     {tab === 'members' && (
                         <div>
                             <div className="overflow-x-auto mb-4">
@@ -314,7 +306,6 @@ function AdminPage() {
                         </div>
                     )}
 
-                    {/* === 입부 신청 탭 === */}
                     {tab === 'applications' && (
                         <div>
                             <div className="flex gap-2 mb-4">
@@ -340,7 +331,7 @@ function AdminPage() {
                                 )}
                                 {!appsLoading && apps.map((a) => (
                                     <div key={a.id} className="border border-border-light rounded-lg p-5 bg-bg-white">
-                                        <div className="flex items-start justify-between gap-4">
+                                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <h3 className="text-base font-bold text-text-title">{a.name}</h3>
@@ -392,13 +383,13 @@ function AdminPage() {
 
                                             {/* 대기 신청: 직책 선택 후 승인/거절 */}
                                             {a.status === 'pending' && (
-                                                <div className="flex flex-col gap-2 shrink-0 min-w-[120px]">
-                                                    <div className="flex flex-col gap-1">
-                                                        <label className="text-xs text-text-muted font-medium">부여 직책</label>
+                                                <div className="flex flex-row sm:flex-col gap-2 sm:shrink-0 sm:min-w-[120px] w-full sm:w-auto">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <label className="text-xs text-text-muted font-medium whitespace-nowrap">부여 직책</label>
                                                         <select
                                                             value={approvePositions[a.id] ?? 'member'}
                                                             onChange={(e) => setApprovePositions(prev => ({ ...prev, [a.id]: e.target.value }))}
-                                                            className="text-xs border border-border-light rounded px-2 py-1 cursor-pointer"
+                                                            className="text-xs border border-border-light rounded px-2 py-1 cursor-pointer flex-1 sm:flex-none"
                                                         >
                                                             {POSITION_OPTIONS.filter((p) => positionToLevel(p) < myLevel).map((p) => (
                                                                 <option key={p} value={p}>{POSITION_LABELS[p]}</option>
@@ -418,14 +409,14 @@ function AdminPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => approve(a.id)}
-                                                        className="px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded text-xs font-bold hover:opacity-90 cursor-pointer"
+                                                        className="flex-1 sm:flex-none px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded text-xs font-bold hover:opacity-90 cursor-pointer"
                                                     >
                                                         승인
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => reject(a.id)}
-                                                        className="px-4 py-2 border border-red-200 text-text-danger rounded text-xs font-bold hover:bg-red-50 cursor-pointer"
+                                                        className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-text-danger rounded text-xs font-bold hover:bg-red-50 cursor-pointer"
                                                     >
                                                         거절
                                                     </button>
