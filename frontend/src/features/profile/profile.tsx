@@ -88,6 +88,10 @@ const Profile = () => {
   const [postPage, setPostPage] = useState(1);
   const [totalPostPages, setTotalPostPages] = useState(1);
 
+  const postPageGroup = Math.ceil(postPage / 10);
+  const startPostPage = ((postPageGroup - 1) * 10) + 1;
+  const endPostPage = Math.min(postPageGroup * 10, totalPostPages);
+
   const handlePostPageChange = async (page: number) => {
     setLoading(true);
     setPostError('');
@@ -117,6 +121,10 @@ const Profile = () => {
 
   const [commentPage, setCommentPage] = useState(1);
   const [totalComments, setTotalComments] = useState(0);
+
+  const commentPageGroup = Math.ceil(commentPage / 10);
+  const startCommentPage = ((commentPageGroup - 1) * 10) + 1;
+  const endCommentPage = Math.min(commentPageGroup * 10, totalCommentPages);
 
   const handleCommentPageChange = async (page: number) => {
     setLoading(true);
@@ -514,7 +522,15 @@ const Profile = () => {
                 </div>
                 {/* 페이지네이션 */}
                 <div className="flex justify-center items-center gap-2 mt-6">
-                  {Array.from({ length: totalPostPages }, (_, i) => i + 1).map(p => (
+                  {startPostPage > 1 && (<button
+                    onClick={() => handlePostPageChange(startPostPage - 1)}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                  </button>)}
+                  {Array.from({ length: endPostPage - startPostPage + 1 }, (_, i) => startPostPage + i).map(p => (
                     <button
                       key={p}
                       onClick={() => handlePostPageChange(p)}
@@ -526,6 +542,16 @@ const Profile = () => {
                       {p}
                     </button>
                   ))}
+                  {endPostPage < totalPostPages && (<button
+                    onClick={() => { handlePostPageChange(endPostPage + 1) }}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+
+
+                  </button>)}
                 </div>
               </div>
             )}
@@ -600,7 +626,17 @@ const Profile = () => {
                 </div>
                 {/* 페이지네이션 */}
                 <div className="flex justify-center items-center gap-2 mt-6">
-                  {Array.from({ length: totalCommentPages }, (_, i) => i + 1).map(p => (
+                  {startCommentPage > 1 && (<button
+                    onClick={() => handleCommentPageChange(startCommentPage - 1)}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+
+
+                  </button>)}
+                  {Array.from({ length: endCommentPage - startCommentPage + 1 }, (_, i) => startCommentPage + i).map(p => (
                     <button
                       key={p}
                       onClick={() => handleCommentPageChange(p)}
@@ -612,6 +648,15 @@ const Profile = () => {
                       {p}
                     </button>
                   ))}
+                  {endCommentPage < totalCommentPages && (<button
+                    onClick={() => { handleCommentPageChange(endCommentPage + 1) }}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+
+                  </button>)}
                 </div>
               </div>
             )}
