@@ -51,28 +51,6 @@ const AdminPage = () => {
 
     const canManageApplications = myLevel >= 6;
     const [tab, setTab] = useState<Tab>('members');
-<<<<<<< HEAD
-
-    const [members, setMembers] = useState<MemberRow[]>([]);
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('');
-    const [membersLoading, setMembersLoading] = useState(false);
-
-    const [apps, setApps] = useState<ApplicationRow[]>([]);
-    const [appStatusFilter, setAppStatusFilter] = useState<string>('pending');
-    const [appsLoading, setAppsLoading] = useState(false);
-
-    // 승인 시 선택할 직책 (appId -> position)
-    const [approvePositions, setApprovePositions] = useState<Record<string, string>>({});
-
-    // 승인 시 부여할 기수 (appId -> cohort)
-    const DEFAULT_COHORT = new Date().getFullYear() - 1977;
-    const [approveCohorts, setApproveCohorts] = useState<Record<string, string>>({});
-
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchMembers = useCallback(async () => {
-=======
     const [error, setError] = useState<string | null>(null);
 
     // 회원 관리 상태
@@ -94,7 +72,6 @@ const AdminPage = () => {
 
     // 회원 조회
     const fetchMembers = async () => {
->>>>>>> feature/insoo-home-style
         setMembersLoading(true);
         setError(null);
         try {
@@ -110,12 +87,8 @@ const AdminPage = () => {
         }
     };
 
-<<<<<<< HEAD
-    const fetchApps = useCallback(async () => {
-=======
     // 신청 조회
     const fetchApps = async () => {
->>>>>>> feature/insoo-home-style
         setAppsLoading(true);
         setError(null);
         try {
@@ -135,8 +108,6 @@ const AdminPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tab, statusFilter, appStatusFilter]);
 
-<<<<<<< HEAD
-=======
     // 필터 바뀌면 페이지 초기화
     useEffect(() => { setMemberPage(1); }, [search, statusFilter]);
     useEffect(() => { setAppPage(1); }, [appStatusFilter]);
@@ -148,7 +119,6 @@ const AdminPage = () => {
     const pagedApps = apps.slice((appPage - 1) * PAGE_SIZE, appPage * PAGE_SIZE);
 
     // 직책 변경
->>>>>>> feature/insoo-home-style
     const changePosition = async (id: string, newPosition: string) => {
         const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
         if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
@@ -201,10 +171,7 @@ const AdminPage = () => {
         }
     };
 
-<<<<<<< HEAD
-=======
     // 신청 승인
->>>>>>> feature/insoo-home-style
     const approve = async (id: string) => {
         const position = approvePositions[id] || 'member';
         const posLabel = POSITION_LABELS[position] ?? position;
@@ -230,10 +197,7 @@ const AdminPage = () => {
         }
     };
 
-<<<<<<< HEAD
-=======
     // 승인된 신청에서 직접 직책 변경
->>>>>>> feature/insoo-home-style
     const changeAppMemberPosition = async (memberId: string, newPosition: string) => {
         const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
         if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
@@ -285,10 +249,7 @@ const AdminPage = () => {
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">{error}</div>
                     )}
 
-<<<<<<< HEAD
-=======
                     {/* 회원 관리 탭 */}
->>>>>>> feature/insoo-home-style
                     {tab === 'members' && (
                         <div>
                             {/* 검색 + 상태 필터 */}
@@ -431,10 +392,7 @@ const AdminPage = () => {
                         </div>
                     )}
 
-<<<<<<< HEAD
-=======
                     {/* 입부 신청 탭 */}
->>>>>>> feature/insoo-home-style
                     {tab === 'applications' && (
                         <div>
                             {/* 상태 필터 */}
