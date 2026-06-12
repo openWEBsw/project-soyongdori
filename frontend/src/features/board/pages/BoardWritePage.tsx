@@ -10,8 +10,9 @@ import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
 import ReceiptAnalyzer from '../../receipt/receiptAnalyzer';
 import Footer from '../../../shared/layout/Footer';
+import { canWriteBoard } from '../../../shared/utils/translations';
 
-const boardNames: Record<string, string> = {
+const ALL_BOARDS: Record<string, string> = {
   notice: '공지 게시판',
   free: '자유 게시판',
   resource: '자료 게시판',
@@ -21,7 +22,7 @@ const boardNames: Record<string, string> = {
 };
 
 const MAX_SIZE = 10 * 1024 * 1024;
-const MAX_FILES = 5;
+const MAX_FILES = 20;
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes}B`;
@@ -48,8 +49,12 @@ function BoardWritePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const initialBoardType: string = (location.state as any)?.boardType ?? 'free';
-  const { logout } = useAuth();
+  const { logout, member } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const boardNames: Record<string, string> = Object.fromEntries(
+    Object.entries(ALL_BOARDS).filter(([key]) => canWriteBoard(key, member))
+  );
 
   const [selectedBoard, setSelectedBoard] = useState(initialBoardType);
   const [title, setTitle] = useState('');
@@ -80,6 +85,7 @@ function BoardWritePage() {
   const handleSubmit = async () => {
     if (!title.trim()) { setError('제목을 입력해주세요'); return; }
     if (!content.trim()) { setError('내용을 입력해주세요'); return; }
+    if (!canWriteBoard(selectedBoard, member)) { setError('해당 게시판에 글을 작성할 권한이 없습니다'); return; }
     setError('');
     setLoading(true);
     try {
@@ -224,13 +230,14 @@ function BoardWritePage() {
 
 
           </button>
-          {/* 영수증 분석 관련 테스트 버튼 (TODO 추후 제대로 삽입, 권한 및 표시조건 수정) */}
-          <button
-            onClick={handleReceiptAnalyzer}
-            className="px-4 py-2 bg-bg-dark text-white rounded text-xs font-bold hover:opacity-90 cursor-pointer"
-          >
-            열어서 테스트
-          </button>
+          {selectedBoard === 'budget' && canWriteBoard('budget', member) && (
+            <button
+              onClick={handleReceiptAnalyzer}
+              className="px-4 py-2 bg-bg-dark text-white rounded text-xs font-bold hover:opacity-90 cursor-pointer"
+            >
+              영수증 분석
+            </button>
+          )}
           {isReceiptAnalyzerOpen && (<ReceiptAnalyzer isOpen={isReceiptAnalyzerOpen} onClose={handleReceiptAnalyzerClose} files={files} analyzeResult={analyzerResult} setAnalyzerResult={setAnalyzerResult} />)}
         </div>
       </div>
