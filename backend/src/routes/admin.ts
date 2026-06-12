@@ -6,6 +6,8 @@ import {
     listMembers,
     updatePosition,
     updateStatus,
+    updatePart,
+    updateCohort,
 } from '../controllers/adminController.js';
 import {
     listApplications,
@@ -19,7 +21,13 @@ router.use(authenticate);
 
 router.get('/members', requireLevel(5), listMembers);
 router.patch('/member/:id/position', requireLevel(6), updatePosition);
+<<<<<<< HEAD
 router.patch('/member/:id/status', requireLevel(5), updateStatus);
+=======
+router.patch('/member/:id/status', requireLevel(6), updateStatus);
+router.patch('/member/:id/part', requireLevel(6), updatePart);
+router.patch('/member/:id/cohort', requireLevel(6), updateCohort);
+>>>>>>> feature/insoo-home-style
 
 router.get('/applications', requireLevel(6), listApplications);
 router.post('/applications/:id/approve', requireLevel(6), approveApplication);

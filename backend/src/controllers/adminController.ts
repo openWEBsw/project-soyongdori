@@ -40,6 +40,34 @@ export const updatePosition = async (req: AuthRequest, res: Response) => {
     }
 };
 
+// 파트 변경
+export const updatePart = async (req: AuthRequest, res: Response) => {
+    try {
+        const updated = await adminService.updatePart({
+            targetId: BigInt(req.params.id as string),
+            part: req.body?.part,
+            myLevel: positionToLevel(req.memberPosition),
+        });
+        return res.json({ data: updated });
+    } catch (e) {
+        return handleError(e, res);
+    }
+};
+
+// 기수 변경
+export const updateCohort = async (req: AuthRequest, res: Response) => {
+    try {
+        const updated = await adminService.updateCohort({
+            targetId: BigInt(req.params.id as string),
+            cohort: Number(req.body?.cohort),
+            myLevel: positionToLevel(req.memberPosition),
+        });
+        return res.json({ data: updated });
+    } catch (e) {
+        return handleError(e, res);
+    }
+};
+
 // 상태 변경
 export const updateStatus = async (req: AuthRequest, res: Response) => {
     try {

@@ -72,7 +72,7 @@ const clubLocation = {
 // 네이버 지도 클라이언트 키 (네이버 클라우드 플랫폼에서 발급)
 const naverMapKey = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
 
-function Home() {
+const Home = () => {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
     const [memberCount, setMemberCount] = useState(0);
@@ -114,11 +114,24 @@ function Home() {
             .then((res) => setEvents(res.data.data.slice(0, 2)));
     }, []);
 
+    // 통계 숫자 올라감
+    const [countUp, setCountUp] = useState(0);
+    useEffect(() => {
+        setCountUp(0);
+        let frame = 0;
+        const id = setInterval(() => {
+            frame += 1;
+            setCountUp(frame / 30);
+            if (frame >= 30) clearInterval(id);
+        }, 30);
+        return () => clearInterval(id);
+    }, [memberCount]);
+
     // 통계
     const statsData = [
-        { value: `${clubYears}`, label: 'YEARS' },
-        { value: '5', label: 'PARTS' },
-        { value: `${memberCount}`, label: 'MEMBERS' },
+        { value: `${Math.round(clubYears * countUp)}`, label: 'YEARS' },
+        { value: `${Math.round(5 * countUp)}`, label: 'PARTS' },
+        { value: `${Math.round(memberCount * countUp)}`, label: 'MEMBERS' },
     ];
 
     return (
@@ -133,7 +146,7 @@ function Home() {
                         key={i}
                         src={src}
                         alt={`소용돌이 ${i + 1}`}
-                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIndex ? 'opacity-100' : 'opacity-0'
+                        className={`absolute inset-0 w-full h-full object-cover [transition:opacity_1s,scale_6s] ${i === heroIndex ? 'opacity-100 scale-120' : 'opacity-0 scale-100'
                             }`}
                     />
                 ))}
@@ -172,14 +185,14 @@ function Home() {
                             {!(isAuthenticated && member?.status === 'active') && (
                                 <Link
                                     to="/apply"
-                                    className="bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity"
+                                    className="group bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                                 >
-                                    입부 신청 →
+                                    입부 신청 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                                 </Link>
                             )}
                             <Link
                                 to="/introduce"
-                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light transition-colors"
+                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light hover:scale-115 active:scale-95 transition duration-500"
                             >
                                 소개 보기
                             </Link>
@@ -190,10 +203,10 @@ function Home() {
                             {statsData.map((stat, index) => (
                                 <div
                                     key={index}
-                                    className="border border-border-light rounded-lg px-5 py-3 text-center bg-white/70 backdrop-blur-sm"
+                                    className="border border-border-light rounded-lg px-5 py-3 text-center bg-white/70 backdrop-blur-sm hover:scale-115 transition duration-500"
                                 >
-                                    <span className="text-xl font-black text-text-title block">{stat.value}</span>
-                                    <span className="text-xs font-medium text-text-muted tracking-wider">{stat.label}</span>
+                                    <span className="text-xl font-black text-text-title block hover:scale-115 duration-500">{stat.value}</span>
+                                    <span className="text-xs font-medium text-text-muted tracking-wider hover:scale-115 duration-500">{stat.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -213,9 +226,9 @@ function Home() {
                         </div>
                         <Link
                             to="/boards/notice"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            전체보기 →
+                            전체보기 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
 
@@ -226,7 +239,7 @@ function Home() {
                             <Link
                                 key={notice.id}
                                 to={`/posts/${notice.id}`}
-                                className="bg-bg-white border border-border-light rounded-lg p-6 flex flex-col gap-3 hover:shadow-sm transition-shadow"
+                                className="bg-bg-white border border-border-light rounded-lg p-6 flex flex-col gap-3 hover:shadow-sm hover:scale-108 transition duration-500"
                             >
                                 <span className="text-xs font-bold px-2.5 py-1 rounded self-start bg-bg-light text-text-secondary">
                                     공지
@@ -258,9 +271,9 @@ function Home() {
                         </div>
                         <Link
                             to="/calendar"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            캘린더 →
+                            캘린더 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
 
@@ -271,7 +284,7 @@ function Home() {
                             <Link
                                 to="/calendar"
                                 key={event.id}
-                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white hover:shadow-sm transition-shadow"
+                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white hover:shadow-sm hover:scale-105 transition duration-500"
                             >
                                 {/* 날짜 */}
                                 <div className="flex flex-col items-center justify-center min-w-[72px] border-r border-border-light pr-6">
@@ -309,9 +322,9 @@ function Home() {
                         <a
                             href={clubLocation.mapUrl}
                             target="_blank"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            네이버 지도 →
+                            네이버 지도 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </a>
                     </div>
 
@@ -346,9 +359,9 @@ function Home() {
                         </h2>
                         <Link
                             to="/apply"
-                            className="bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500 whitespace-nowrap"
                         >
-                            입부 신청하기 →
+                            입부 신청하기 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
                 </section>
@@ -357,6 +370,6 @@ function Home() {
             <Footer />
         </div>
     );
-}
+};
 
 export default Home;

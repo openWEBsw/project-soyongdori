@@ -1,7 +1,6 @@
 // https://velog.io/@sohyun32253/FullCalendar-%EC%82%AC%EC%9A%A9%EB%B2%95-feat.-react-typescript
 
-import { useState, useCallback, useRef } from 'react';
-import type { SubmitEvent } from 'react';
+import React, { useState, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -73,7 +72,7 @@ const emptyForm = (date?: string): FormState => ({
     color: COLORS[0].value,
 });
 
-function Calendar() {
+const Calendar = () => {
     // 로그인 정보 + 권한 계산
     const { member } = useAuth();
     const level = positionToLevel(member?.position);
@@ -94,7 +93,7 @@ function Calendar() {
     const rangeRef = useRef<{ start: string; end: string } | null>(null);
 
     // 일정 조회
-    const fetchEvents = useCallback(async (start?: string, end?: string) => {
+    const fetchEvents = async (start?: string, end?: string) => {
         setLoading(true);
         setError(null);
         try {
@@ -108,7 +107,7 @@ function Calendar() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
     // 달 이동
     const handleDatesSet = (arg: DatesSetArg) => {
@@ -124,6 +123,7 @@ function Calendar() {
         setModalMode('create');
     };
 
+    // 일정 클릭
     const handleEventClick = (arg: EventClickArg) => {
         // 더보기 팝오버가 열려 있으면 닫기
         document.querySelector<HTMLElement>('.fc-popover-close')?.click();
@@ -157,7 +157,7 @@ function Calendar() {
     const readOnly = modalMode === 'edit' && !canEdit;
 
     // 생성/수정 폼 제출 → POST 또는 PATCH
-    const submit = async (e: SubmitEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!form.title || !form.startAt) {
             setError('제목과 시작일은 필수입니다');
@@ -192,8 +192,8 @@ function Calendar() {
         }
     };
 
-    // 일정 삭제 
-    const remove = async () => {
+    // 일정 삭제
+    const handleDelete = async () => {
         if (!selectedEvent) return;
         if (!window.confirm('이 일정을 삭제하시겠습니까?')) return;
         setSubmitting(true);
@@ -273,7 +273,19 @@ function Calendar() {
                     {/* 캘린더 */}
                     <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6 overflow-x-auto">
                         {/* 일정 제목이 길면 한 줄 말줄임 처리 */}
-                        <div className="min-w-[600px] text-sm [&_.fc-event-title]:truncate [&_.fc-toolbar-title]:text-xl [&_.fc-toolbar-title]:font-bold [&_.fc-toolbar-title]:text-text-title">
+                        <div
+                            style={{
+                                '--fc-button-bg-color': '#333333',
+                                '--fc-button-border-color': '#333333',
+                                '--fc-button-hover-bg-color': '#1a1a1a',
+                                '--fc-button-hover-border-color': '#1a1a1a',
+                                '--fc-button-active-bg-color': '#000000',
+                                '--fc-button-active-border-color': '#000000',
+                                '--fc-today-bg-color': '#f2f2f2',
+                                '--fc-border-color': '#e5e7eb',
+                            } as React.CSSProperties}
+                            className="min-w-[600px] text-sm [&_.fc-daygrid-day]:cursor-pointer [&_.fc-daygrid-day]:transition-colors [&_.fc-daygrid-day:hover]:bg-bg-deep [&_.fc-event-title]:truncate [&_.fc-toolbar-title]:text-xl [&_.fc-toolbar-title]:font-bold [&_.fc-toolbar-title]:text-text-title"
+                        >
                             <FullCalendar
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                 initialView="dayGridMonth"
@@ -329,7 +341,7 @@ function Calendar() {
                         </div>
 
                         {/* 일정 입력 폼 */}
-                        <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-4">
+                        <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
                             {error && (
                                 <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">
                                     {error}
@@ -341,7 +353,7 @@ function Calendar() {
                                 <input
                                     type="text"
                                     value={form.title}
-                                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
                                     required
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
@@ -352,7 +364,7 @@ function Calendar() {
                                 <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">설명</label>
                                 <textarea
                                     value={form.description}
-                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                                     disabled={readOnly}
                                     rows={2}
                                     className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light resize-none"
@@ -365,7 +377,7 @@ function Calendar() {
                                     <input
                                         type={form.allDay ? 'date' : 'datetime-local'}
                                         value={form.allDay ? form.startAt.slice(0, 10) : form.startAt}
-                                        onChange={(e) => setForm({ ...form, startAt: form.allDay ? `${e.target.value}T00:00` : e.target.value })}
+                                        onChange={(e) => setForm(prev => ({ ...prev, startAt: prev.allDay ? `${e.target.value}T00:00` : e.target.value }))}
                                         required
                                         disabled={readOnly}
                                         className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
@@ -376,7 +388,7 @@ function Calendar() {
                                     <input
                                         type={form.allDay ? 'date' : 'datetime-local'}
                                         value={form.allDay ? form.endAt.slice(0, 10) : form.endAt}
-                                        onChange={(e) => setForm({ ...form, endAt: form.allDay && e.target.value ? `${e.target.value}T00:00` : e.target.value })}
+                                        onChange={(e) => setForm(prev => ({ ...prev, endAt: prev.allDay && e.target.value ? `${e.target.value}T00:00` : e.target.value }))}
                                         disabled={readOnly}
                                         className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                     />
@@ -387,7 +399,7 @@ function Calendar() {
                                 <input
                                     type="checkbox"
                                     checked={form.allDay}
-                                    onChange={(e) => setForm({ ...form, allDay: e.target.checked })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, allDay: e.target.checked }))}
                                     disabled={readOnly}
                                     className="cursor-pointer disabled:cursor-default"
                                 />
@@ -398,7 +410,7 @@ function Calendar() {
                                 <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">공개 범위 *</label>
                                 <select
                                     value={form.visibility}
-                                    onChange={(e) => setForm({ ...form, visibility: e.target.value as Visibility })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value as Visibility }))}
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                 >
@@ -413,7 +425,7 @@ function Calendar() {
                                 <input
                                     type="text"
                                     value={form.location}
-                                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, location: e.target.value }))}
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
                                 />
@@ -426,7 +438,7 @@ function Calendar() {
                                         <button
                                             key={c.value}
                                             type="button"
-                                            onClick={() => !readOnly && setForm({ ...form, color: c.value })}
+                                            onClick={() => !readOnly && setForm(prev => ({ ...prev, color: c.value }))}
                                             disabled={readOnly}
                                             className={`w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-110 duration-150 disabled:cursor-not-allowed ${form.color === c.value ? 'ring-2 ring-offset-2 ring-text-primary scale-110' : ''
                                                 }`}
@@ -448,7 +460,7 @@ function Calendar() {
                                 {modalMode === 'edit' && canEdit && (
                                     <button
                                         type="button"
-                                        onClick={remove}
+                                        onClick={handleDelete}
                                         disabled={submitting}
                                         className="px-4 py-2 text-sm font-bold text-text-danger border border-red-200 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
                                     >
@@ -480,6 +492,6 @@ function Calendar() {
             <Footer />
         </div>
     );
-}
+};
 
 export default Calendar;
