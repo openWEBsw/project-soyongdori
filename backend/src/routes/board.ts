@@ -24,7 +24,7 @@ router.get('/:boardType/posts', optionalAuth, getPosts);
 
 // 게시글 작성
 router.post('/:boardType/posts', authenticate, (req, res, next) => {
-  upload.array('files', 5)(req as any, res, (err: any) => {
+  upload.array('files', 20)(req as any, res, (err: any) => {
     if (err) return res.status(400).json({ error: { code: 'UPLOAD_ERROR', message: err.message } });
     next();
   });
@@ -38,7 +38,7 @@ router.patch('/posts/:postId/view', optionalAuth, incrementView);
 
 // 게시글 수정
 router.put('/posts/:postId', authenticate, (req, res, next) => {
-  upload.array('files', 5)(req as any, res, (err: any) => {
+  upload.array('files', 20)(req as any, res, (err: any) => {
     if (err) return res.status(400).json({ error: { code: 'UPLOAD_ERROR', message: err.message } });
     next();
   });
