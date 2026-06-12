@@ -168,8 +168,9 @@ const Calendar = () => {
         const payload = {
             title: form.title,
             description: form.description || null,
-            startAt: form.startAt,
-            endAt: form.endAt || null,
+            // 로컬 시간 -> UTC로 변환해 보냄 
+            startAt: new Date(form.startAt).toISOString(),
+            endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
             allDay: form.allDay,
             visibility: form.visibility,
             location: form.location || null,
