@@ -210,12 +210,20 @@ const Calendar = () => {
         }
     };
 
+    // 종일 일정 하루 더해 마지막 날까지 보이게
+    const allDayEnd = (iso: string): string => {
+        const d = new Date(iso);
+        d.setDate(d.getDate() + 1);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+
     // FullCalendar에 넘길 형태로 매핑
     const fcEvents = events.map((ev) => ({
         id: String(ev.id),
         title: ev.title,
         start: ev.startAt,
-        end: ev.endAt ?? undefined,
+        end: ev.endAt ? (ev.allDay ? allDayEnd(ev.endAt) : ev.endAt) : undefined,
         allDay: ev.allDay,
         backgroundColor: ev.color ?? '#6366f1',
         borderColor: ev.color ?? '#6366f1',
