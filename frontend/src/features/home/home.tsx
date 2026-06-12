@@ -72,7 +72,7 @@ const clubLocation = {
 // 네이버 지도 클라이언트 키 (네이버 클라우드 플랫폼에서 발급)
 const naverMapKey = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
 
-function Home() {
+const Home = () => {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
     const [memberCount, setMemberCount] = useState(0);
@@ -357,6 +357,6 @@ function Home() {
             <Footer />
         </div>
     );
-}
+};
 
 export default Home;
