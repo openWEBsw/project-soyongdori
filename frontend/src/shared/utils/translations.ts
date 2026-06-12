@@ -35,9 +35,11 @@ export const formatDate = (dateString: string): string => {
 type MemberLike = { position: string; status: string } | null;
 
 const FULL_ACCESS = ['vice_leader', 'leader', 'super_admin'];
-const PLANNING_ACCESS = ['planning_member', 'planning_lead', ...FULL_ACCESS];
+const PLANNING_ACCESS = ['planning_member', 'planning_lead', 'treasurer', ...FULL_ACCESS];
 const BUDGET_ACCESS = ['treasurer', ...FULL_ACCESS];
-const MEMBER_ACCESS = ['member', ...PLANNING_ACCESS, 'treasurer'];
+const MEMBER_ACCESS = ['member', 'planning_member', 'planning_lead', 'treasurer', ...FULL_ACCESS];
+const LEAD_WRITE = ['planning_lead', ...BUDGET_ACCESS];
+const NOTICE_WRITE = ['leader', 'super_admin'];
 
 export function canAccessBoard(boardType: string, member: MemberLike): boolean {
   if (['notice', 'free'].includes(boardType)) return true;
@@ -50,5 +52,9 @@ export function canAccessBoard(boardType: string, member: MemberLike): boolean {
 
 export function canWriteBoard(boardType: string, member: MemberLike): boolean {
   if (!member || member.status !== 'active') return false;
-  return canAccessBoard(boardType, member);
+  if (boardType === 'notice') return NOTICE_WRITE.includes(member.position);
+  if (boardType === 'free' || boardType === 'photo') return MEMBER_ACCESS.includes(member.position);
+  if (boardType === 'resource' || boardType === 'planning') return LEAD_WRITE.includes(member.position);
+  if (boardType === 'budget') return BUDGET_ACCESS.includes(member.position);
+  return false;
 }
