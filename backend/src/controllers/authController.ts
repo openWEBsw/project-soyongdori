@@ -26,7 +26,7 @@ export const signup = async (req: Request, res: Response) => {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const member = await prisma.member.create({
-      data: { email, passwordHash, name, studentId, phone, department },
+      data: { email, passwordHash, name, studentId, phone, department, position: 'not_member' },
       select: { id: true, email: true, name: true, status: true, createdAt: true },
     });
     return res.status(201).json({ success: true, data: member });
