@@ -6,6 +6,7 @@ import { Response } from 'express';
 import bcrypt from 'bcrypt';
 import { AuthRequest } from '../middleware/auth.js';
 import prisma from '../prisma/client.js';
+import { extForMime } from '../middleware/upload.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.join(__dirname, '../../../uploads');
@@ -190,7 +191,7 @@ export const updateProfileImage = async (req: AuthRequest, res: Response) => {
         }
 
 
-        const ext = path.extname(newProfileImage.originalname);
+        const ext = extForMime(newProfileImage.mimetype);
         const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
         await fs.promises.writeFile(path.join(uploadsDir, filename), newProfileImage.buffer);
 

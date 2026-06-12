@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
 import prisma from '../prisma/client.js';
+import { extForMime } from '../middleware/upload.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.join(__dirname, '../../../uploads');
@@ -196,7 +197,7 @@ export const createPost = async (req: AuthRequest, res: Response) => {
 
     const savedFiles = await Promise.all(memFiles.map(async f => {
       const originalname = Buffer.from(f.originalname, 'latin1').toString('utf8');
-      const ext = path.extname(originalname);
+      const ext = extForMime(f.mimetype);
       const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
       await fs.promises.writeFile(path.join(uploadsDir, filename), f.buffer);
       return { filename, originalname, size: f.size, mimetype: f.mimetype };
@@ -269,7 +270,7 @@ export const updatePost = async (req: AuthRequest, res: Response) => {
 
     const savedFiles = await Promise.all(memFiles.map(async f => {
       const originalname = Buffer.from(f.originalname, 'latin1').toString('utf8');
-      const ext = path.extname(originalname);
+      const ext = extForMime(f.mimetype);
       const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
       await fs.promises.writeFile(path.join(uploadsDir, filename), f.buffer);
       return { filename, originalname, size: f.size, mimetype: f.mimetype };

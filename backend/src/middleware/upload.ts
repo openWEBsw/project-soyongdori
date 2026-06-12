@@ -1,15 +1,25 @@
 import multer from 'multer';
 
-const ALLOWED_TYPES = [
-  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-  'application/pdf',
-  'application/zip', 'application/x-zip-compressed',
-  'text/plain',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-];
+// 허용 MIME 타입 
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'application/pdf': '.pdf',
+  'application/zip': '.zip',
+  'application/x-zip-compressed': '.zip',
+  'text/plain': '.txt',
+  'application/msword': '.doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.ms-excel': '.xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+};
+
+const ALLOWED_TYPES = Object.keys(MIME_TO_EXT);
+
+// MIME 타입으로 안전한 확장자 얻기 (모르는 타입이면 빈 문자열)
+export const extForMime = (mimetype: string): string => MIME_TO_EXT[mimetype] ?? '';
 
 export const upload = multer({
   storage: multer.memoryStorage(),

@@ -24,7 +24,13 @@ app.set('json replacer', (_key: string, value: unknown) =>
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+// 업로드 파일은 브라우저에서 실행되지 않게함
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads'), {
+  setHeaders: (res) => {
+    res.setHeader('Content-Disposition', 'attachment');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  },
+}));
 
 // app.use((req, res, next) => {
 //   console.log(`${req.method} ${req.path}`);
