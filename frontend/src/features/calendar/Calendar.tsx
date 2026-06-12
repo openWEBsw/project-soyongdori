@@ -163,14 +163,22 @@ const Calendar = () => {
             setError('제목과 시작일은 필수입니다');
             return;
         }
+        // 종료가 시작보다 앞서면 막음
+        if (form.endAt && new Date(form.endAt) < new Date(form.startAt)) {
+            setError('종료 시간은 시작 시간보다 빠를 수 없습니다');
+            return;
+        }
         setSubmitting(true);
         setError(null);
+        // 종료 없으면 시작 시간+ 1시간 종료값
+        const startDate = new Date(form.startAt);
+        const endDate = form.endAt ? new Date(form.endAt) : new Date(startDate.getTime() + 60 * 60 * 1000);
         const payload = {
             title: form.title,
             description: form.description || null,
-            // 로컬 시간 -> UTC로 변환해 보냄 
-            startAt: new Date(form.startAt).toISOString(),
-            endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
+            // 로컬 시간 -> UTC로 변환해 보냄
+            startAt: startDate.toISOString(),
+            endAt: endDate.toISOString(),
             allDay: form.allDay,
             visibility: form.visibility,
             location: form.location || null,
@@ -398,6 +406,7 @@ const Calendar = () => {
                                         type={form.allDay ? 'date' : 'datetime-local'}
                                         value={form.allDay ? form.endAt.slice(0, 10) : form.endAt}
                                         onChange={(e) => setForm(prev => ({ ...prev, endAt: prev.allDay && e.target.value ? `${e.target.value}T00:00` : e.target.value }))}
+                                        min={form.allDay ? form.startAt.slice(0, 10) : form.startAt}
                                         disabled={readOnly}
                                         className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                     />
