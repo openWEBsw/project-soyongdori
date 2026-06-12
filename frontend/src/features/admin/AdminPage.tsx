@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -6,6 +6,7 @@ import api from '../../lib/api';
 import { positionToLevel, POSITION_LABELS, STATUS_LABELS } from '../../lib/permission';
 import { partNames } from '../../shared/utils/translations';
 
+// 타입 정의: 백엔드 응답 형태
 interface MemberRow {
     id: string;
     email: string;
@@ -37,41 +38,39 @@ interface ApplicationRow {
     reviewer: { id: string; name: string } | null;
 }
 
-const POSITION_OPTIONS = ['member', 'planning_member', 'planning_lead', 'treasurer', 'vice_leader', 'leader'];
-const PAGE_SIZE = 30;
-
 type Tab = 'members' | 'applications';
 
-function AdminPage() {
+const POSITION_OPTIONS = ['member', 'planning_member', 'planning_lead', 'treasurer', 'vice_leader', 'leader'];
+const PAGE_SIZE = 30;
+const DEFAULT_COHORT = new Date().getFullYear() - 1977;
+
+const AdminPage = () => {
+    // 로그인 정보 + 권한 계산
     const { member } = useAuth();
     const myLevel = positionToLevel(member?.position);
 
     const [tab, setTab] = useState<Tab>('members');
+    const [error, setError] = useState<string | null>(null);
 
-    // ---- 회원 관리 상태 ----
+    // 회원 관리 상태
     const [members, setMembers] = useState<MemberRow[]>([]);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState('');
     const [membersLoading, setMembersLoading] = useState(false);
     const [memberPage, setMemberPage] = useState(1);
 
-    // ---- 신청 관리 상태 ----
+    // 신청 관리 상태
     const [apps, setApps] = useState<ApplicationRow[]>([]);
-    const [appStatusFilter, setAppStatusFilter] = useState<string>('pending');
+    const [appStatusFilter, setAppStatusFilter] = useState('pending');
     const [appsLoading, setAppsLoading] = useState(false);
     const [appPage, setAppPage] = useState(1);
 
-    // 승인 시 선택할 직책 (appId -> position)
+    // 승인 시 선택할 직책/기수 (appId -> 값)
     const [approvePositions, setApprovePositions] = useState<Record<string, string>>({});
-
-    // 승인 시 부여할 기수 (appId -> cohort)
-    const DEFAULT_COHORT = new Date().getFullYear() - 1977;
     const [approveCohorts, setApproveCohorts] = useState<Record<string, string>>({});
 
-    const [error, setError] = useState<string | null>(null);
-
     // 회원 조회
-    const fetchMembers = useCallback(async () => {
+    const fetchMembers = async () => {
         setMembersLoading(true);
         setError(null);
         try {
@@ -85,27 +84,28 @@ function AdminPage() {
         } finally {
             setMembersLoading(false);
         }
-    }, [search, statusFilter]);
+    };
 
     // 신청 조회
-    const fetchApps = useCallback(async () => {
+    const fetchApps = async () => {
         setAppsLoading(true);
         setError(null);
         try {
-            const params: Record<string, string> = { status: appStatusFilter };
-            const res = await api.get('/admin/applications', { params });
+            const res = await api.get('/admin/applications', { params: { status: appStatusFilter } });
             setApps(res.data.data);
         } catch (e: any) {
             setError(e.response?.data?.error?.message || '신청 목록을 불러오지 못했습니다');
         } finally {
             setAppsLoading(false);
         }
-    }, [appStatusFilter]);
+    };
 
+    // 탭/필터 바뀌면 다시 조회
     useEffect(() => {
         if (tab === 'members') fetchMembers();
         else fetchApps();
-    }, [tab, fetchMembers, fetchApps]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, statusFilter, appStatusFilter]);
 
     // 필터 바뀌면 페이지 초기화
     useEffect(() => { setMemberPage(1); }, [search, statusFilter]);
@@ -117,7 +117,7 @@ function AdminPage() {
     const totalAppPages = Math.max(1, Math.ceil(apps.length / PAGE_SIZE));
     const pagedApps = apps.slice((appPage - 1) * PAGE_SIZE, appPage * PAGE_SIZE);
 
-    // ---- 회원 액션 ----
+    // 직책 변경
     const changePosition = async (id: string, newPosition: string) => {
         const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
         if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
@@ -130,18 +130,7 @@ function AdminPage() {
         }
     };
 
-    const toggleStatus = async (id: string, currentStatus: string) => {
-        const next = currentStatus === 'active' ? 'inactive' : 'active';
-        const nextLabel = next === 'active' ? '활성' : '비활성';
-        if (!window.confirm(`${STATUS_LABELS[currentStatus]} → ${nextLabel} 로 변경하시겠습니까?`)) return;
-        try {
-            await api.patch(`/admin/member/${id}/status`, { status: next });
-            fetchMembers();
-        } catch (e: any) {
-            alert(e.response?.data?.error?.message || '상태 변경 실패');
-        }
-    };
-
+    // 파트 변경
     const changePart = async (id: string, newPart: string) => {
         const partLabel = partNames[newPart] ?? newPart;
         if (!window.confirm(`파트를 ${partLabel}(으)로 변경하시겠습니까?`)) return;
@@ -154,6 +143,7 @@ function AdminPage() {
         }
     };
 
+    // 기수 변경
     const changeCohort = async (id: string, newCohort: string) => {
         const cohort = Number(newCohort);
         if (!cohort || cohort < 1) return;
@@ -167,7 +157,20 @@ function AdminPage() {
         }
     };
 
-    // ---- 신청 액션 ----
+    // 활성/비활성 전환
+    const toggleStatus = async (id: string, currentStatus: string) => {
+        const next = currentStatus === 'active' ? 'inactive' : 'active';
+        const nextLabel = next === 'active' ? '활성' : '비활성';
+        if (!window.confirm(`${STATUS_LABELS[currentStatus]} → ${nextLabel} 로 변경하시겠습니까?`)) return;
+        try {
+            await api.patch(`/admin/member/${id}/status`, { status: next });
+            fetchMembers();
+        } catch (e: any) {
+            alert(e.response?.data?.error?.message || '상태 변경 실패');
+        }
+    };
+
+    // 신청 승인
     const approve = async (id: string) => {
         const position = approvePositions[id] || 'member';
         const posLabel = POSITION_LABELS[position] ?? position;
@@ -181,6 +184,7 @@ function AdminPage() {
         }
     };
 
+    // 신청 거절
     const reject = async (id: string) => {
         const note = window.prompt('거절 사유 (선택)') ?? undefined;
         if (note === null) return;
@@ -192,7 +196,7 @@ function AdminPage() {
         }
     };
 
-    // 승인된 신청에서 직접 권한 변경
+    // 승인된 신청에서 직접 직책 변경
     const changeAppMemberPosition = async (memberId: string, newPosition: string) => {
         const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
         if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
@@ -212,6 +216,7 @@ function AdminPage() {
         <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
             <Header />
 
+            {/* 페이지 헤더 */}
             <section className="bg-bg-light border-b border-border-light">
                 <div className="max-w-6xl mx-auto px-6 md:px-12 py-12 text-center flex flex-col items-center">
                     <span className="text-text-muted text-xs tracking-widest font-medium uppercase mb-3">Admin</span>
@@ -239,13 +244,15 @@ function AdminPage() {
                         ))}
                     </div>
 
+                    {/* 에러 메시지 */}
                     {error && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">{error}</div>
                     )}
 
-                    {/* === 회원 관리 탭 === */}
+                    {/* 회원 관리 탭 */}
                     {tab === 'members' && (
                         <div>
+                            {/* 검색 + 상태 필터 */}
                             <div className="overflow-x-auto mb-4">
                                 <div className="flex gap-3 min-w-max">
                                     <input
@@ -266,18 +273,10 @@ function AdminPage() {
                                         <option value="active">활성</option>
                                         <option value="inactive">비활성</option>
                                     </select>
-                                    {/* 검색 버튼
-                                    <button
-                                        type="button"
-                                        onClick={fetchMembers}
-                                        className="px-4 py-2 cursor-pointer bg-btn-primary-bg text-btn-primary-text rounded-md text-sm font-bold hover:opacity-90"
-                                    >
-                                        검색
-                                    </button>
-                                    */}
                                 </div>
                             </div>
 
+                            {/* 회원 테이블 */}
                             <div className="border border-border-light rounded-lg overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-bg-light">
@@ -371,6 +370,8 @@ function AdminPage() {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* 페이지네이션 */}
                             {totalMemberPages > 1 && (
                                 <div className="flex justify-center items-center gap-2 mt-6">
                                     {Array.from({ length: totalMemberPages }, (_, i) => i + 1).map(p => (
@@ -391,9 +392,10 @@ function AdminPage() {
                         </div>
                     )}
 
-                    {/* === 입부 신청 탭 === */}
+                    {/* 입부 신청 탭 */}
                     {tab === 'applications' && (
                         <div>
+                            {/* 상태 필터 */}
                             <div className="flex gap-2 mb-4">
                                 {['pending', 'approved', 'rejected'].map((s) => (
                                     <button
@@ -410,6 +412,7 @@ function AdminPage() {
                                 ))}
                             </div>
 
+                            {/* 신청 카드 목록 */}
                             <div className="flex flex-col gap-3">
                                 {appsLoading && <div className="py-8 text-center text-text-muted">불러오는 중…</div>}
                                 {!appsLoading && apps.length === 0 && (
@@ -467,7 +470,7 @@ function AdminPage() {
                                                 )}
                                             </div>
 
-                                            {/* 대기 신청: 직책 선택 후 승인/거절 */}
+                                            {/* 대기 신청: 직책/기수 선택 후 승인/거절 */}
                                             {a.status === 'pending' && (
                                                 <div className="flex flex-col gap-2 shrink-0 min-w-[120px]">
                                                     <div className="flex flex-col gap-1">
@@ -512,6 +515,8 @@ function AdminPage() {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* 페이지네이션 */}
                             {totalAppPages > 1 && (
                                 <div className="flex justify-center items-center gap-2 mt-6">
                                     {Array.from({ length: totalAppPages }, (_, i) => i + 1).map(p => (
@@ -537,6 +542,6 @@ function AdminPage() {
             <Footer />
         </div>
     );
-}
+};
 
 export default AdminPage;
