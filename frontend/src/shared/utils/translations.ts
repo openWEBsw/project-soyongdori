@@ -17,7 +17,7 @@ export const partNames: Record<string, string> = {
 };
 
 export const positionNames: Record<string, string> = {
-  not_member: '비회원',
+  not_member: '준회원',
   member: '일반회원',
   planning_member: '기획부원',
   planning_lead: '기획팀장',

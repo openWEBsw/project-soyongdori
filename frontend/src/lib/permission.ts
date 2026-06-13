@@ -20,6 +20,7 @@ export const POSITION_LABELS: Record<string, string> = {
     planning_lead: '기획부장',
     planning_member: '기획부원',
     member: '일반회원',
+    not_member: '준회원',
 };
 
 export const STATUS_LABELS: Record<string, string> = {
