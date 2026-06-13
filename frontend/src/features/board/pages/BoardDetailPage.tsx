@@ -355,6 +355,12 @@ function BoardDetailPage() {
                 등록
               </button>
             </div>
+          ) : member ? (
+            <div
+              className="border border-border-light rounded-lg p-4 mb-5 bg-bg-light text-center text-sm text-text-muted"
+            >
+              댓글을 작성할 수 있는 권한이 없습니다
+            </div>
           ) : (
             <div
               className="border border-border-light rounded-lg p-4 mb-5 bg-bg-light text-center text-sm text-text-muted cursor-pointer hover:bg-bg-deep transition-colors"
