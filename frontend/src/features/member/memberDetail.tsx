@@ -74,8 +74,13 @@ const MemberDetail = ({ isOpen, onClose, memberId }: MemberDetailProps) => {
     }, [memberId])
 
     return isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-bg-white rounded-lg shadow-xl max-w-xs w-full overflow-hidden text-left border border-border-light flex flex-col">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={onClose}
+        >
+            <div className="bg-bg-white rounded-lg shadow-xl max-w-xs w-full overflow-hidden text-left border border-border-light flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+            >
+
                 { /* 헤더 */}
                 <div className="bg-bg-light border-b border-border-light px-6 py-4 flex items-center justify-between">
                     <h3 className="text-base font-bold text-text-title">멤버 프로필</h3>
