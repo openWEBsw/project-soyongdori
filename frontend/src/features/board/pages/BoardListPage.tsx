@@ -96,6 +96,8 @@ function BoardListPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
+  const [boardRegularTotal, setBoardRegularTotal] = useState(0);
+  const [boardNoticeTotal, setBoardNoticeTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -122,7 +124,7 @@ function BoardListPage() {
     }
     setLoading(true);
     setError('');
-    const params = new URLSearchParams({ page: String(page), limit: '10' });
+    const params = new URLSearchParams({ page: String(page), limit: boardType === 'photo' ? '12' : '10' });
     if (appliedSearch) {
       params.set('search', appliedSearch);
       params.set('searchField', appliedSearchField);
@@ -132,6 +134,8 @@ function BoardListPage() {
         setPosts(res.data.data.posts);
         setTotalPages(res.data.data.pagination.totalPages || 1);
         setTotalPosts(res.data.data.pagination.total || 0);
+        setBoardRegularTotal(res.data.data.pagination.boardRegularTotal || 0);
+        setBoardNoticeTotal(res.data.data.pagination.boardNoticeTotal || 0);
       })
       .catch(err => {
         if (err.response?.status === 401) { logout(); navigate('/login'); }
@@ -309,7 +313,13 @@ function BoardListPage() {
                   <div className="md:hidden divide-y divide-border-light">
                     {posts.length === 0 ? (
                       <div className="text-center py-12 text-text-muted text-sm">게시글이 없습니다</div>
-                    ) : posts.map((post, idx) => (
+                    ) : (() => {
+                      const regularPostsBefore = page === 1 ? 0 : (page - 1) * 10 - boardNoticeTotal;
+                      let regularIdx = -1;
+                      return posts.map((post) => {
+                        if (!post.isNotice) regularIdx++;
+                        const postNo = boardRegularTotal - regularPostsBefore - regularIdx;
+                        return (
                       <div
                         key={post.id}
                         onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
@@ -319,7 +329,7 @@ function BoardListPage() {
                           {post.isNotice ? (
                             <span className="flex-shrink-0 bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold mt-0.5">공지</span>
                           ) : (
-                            <span className="flex-shrink-0 text-[10px] text-text-muted mt-0.5 w-5 text-center">{totalPosts - (page - 1) * 10 - idx}</span>
+                            <span className="flex-shrink-0 text-[10px] text-text-muted mt-0.5 w-5 text-center">{postNo}</span>
                           )}
                           <span className="text-sm text-text-primary leading-snug">
                             {post.title}
@@ -341,7 +351,9 @@ function BoardListPage() {
                           <span>조회 {post.viewCount}</span>
                         </div>
                       </div>
-                    ))}
+                    );
+                  });
+                })()}
                   </div>
 
                   {/* 데스크톱 테이블 */}
@@ -363,7 +375,13 @@ function BoardListPage() {
                             게시글이 없습니다
                           </td>
                         </tr>
-                      ) : posts.map((post, idx) => (
+                      ) : (() => {
+                        const regularPostsBefore = page === 1 ? 0 : (page - 1) * 10 - boardNoticeTotal;
+                        let regularIdx = -1;
+                        return posts.map((post) => {
+                          if (!post.isNotice) regularIdx++;
+                          const postNo = boardRegularTotal - regularPostsBefore - regularIdx;
+                          return (
                         <tr
                           key={post.id}
                           onClick={() => navigate(`/posts/${post.id}`, { state: { boardType } })}
@@ -372,7 +390,7 @@ function BoardListPage() {
                           <td className="py-3.5 px-4 text-center text-xs text-text-muted">
                             {post.isNotice ? (
                               <span className="bg-bg-dark text-white text-[10px] px-1.5 py-0.5 rounded font-bold">공지</span>
-                            ) : totalPosts - (page - 1) * 10 - idx}
+                            ) : postNo}
                           </td>
                           <td className="py-3.5 px-4 text-text-primary">
                             {post.title}
@@ -398,14 +416,18 @@ function BoardListPage() {
                             {post._count.comments}
                           </td>
                         </tr>
-                      ))}
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
                 </>
               )}
             </div>
 
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            {canAccessBoard(boardType, member) && (
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            )}
           </div>
         </div>
       </div>

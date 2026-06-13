@@ -32,7 +32,7 @@ export const formatDate = (dateString: string): string => {
   return dateString.substring(0, 10).replaceAll('-', '.');
 };
 
-type MemberLike = { position: string; status: string } | null;
+type MemberLike = { position: string | null; status: string } | null;
 
 const FULL_ACCESS = ['vice_leader', 'leader', 'super_admin'];
 const PLANNING_ACCESS = ['planning_member', 'planning_lead', 'treasurer', ...FULL_ACCESS];
@@ -44,17 +44,19 @@ const NOTICE_WRITE = ['leader', 'super_admin'];
 export function canAccessBoard(boardType: string, member: MemberLike): boolean {
   if (['notice', 'free'].includes(boardType)) return true;
   if (!member || member.status !== 'active') return false;
-  if (['resource', 'photo'].includes(boardType)) return MEMBER_ACCESS.includes(member.position);
-  if (boardType === 'planning') return PLANNING_ACCESS.includes(member.position);
-  if (boardType === 'budget') return BUDGET_ACCESS.includes(member.position);
+  const position = member.position ?? 'member';
+  if (['resource', 'photo'].includes(boardType)) return MEMBER_ACCESS.includes(position);
+  if (boardType === 'planning') return PLANNING_ACCESS.includes(position);
+  if (boardType === 'budget') return BUDGET_ACCESS.includes(position);
   return false;
 }
 
 export function canWriteBoard(boardType: string, member: MemberLike): boolean {
   if (!member || member.status !== 'active') return false;
-  if (boardType === 'notice') return NOTICE_WRITE.includes(member.position);
-  if (boardType === 'free' || boardType === 'photo') return MEMBER_ACCESS.includes(member.position);
-  if (boardType === 'resource' || boardType === 'planning') return LEAD_WRITE.includes(member.position);
-  if (boardType === 'budget') return BUDGET_ACCESS.includes(member.position);
+  const position = member.position ?? 'member';
+  if (boardType === 'notice') return NOTICE_WRITE.includes(position);
+  if (boardType === 'free' || boardType === 'photo') return MEMBER_ACCESS.includes(position);
+  if (boardType === 'resource' || boardType === 'planning') return LEAD_WRITE.includes(position);
+  if (boardType === 'budget') return BUDGET_ACCESS.includes(position);
   return false;
 }
