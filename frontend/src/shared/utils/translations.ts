@@ -55,8 +55,8 @@ export function canWriteBoard(boardType: string, member: MemberLike): boolean {
   if (!member || member.status !== 'active') return false;
   const position = member.position ?? 'member';
   if (boardType === 'notice') return NOTICE_WRITE.includes(position);
-  if (boardType === 'free' || boardType === 'photo') return MEMBER_ACCESS.includes(position);
-  if (boardType === 'resource' || boardType === 'planning') return LEAD_WRITE.includes(position);
+  if (boardType === 'free' || boardType === 'photo' || boardType === 'resource') return MEMBER_ACCESS.includes(position);
+  if (boardType === 'planning') return LEAD_WRITE.includes(position);
   if (boardType === 'budget') return BUDGET_ACCESS.includes(position);
   return false;
 }

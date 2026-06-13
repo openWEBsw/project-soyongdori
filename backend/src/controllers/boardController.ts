@@ -21,12 +21,12 @@ const BUDGET_WRITE_POSITIONS = ['treasurer', ...FULL_ACCESS_POSITIONS];
 const LEAD_WRITE_POSITIONS = ['planning_lead', ...BUDGET_WRITE_POSITIONS];
 const MEMBER_WRITE_POSITIONS = ['member', 'planning_member', ...LEAD_WRITE_POSITIONS];
 
-function canWriteBoard(boardType: string, position: string | undefined): boolean {
-  if (!position) return false;
-  if (boardType === 'notice') return ['leader', 'super_admin'].includes(position);
-  if (boardType === 'free' || boardType === 'photo') return MEMBER_WRITE_POSITIONS.includes(position);
-  if (boardType === 'resource' || boardType === 'planning') return LEAD_WRITE_POSITIONS.includes(position);
-  if (boardType === 'budget') return BUDGET_WRITE_POSITIONS.includes(position);
+function canWriteBoard(boardType: string, position: string | undefined | null): boolean {
+  const pos = position ?? 'member';
+  if (boardType === 'notice') return ['leader', 'super_admin'].includes(pos);
+  if (boardType === 'free' || boardType === 'photo' || boardType === 'resource') return MEMBER_WRITE_POSITIONS.includes(pos);
+  if (boardType === 'planning') return LEAD_WRITE_POSITIONS.includes(pos);
+  if (boardType === 'budget') return BUDGET_WRITE_POSITIONS.includes(pos);
   return false;
 }
 
@@ -61,9 +61,9 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
       : {};
 
     const baseWhere = { boardId: board.id, deletedAt: null, isHidden: false, ...searchCondition };
-    const boardBaseWhere = { boardId: board.id, deletedAt: null, isHidden: false };
+    const regularBaseWhere = { boardId: board.id, deletedAt: null, isHidden: false, isNotice: false };
 
-    const [posts, total, boardTotal, boardNoticeTotal] = await Promise.all([
+    const [rawPosts, total] = await Promise.all([
       prisma.post.findMany({
         where: baseWhere,
         include: {
@@ -76,18 +76,23 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
         take: limit,
       }),
       prisma.post.count({ where: baseWhere }),
-      prisma.post.count({ where: boardBaseWhere }),
-      prisma.post.count({ where: { ...boardBaseWhere, isNotice: true } }),
     ]);
+
+    // 각 일반 게시글의 고정 번호: 해당 게시글과 같거나 최신인 일반글 수 (검색/페이지 무관)
+    const posts = await Promise.all(
+      rawPosts.map(async (post) => {
+        if (post.isNotice) return { ...post, postNo: null };
+        const postNo = await prisma.post.count({
+          where: { ...regularBaseWhere, createdAt: { gte: post.createdAt } },
+        });
+        return { ...post, postNo };
+      })
+    );
 
     return res.json({
       data: {
         posts,
-        pagination: {
-          page, limit, total, totalPages: Math.ceil(total / limit),
-          boardRegularTotal: boardTotal - boardNoticeTotal,
-          boardNoticeTotal,
-        },
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       },
     });
   } catch (error) {
