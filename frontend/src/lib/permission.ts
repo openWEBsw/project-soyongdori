@@ -4,7 +4,7 @@ export const positionToLevel = (position?: string | null): number => {
         case 'super_admin': return 8;
         case 'leader': return 7;
         case 'vice_leader': return 6;
-        case 'treasurer': return 6;
+        case 'treasurer': return 5;
         case 'planning_lead': return 5;
         case 'planning_member': return 4;
         case 'member': return 1;
@@ -20,6 +20,7 @@ export const POSITION_LABELS: Record<string, string> = {
     planning_lead: '기획부장',
     planning_member: '기획부원',
     member: '일반회원',
+    not_member: '준회원',
 };
 
 export const STATUS_LABELS: Record<string, string> = {

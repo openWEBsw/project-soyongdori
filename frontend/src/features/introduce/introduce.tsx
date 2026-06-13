@@ -1,16 +1,21 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
 import introduceHero from '../../assets/introduce_hero.jpeg';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
+import introduceHero2 from '../../assets/introduce_hero_2.jpg';
+import vocal from '../../assets/vocal.jpg';
+import guitar from '../../assets/guitar.jpg';
+import drum from '../../assets/drum.jpg';
+import keyboard from '../../assets/keyboard.jpg';
+import bass from '../../assets/bass.jpg';
 
 const partsData = [
-  { name: '보컬', english: 'Vocal', desc: '밴드의 목소리' },
-  { name: '일렉기타', english: 'Electric Guitar', desc: '리프와 솔로의 핵심' },
-  { name: '베이스', english: 'Bass', desc: '리듬의 뿌리' },
-  { name: '드럼', english: 'Drum', desc: '비트를 이끄는 심장' },
-  { name: '키보드', english: 'Keyboard', desc: '사운드의 색채' },
+  { name: '보컬', english: 'Vocal', desc: '밴드의 목소리', img: vocal },
+  { name: '일렉기타', english: 'Electric Guitar', desc: '리프와 솔로의 핵심', img: guitar },
+  { name: '베이스', english: 'Bass', desc: '리듬의 뿌리', img: bass },
+  { name: '드럼', english: 'Drum', desc: '비트를 이끄는 심장', img: drum },
+  { name: '키보드', english: 'Keyboard', desc: '사운드의 색채', img: keyboard, pos: 'object-bottom' },
 ];
 
 const timelineData = [
@@ -22,7 +27,7 @@ const timelineData = [
   { date: '12월', activity: '임원 선거\n악기수여식' },
 ];
 
-const Introduce: React.FC = () => {
+const Introduce = () => {
   const { isAuthenticated, member } = useAuth();
 
   return (
@@ -30,9 +35,11 @@ const Introduce: React.FC = () => {
       <Header />
 
       {/* 메인 챕터 */}
-      {/* TODO 이미지로 교체 등 시선 끌기 */}
-      <section className="bg-bg-light border-b border-border-light">
-        <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 text-center flex flex-col items-center">
+      <section className="relative overflow-hidden bg-bg-light border-b border-border-light">
+        <img src={introduceHero2} alt="소용돌이 메인"
+          className="absolute inset-0 w-full h-full object-cover opacity-95" />
+        <div className="absolute inset-0 bg-linear-to-r from-bg-light/40 via-bg-light/90 to-bg-light/40" />
+        <div className="relative max-w-6xl mx-auto px-6 md:px-12 py-16 text-center flex flex-col items-center">
           <span className="text-text-muted text-xs tracking-widest font-medium mb-3">
             ABOUT SYDR
           </span>
@@ -61,7 +68,7 @@ const Introduce: React.FC = () => {
             <img
               src={introduceHero}
               alt="소용돌이 역사"
-              className="md:col-span-2 w-full aspect-[1.8/1] object-cover rounded-lg"
+              className="md:col-span-2 w-full aspect-[1.8/1] object-cover rounded-lg hover:scale-105 transition-transform duration-300"
             />
 
             <div className="break-keep md:col-span-3 text-sm md:text-base leading-loose font-light text-text-secondary">
@@ -87,8 +94,8 @@ const Introduce: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-8">
             {partsData.map((part, index) => (
               <div key={index} className="rounded-lg shadow-sm overflow-hidden bg-bg-white flex flex-col border border-border-light">
-                <div className="bg-bg-dark text-center text-white py-4 px-3">
-                  <h3 className="text-base md:text-lg font-bold">{part.name}</h3>
+                <div className="bg-bg-white aspect-4/3 overflow-hidden">
+                  <img className={`transition-transform duration-300 scale-[1.01] hover:scale-105 object-cover w-full h-full ${part.pos ? part.pos : 'object-center'}`} src={part.img} alt={part.name} />
                 </div>
                 <div className="bg-bg-white flex flex-col items-center justify-center py-5 px-3 gap-1 text-center flex-1">
                   <span className="text-sm font-semibold text-text-secondary">{part.english}</span>
@@ -114,10 +121,10 @@ const Introduce: React.FC = () => {
             <div className="hidden md:block absolute top-[8px] left-[2px] right-[2px] h-[2px] bg-border-dark z-0" />
             <div className="grid grid-cols-2 md:grid-cols-6 gap-y-10 gap-x-4 relative z-10">
               {timelineData.map((item, index) => (
-                <div key={index} className="flex flex-col items-center text-center">
-                  <div className="w-4 h-4 rounded-full bg-bg-dark mb-4 z-10" />
-                  <span className="text-base md:text-lg font-extrabold text-text-title mb-1">{item.date}</span>
-                  <span className="text-xs font-medium text-text-secondary leading-relaxed whitespace-pre-line">
+                <div key={index} className="flex flex-col items-center text-center group">
+                  <div className="w-4 h-4 rounded-full bg-bg-dark mb-4 z-10 group-hover:scale-120 transition-transform duration-150" />
+                  <span className="text-base md:text-lg font-extrabold text-text-title mb-1 group-hover:scale-115 transition-transform duration-150">{item.date}</span>
+                  <span className="text-xs font-medium text-text-secondary leading-relaxed whitespace-pre-line group-hover:scale-110 transition-transform duration-150">
                     {item.activity}
                   </span>
                 </div>
@@ -130,7 +137,7 @@ const Introduce: React.FC = () => {
       {/* 합류버튼 챕터 */}
       {!(isAuthenticated && member?.status === 'active') && <section className="bg-bg-light py-12">
         <div className="max-w-6xl mx-auto px-6 md:px-12 flex flex-col items-center">
-          <Link to="/apply" className="bg-btn-primary-bg text-btn-primary-text rounded-md flex items-center justify-center gap-2.5 h-12 px-8 text-sm md:text-base font-bold hover:opacity-95 transition-opacity shadow-sm cursor-pointer">
+          <Link to="/apply" className="bg-btn-primary-bg text-btn-primary-text rounded-md flex items-center justify-center gap-2.5 h-12 px-8 text-sm md:text-base font-bold shadow-sm cursor-pointer hover:scale-105 transition-transform duration-300">
             소용돌이에 합류하기
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />

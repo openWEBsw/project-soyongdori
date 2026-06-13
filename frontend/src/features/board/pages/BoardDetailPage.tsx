@@ -11,8 +11,9 @@ import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
-import { partNames } from '../../../shared/utils/translations';
+import { partNames, canAccessBoard } from '../../../shared/utils/translations';
 import defaultProfileImg from '../../../assets/default_profile_image.jpg';
+import MemberDetail from '../../member/memberDetail';
 
 const boardNames: Record<string, string> = {
   notice: '공지 게시판',
@@ -22,6 +23,8 @@ const boardNames: Record<string, string> = {
   planning: '기획부 게시판',
   budget: '동아리비 내역',
 };
+
+const COMMENTS_PER_PAGE = 10;
 
 interface Comment {
   id: string;
@@ -56,12 +59,28 @@ function formatDateTime(iso: string) {
   return iso.slice(0, 16).replace('T', ' ').replace(/-/g, '.');
 }
 
+const YOUTUBE_REGEX = /https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([A-Za-z0-9_-]{11})[^\s]*/g;
+
+function renderContentWithYoutube(content: string) {
+  const parts: { type: 'text' | 'youtube'; content: string; videoId?: string }[] = [];
+  let lastIndex = 0;
+  YOUTUBE_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = YOUTUBE_REGEX.exec(content)) !== null) {
+    if (match.index > lastIndex) parts.push({ type: 'text', content: content.slice(lastIndex, match.index) });
+    parts.push({ type: 'youtube', content: match[0], videoId: match[1] });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < content.length) parts.push({ type: 'text', content: content.slice(lastIndex) });
+  return parts;
+}
+
 function BoardDetailPage() {
   const navigate = useNavigate();
   const { postId } = useParams();
   const location = useLocation();
   const boardType: string = (location.state as any)?.boardType ?? 'free';
-  const { member, logout, isAuthenticated } = useAuth();
+  const { member, logout } = useAuth();
   const boardName = boardNames[boardType] || '게시판';
 
   const [post, setPost] = useState<Post | null>(null);
@@ -71,6 +90,15 @@ function BoardDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+  const [memberModalId, setMemberModalId] = useState<string | null>(null);
+  const [commentPage, setCommentPage] = useState(1);
+
+  useEffect(() => {
+    // 비로그인 + 비공개 게시판 → 로그인 페이지로
+    if (!member && !['notice', 'free'].includes(boardType)) {
+      navigate('/login');
+    }
+  }, [boardType, member]);
 
   const fetchPost = () => {
     api.get(`/boards/posts/${postId}`)
@@ -105,7 +133,11 @@ function BoardDetailPage() {
     try {
       await api.post(`/boards/posts/${postId}/comments`, { content: commentText });
       setCommentText('');
-      fetchPost();
+      const res = await api.get(`/boards/posts/${postId}`);
+      setPost(res.data.data);
+      const lastPage = Math.ceil(res.data.data.comments.length / COMMENTS_PER_PAGE) || 1;
+      setCommentPage(lastPage);
+      alert('댓글이 등록되었습니다.');
     } catch {
       alert('댓글 등록에 실패했습니다');
     } finally {
@@ -115,6 +147,7 @@ function BoardDetailPage() {
 
   const handleCommentEdit = async (commentId: string) => {
     if (!editingCommentText.trim()) return;
+    if (!confirm('댓글을 수정하시겠습니까?')) return;
     try {
       await api.put(`/boards/comments/${commentId}`, { content: editingCommentText });
       setEditingCommentId(null);
@@ -124,10 +157,16 @@ function BoardDetailPage() {
     }
   };
 
+  const handleCommentEditCancel = () => {
+    if (!confirm('수정을 취소하시겠습니까?')) return;
+    setEditingCommentId(null);
+  };
+
   const handleCommentDelete = async (commentId: string) => {
     if (!confirm('댓글을 삭제하시겠습니까?')) return;
     try {
       await api.delete(`/boards/comments/${commentId}`);
+      setCommentPage(1);
       fetchPost();
     } catch {
       alert('댓글 삭제에 실패했습니다');
@@ -157,18 +196,31 @@ function BoardDetailPage() {
   }
 
   const isAuthor = member?.id === post.authorId;
+  const totalCommentPages = Math.ceil(post.comments.length / COMMENTS_PER_PAGE) || 1;
+  const pagedComments = post.comments.slice(
+    (commentPage - 1) * COMMENTS_PER_PAGE,
+    commentPage * COMMENTS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-bg-light text-text-primary flex flex-col">
       <Header />
 
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-12 py-5 md:py-8 pb-20 md:pb-8">
-        <div className="text-xs text-text-muted mb-4 md:mb-6">
-          홈 / 게시판 / {boardName} / 게시글
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+          <div className="text-xs text-text-muted">
+            홈 / 게시판 / {boardName} / 게시글
+          </div>
+          <button
+            onClick={() => navigate(`/boards/${boardType}`)}
+            className="flex items-center gap-1.5 border border-border-light px-4 py-1.5 rounded-lg text-xs bg-bg-white text-text-secondary hover:bg-bg-light transition-colors cursor-pointer shadow-sm"
+          >
+            <ArrowLeftIcon className="w-3.5 h-3.5" />
+            목록
+          </button>
         </div>
 
         <div className="bg-bg-white border border-border-light rounded-lg overflow-hidden mb-4 shadow-sm">
-          {/* 게시글 헤더 */}
           <div className="px-4 sm:px-8 pt-6 pb-5 border-b border-border-light">
             <div className="text-[10px] font-bold text-text-muted tracking-widest uppercase mb-2">
               {boardType} board
@@ -177,7 +229,10 @@ function BoardDetailPage() {
               {post.title}
             </h1>
             <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted">
-              <div className="flex items-center gap-2">
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={() => setMemberModalId(post.authorId)}
+              >
                 <img
                   src={post.author.profileImageUrl || defaultProfileImg}
                   className="w-6 h-6 rounded-full object-cover bg-bg-deep"
@@ -198,15 +253,28 @@ function BoardDetailPage() {
             </div>
           </div>
 
-          {/* 본문 */}
+          {/* 이미지 첨부파일 — 본문에 크게 표시 */}
           <div className="px-4 sm:px-8 py-6">
             {post.content && (
-              <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap mb-6">
-                {post.content}
+              <div className="text-sm text-text-secondary leading-relaxed mb-6">
+                {renderContentWithYoutube(post.content).map((part, i) =>
+                  part.type === 'youtube' ? (
+                    <div key={i} className="my-4 w-full max-w-2xl" style={{ aspectRatio: '16/9' }}>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${part.videoId}`}
+                        className="w-full h-full rounded-lg"
+                        allowFullScreen
+                        title="YouTube video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      />
+                    </div>
+                  ) : (
+                    <span key={i} className="whitespace-pre-wrap">{part.content}</span>
+                  )
+                )}
               </div>
             )}
 
-            {/* 이미지 첨부파일 — 본문에 크게 표시 */}
             {post.attachments.filter(att => att.mimeType.startsWith('image/')).map(att => (
               <img
                 key={att.id}
@@ -244,7 +312,6 @@ function BoardDetailPage() {
             )}
           </div>
 
-          {/* 수정/삭제 버튼 */}
           {isAuthor && (
             <div className="flex justify-end gap-2 px-4 sm:px-8 py-4 border-t border-border-light">
               <button
@@ -265,13 +332,12 @@ function BoardDetailPage() {
           )}
         </div>
 
-        {/* 댓글 섹션 */}
         <div className="bg-bg-white border border-border-light rounded-lg px-4 py-5 sm:px-6 sm:py-6 shadow-sm">
           <div className="text-sm font-semibold text-text-primary mb-4">
-            댓글 <span className="text-text-muted font-normal">{post._count.comments}</span>
+            댓글 <span className="text-text-muted font-normal">{post.comments.length}</span>
           </div>
 
-          {isAuthenticated ? (
+          {member?.status === 'active' && canAccessBoard(boardType, member) ? (
             <div className="border border-border-light rounded-lg p-4 flex gap-3 mb-5 bg-bg-light">
               <textarea
                 value={commentText}
@@ -289,8 +355,17 @@ function BoardDetailPage() {
                 등록
               </button>
             </div>
+          ) : member ? (
+            <div
+              className="border border-border-light rounded-lg p-4 mb-5 bg-bg-light text-center text-sm text-text-muted"
+            >
+              댓글을 작성할 수 있는 권한이 없습니다
+            </div>
           ) : (
-            <div className="border border-border-light rounded-lg p-4 mb-5 bg-bg-light text-center text-sm text-text-muted cursor-pointer hover:bg-bg-deep transition-colors" onClick={() => navigate('/login')}>
+            <div
+              className="border border-border-light rounded-lg p-4 mb-5 bg-bg-light text-center text-sm text-text-muted cursor-pointer hover:bg-bg-deep transition-colors"
+              onClick={() => navigate('/login')}
+            >
               댓글을 작성하려면 로그인이 필요합니다
             </div>
           )}
@@ -299,16 +374,22 @@ function BoardDetailPage() {
             <div className="text-center py-6 text-text-muted text-sm">
               첫 번째 댓글을 남겨보세요
             </div>
-          ) : post.comments.map(comment => (
+          ) : pagedComments.map(comment => (
             <div key={comment.id} className="flex gap-3 py-4 border-b border-border-light last:border-0">
               <img
                 src={comment.author.profileImageUrl || defaultProfileImg}
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-bg-deep"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-bg-deep cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={() => setMemberModalId(comment.authorId)}
               />
               <div className="flex-1">
                 <div className="flex justify-between items-start mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-text-primary">{comment.author.name}</span>
+                    <button
+                      className="text-xs font-semibold text-text-primary hover:underline cursor-pointer"
+                      onClick={() => setMemberModalId(comment.authorId)}
+                    >
+                      {comment.author.name}
+                    </button>
                     <span className="text-[10px] text-text-muted">
                       {[comment.author.part ? partNames[comment.author.part] : null, comment.author.cohort ? `${comment.author.cohort}기` : null].filter(Boolean).join(' · ')}
                     </span>
@@ -332,7 +413,7 @@ function BoardDetailPage() {
                         저장
                       </button>
                       <button
-                        onClick={() => setEditingCommentId(null)}
+                        onClick={handleCommentEditCancel}
                         className="border border-border-light bg-bg-white text-text-muted rounded px-3 py-1 text-xs cursor-pointer hover:bg-bg-light"
                       >
                         취소
@@ -363,18 +444,34 @@ function BoardDetailPage() {
               </div>
             </div>
           ))}
-        </div>
 
-        <div className="mt-4">
-          <button
-            onClick={() => navigate(`/boards/${boardType}`)}
-            className="flex items-center gap-1.5 border border-border-light px-5 py-2 rounded-lg text-sm bg-bg-white text-text-secondary hover:bg-bg-light transition-colors cursor-pointer shadow-sm"
-          >
-            <ArrowLeftIcon className="w-4 h-4" />
-            목록
-          </button>
+          {totalCommentPages > 1 && (
+            <div className="flex justify-center gap-1.5 mt-4 pt-4 border-t border-border-light">
+              {Array.from({ length: totalCommentPages }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setCommentPage(p)}
+                  className={`w-7 h-7 rounded text-xs font-medium cursor-pointer transition-colors ${
+                    p === commentPage
+                      ? 'bg-bg-dark text-white'
+                      : 'bg-bg-white border border-border-light text-text-secondary hover:bg-bg-light'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
+      {memberModalId && (
+        <MemberDetail
+          isOpen={true}
+          onClose={() => setMemberModalId(null)}
+          memberId={memberModalId}
+        />
+      )}
       <Footer />
     </div>
   );

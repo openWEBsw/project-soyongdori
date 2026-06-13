@@ -1,6 +1,6 @@
 // https://velog.io/@sohyun32253/FullCalendar-%EC%82%AC%EC%9A%A9%EB%B2%95-feat.-react-typescript
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -10,22 +10,9 @@ import type { EventClickArg, DatesSetArg } from '@fullcalendar/core';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
+import { positionToLevel } from '../../lib/permission';
 import api from '../../lib/api';
-
-
-// 직책 → 권한 레벨 매핑 (BE의 positionToLevel과 동일)
-const positionToLevel = (position?: string): number => {
-    switch (position) {
-        case 'super_admin': return 8;
-        case 'leader': return 7;
-        case 'vice_leader': return 6;
-        case 'treasurer': return 6;
-        case 'planning_lead': return 5;
-        case 'planning_member': return 4;
-        case 'member': return 1;
-        default: return 0;
-    }
-};
+import calendarBg from '../../assets/calendar_bg.jpeg';
 
 // 타입 정의: 백엔드 응답 형태와 모달 폼 상태
 type Visibility = 'personal' | 'group' | 'public';
@@ -85,28 +72,28 @@ const emptyForm = (date?: string): FormState => ({
     color: COLORS[0].value,
 });
 
-const Calendar: React.FC = () => {
+const Calendar = () => {
     // 로그인 정보 + 권한 계산
     const { member } = useAuth();
     const level = positionToLevel(member?.position);
     const canCreate = level >= 1;
 
-    // useState
-    const [events, setEvents] = useState<CalendarEvent[]>([]); // 현재 일정 목록
-    const [error, setError] = useState<string | null>(null); // 에러 메시지
-    const [loading, setLoading] = useState(false); // 로딩 상태
+    // 일정 목록, 로딩, 에러
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
     // 모달 상태
-    const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null); // 모달 모드
-    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null); // 선택된 일정
-    const [form, setForm] = useState<FormState>(emptyForm()); // 폼 상태
-    const [submitting, setSubmitting] = useState(false); // 제출 중 상태
+    const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+    const [form, setForm] = useState<FormState>(emptyForm());
+    const [submitting, setSubmitting] = useState(false);
 
     // 현재 조회 중인 날짜 범위
     const rangeRef = useRef<{ start: string; end: string } | null>(null);
 
     // 일정 조회
-    const fetchEvents = useCallback(async (start?: string, end?: string) => {
+    const fetchEvents = async (start?: string, end?: string) => {
         setLoading(true);
         setError(null);
         try {
@@ -120,7 +107,7 @@ const Calendar: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
     // 달 이동
     const handleDatesSet = (arg: DatesSetArg) => {
@@ -136,8 +123,10 @@ const Calendar: React.FC = () => {
         setModalMode('create');
     };
 
-    // 기존 이벤트 클릭 
+    // 일정 클릭
     const handleEventClick = (arg: EventClickArg) => {
+        // 더보기 팝오버가 열려 있으면 닫기
+        document.querySelector<HTMLElement>('.fc-popover-close')?.click();
         const ev = events.find((e) => String(e.id) === String(arg.event.id));
         if (!ev) return;
         setSelectedEvent(ev);
@@ -154,6 +143,7 @@ const Calendar: React.FC = () => {
         setModalMode('edit');
     };
 
+    // 모달 닫기
     const closeModal = () => {
         setModalMode(null);
         setSelectedEvent(null);
@@ -167,19 +157,28 @@ const Calendar: React.FC = () => {
     const readOnly = modalMode === 'edit' && !canEdit;
 
     // 생성/수정 폼 제출 → POST 또는 PATCH
-    const submit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!form.title || !form.startAt) {
             setError('제목과 시작일은 필수입니다');
             return;
         }
+        // 종료가 시작보다 앞서면 막음
+        if (form.endAt && new Date(form.endAt) < new Date(form.startAt)) {
+            setError('종료 시간은 시작 시간보다 빠를 수 없습니다');
+            return;
+        }
         setSubmitting(true);
         setError(null);
+        // 종료 없으면 시작 시간+ 1시간 종료값
+        const startDate = new Date(form.startAt);
+        const endDate = form.endAt ? new Date(form.endAt) : new Date(startDate.getTime() + 60 * 60 * 1000);
         const payload = {
             title: form.title,
             description: form.description || null,
-            startAt: form.startAt,
-            endAt: form.endAt || null,
+            // 로컬 시간 -> UTC로 변환해 보냄
+            startAt: startDate.toISOString(),
+            endAt: endDate.toISOString(),
             allDay: form.allDay,
             visibility: form.visibility,
             location: form.location || null,
@@ -202,8 +201,8 @@ const Calendar: React.FC = () => {
         }
     };
 
-    // 일정 삭제 
-    const remove = async () => {
+    // 일정 삭제
+    const handleDelete = async () => {
         if (!selectedEvent) return;
         if (!window.confirm('이 일정을 삭제하시겠습니까?')) return;
         setSubmitting(true);
@@ -220,12 +219,20 @@ const Calendar: React.FC = () => {
         }
     };
 
+    // 종일 일정 하루 더해 마지막 날까지 보이게
+    const allDayEnd = (iso: string): string => {
+        const d = new Date(iso);
+        d.setDate(d.getDate() + 1);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+
     // FullCalendar에 넘길 형태로 매핑
     const fcEvents = events.map((ev) => ({
         id: String(ev.id),
         title: ev.title,
         start: ev.startAt,
-        end: ev.endAt ?? undefined,
+        end: ev.endAt ? (ev.allDay ? allDayEnd(ev.endAt) : ev.endAt) : undefined,
         allDay: ev.allDay,
         backgroundColor: ev.color ?? '#6366f1',
         borderColor: ev.color ?? '#6366f1',
@@ -236,8 +243,10 @@ const Calendar: React.FC = () => {
             <Header />
 
             {/* 페이지 헤더 */}
-            <section className="bg-bg-light border-b border-border-light">
-                <div className="max-w-6xl mx-auto px-6 md:px-12 py-12 text-center flex flex-col items-center">
+            <section className="relative bg-bg-light border-b border-border-light overflow-hidden">
+                <img src={calendarBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-linear-to-r from-bg-light/40 via-bg-light/90 to-bg-light/40" />
+                <div className="relative max-w-6xl mx-auto px-6 md:px-12 py-24 text-center flex flex-col items-center">
                     <span className="text-text-muted text-xs tracking-widest font-medium uppercase mb-3">
                         Calendar
                     </span>
@@ -264,13 +273,14 @@ const Calendar: React.FC = () => {
                                     setForm(emptyForm(today));
                                     setModalMode('create');
                                 }}
-                                className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-sm font-bold hover:opacity-90 transition-opacity"
+                                className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-sm font-bold hover:opacity-90 transition-opacity cursor-pointer"
                             >
                                 일정 추가 +
                             </button>
                         )}
                     </div>
 
+                    {/* 에러 메시지 */}
                     {error && !modalMode && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">
                             {error}
@@ -278,33 +288,51 @@ const Calendar: React.FC = () => {
                     )}
 
                     {/* 캘린더 */}
-                    <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6">
-                        <FullCalendar
-                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                            initialView="dayGridMonth"
-                            locale="ko"
-                            headerToolbar={{
-                                left: 'prev,next today',
-                                center: 'title',
-                                right: 'dayGridMonth,timeGridWeek,timeGridDay',
-                            }}
-                            buttonText={{
-                                today: '오늘',
-                                month: '월',
-                                week: '주',
-                                day: '일',
-                            }}
-                            events={fcEvents}
-                            datesSet={handleDatesSet}
-                            dateClick={handleDateClick}
-                            eventClick={handleEventClick}
-                            height="auto"
-                            dayMaxEvents={3}
-                        />
+                    <div className="bg-bg-white border border-border-light rounded-lg p-4 md:p-6 overflow-x-auto">
+                        {/* 일정 제목이 길면 한 줄 말줄임 처리 */}
+                        <div
+                            style={{
+                                '--fc-button-bg-color': '#333333',
+                                '--fc-button-border-color': '#333333',
+                                '--fc-button-hover-bg-color': '#1a1a1a',
+                                '--fc-button-hover-border-color': '#1a1a1a',
+                                '--fc-button-active-bg-color': '#000000',
+                                '--fc-button-active-border-color': '#000000',
+                                '--fc-today-bg-color': '#f2f2f2',
+                                '--fc-border-color': '#e5e7eb',
+                            } as React.CSSProperties}
+                            className="min-w-[600px] text-sm [&_.fc-daygrid-day]:cursor-pointer [&_.fc-daygrid-day]:transition-colors [&_.fc-daygrid-day:hover]:bg-bg-deep [&_.fc-event-title]:truncate [&_.fc-toolbar-title]:text-xl [&_.fc-toolbar-title]:font-bold [&_.fc-toolbar-title]:text-text-title"
+                        >
+                            <FullCalendar
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                locale="ko"
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                                }}
+                                buttonText={{
+                                    today: '오늘',
+                                    month: '월',
+                                    week: '주',
+                                    day: '일',
+                                }}
+                                events={fcEvents}
+                                eventClassNames="cursor-pointer"
+                                datesSet={handleDatesSet}
+                                dateClick={handleDateClick}
+                                eventClick={handleEventClick}
+                                height={720}
+                                dayMaxEvents={true}
+                                moreLinkText={(n) => `+${n} 더보기`}
+                            />
+                        </div>
                     </div>
                 </div>
             </main>
 
+            {/* 일정 추가/수정 모달 */}
             {modalMode && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -314,6 +342,7 @@ const Calendar: React.FC = () => {
                         className="bg-bg-white rounded-lg shadow-xl w-full max-w-lg border border-border-light max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* 모달 헤더 */}
                         <div className="px-6 py-4 border-b border-border-light flex items-center justify-between">
                             <h2 className="text-lg font-bold text-text-title">
                                 {modalMode === 'create' ? '일정 추가' : readOnly ? '일정 상세' : '일정 수정'}
@@ -321,14 +350,15 @@ const Calendar: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={closeModal}
-                                className="text-text-muted hover:text-text-primary text-2xl leading-none"
+                                className="text-text-muted hover:text-text-primary text-2xl leading-none cursor-pointer"
                                 aria-label="닫기"
                             >
                                 ×
                             </button>
                         </div>
 
-                        <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-4">
+                        {/* 일정 입력 폼 */}
+                        <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
                             {error && (
                                 <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">
                                     {error}
@@ -340,7 +370,7 @@ const Calendar: React.FC = () => {
                                 <input
                                     type="text"
                                     value={form.title}
-                                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
                                     required
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
@@ -351,7 +381,7 @@ const Calendar: React.FC = () => {
                                 <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">설명</label>
                                 <textarea
                                     value={form.description}
-                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                                     disabled={readOnly}
                                     rows={2}
                                     className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light resize-none"
@@ -362,32 +392,34 @@ const Calendar: React.FC = () => {
                                 <div>
                                     <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">시작 *</label>
                                     <input
-                                        type="datetime-local"
-                                        value={form.startAt}
-                                        onChange={(e) => setForm({ ...form, startAt: e.target.value })}
+                                        type={form.allDay ? 'date' : 'datetime-local'}
+                                        value={form.allDay ? form.startAt.slice(0, 10) : form.startAt}
+                                        onChange={(e) => setForm(prev => ({ ...prev, startAt: prev.allDay ? `${e.target.value}T00:00` : e.target.value }))}
                                         required
                                         disabled={readOnly}
-                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
+                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">종료</label>
                                     <input
-                                        type="datetime-local"
-                                        value={form.endAt}
-                                        onChange={(e) => setForm({ ...form, endAt: e.target.value })}
+                                        type={form.allDay ? 'date' : 'datetime-local'}
+                                        value={form.allDay ? form.endAt.slice(0, 10) : form.endAt}
+                                        onChange={(e) => setForm(prev => ({ ...prev, endAt: prev.allDay && e.target.value ? `${e.target.value}T00:00` : e.target.value }))}
+                                        min={form.allDay ? form.startAt.slice(0, 10) : form.startAt}
                                         disabled={readOnly}
-                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
+                                        className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                     />
                                 </div>
                             </div>
 
-                            <label className="flex items-center gap-2 text-sm text-text-secondary">
+                            <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={form.allDay}
-                                    onChange={(e) => setForm({ ...form, allDay: e.target.checked })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, allDay: e.target.checked }))}
                                     disabled={readOnly}
+                                    className="cursor-pointer disabled:cursor-default"
                                 />
                                 종일 일정
                             </label>
@@ -396,9 +428,9 @@ const Calendar: React.FC = () => {
                                 <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">공개 범위 *</label>
                                 <select
                                     value={form.visibility}
-                                    onChange={(e) => setForm({ ...form, visibility: e.target.value as Visibility })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value as Visibility }))}
                                     disabled={readOnly}
-                                    className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
+                                    className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light cursor-pointer disabled:cursor-default"
                                 >
                                     <option value="personal">개인 공개</option>
                                     <option value="group">멤버 공개</option>
@@ -411,7 +443,7 @@ const Calendar: React.FC = () => {
                                 <input
                                     type="text"
                                     value={form.location}
-                                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                                    onChange={(e) => setForm(prev => ({ ...prev, location: e.target.value }))}
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary disabled:bg-bg-light"
                                 />
@@ -424,9 +456,9 @@ const Calendar: React.FC = () => {
                                         <button
                                             key={c.value}
                                             type="button"
-                                            onClick={() => !readOnly && setForm({ ...form, color: c.value })}
+                                            onClick={() => !readOnly && setForm(prev => ({ ...prev, color: c.value }))}
                                             disabled={readOnly}
-                                            className={`w-7 h-7 rounded-full transition-transform disabled:cursor-not-allowed ${form.color === c.value ? 'ring-2 ring-offset-2 ring-text-primary scale-110' : ''
+                                            className={`w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-110 duration-150 disabled:cursor-not-allowed ${form.color === c.value ? 'ring-2 ring-offset-2 ring-text-primary scale-110' : ''
                                                 }`}
                                             style={{ backgroundColor: c.value }}
                                             aria-label={c.name}
@@ -446,9 +478,9 @@ const Calendar: React.FC = () => {
                                 {modalMode === 'edit' && canEdit && (
                                     <button
                                         type="button"
-                                        onClick={remove}
+                                        onClick={handleDelete}
                                         disabled={submitting}
-                                        className="px-4 py-2 text-sm font-bold text-text-danger border border-red-200 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-bold text-text-danger border border-red-200 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
                                     >
                                         삭제
                                     </button>
@@ -456,7 +488,7 @@ const Calendar: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="px-4 py-2 text-sm font-bold text-text-secondary border border-border-dark rounded-md hover:bg-bg-light transition-colors"
+                                    className="px-4 py-2 text-sm font-bold text-text-secondary border border-border-dark rounded-md hover:bg-bg-light transition-colors cursor-pointer"
                                 >
                                     {readOnly ? '닫기' : '취소'}
                                 </button>
@@ -464,7 +496,7 @@ const Calendar: React.FC = () => {
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="px-4 py-2 text-sm font-bold bg-btn-primary-bg text-btn-primary-text rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-bold bg-btn-primary-bg text-btn-primary-text rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
                                     >
                                         {submitting ? '저장 중...' : modalMode === 'create' ? '추가' : '수정'}
                                     </button>

@@ -5,6 +5,8 @@ WORKDIR /frontend
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
+ARG VITE_NAVER_MAP_CLIENT_ID
+ENV VITE_NAVER_MAP_CLIENT_ID=$VITE_NAVER_MAP_CLIENT_ID
 RUN npm run build
 
 FROM node:24-alpine${ALPINE_VERSION} AS backend-builder

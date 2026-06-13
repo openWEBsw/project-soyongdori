@@ -8,9 +8,11 @@ import {
 import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
+import ReceiptAnalyzer from '../../receipt/receiptAnalyzer';
 import Footer from '../../../shared/layout/Footer';
+import { canWriteBoard } from '../../../shared/utils/translations';
 
-const boardNames: Record<string, string> = {
+const ALL_BOARDS: Record<string, string> = {
   notice: '공지 게시판',
   free: '자유 게시판',
   resource: '자료 게시판',
@@ -20,7 +22,7 @@ const boardNames: Record<string, string> = {
 };
 
 const MAX_SIZE = 10 * 1024 * 1024;
-const MAX_FILES = 5;
+const MAX_FILES = 20;
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes}B`;
@@ -29,11 +31,32 @@ function formatBytes(bytes: number) {
 }
 
 function BoardWritePage() {
+
+  // 영수증 분석 관련 js 부분
+  // 영수증 분석 관련 로직
+  const [analyzerResult, setAnalyzerResult] = useState('');
+  const [isReceiptAnalyzerOpen, setIsReceiptAnalyzerOpen] = useState(false);
+  const [isReceiptLoading, setIsReceiptLoading] = useState(false);
+  const [isReceiptError, setIsReceiptError] = useState(false);
+
+  const handleReceiptAnalyzer = () => {
+    setIsReceiptAnalyzerOpen(true);
+  };
+
+  const handleReceiptAnalyzerClose = () => {
+    setIsReceiptAnalyzerOpen(false);
+  };
+  //
+
   const navigate = useNavigate();
   const location = useLocation();
   const initialBoardType: string = (location.state as any)?.boardType ?? 'free';
-  const { logout } = useAuth();
+  const { logout, member } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const boardNames: Record<string, string> = Object.fromEntries(
+    Object.entries(ALL_BOARDS).filter(([key]) => canWriteBoard(key, member))
+  );
 
   const [selectedBoard, setSelectedBoard] = useState(initialBoardType);
   const [title, setTitle] = useState('');
@@ -64,6 +87,7 @@ function BoardWritePage() {
   const handleSubmit = async () => {
     if (!title.trim()) { setError('제목을 입력해주세요'); return; }
     if (!content.trim()) { setError('내용을 입력해주세요'); return; }
+    if (!canWriteBoard(selectedBoard, member)) { setError('해당 게시판에 글을 작성할 권한이 없습니다'); return; }
     setError('');
     setLoading(true);
     try {
@@ -136,21 +160,30 @@ function BoardWritePage() {
 
           {/* 첨부파일 */}
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-2">
-              첨부파일
-              <span className="text-xs text-text-muted font-normal ml-2">최대 {MAX_FILES}개 · 파일당 10MB 이하</span>
-            </label>
+            <div className="flex justify-between items-center text-xs font-semibold text-text-secondary mb-2">
+              <div>
+                <span>첨부파일</span>
+                <span className="text-xs text-text-muted font-normal ml-2">최대 {MAX_FILES}개 · 파일당 10MB 이하</span>
+              </div>
+              {selectedBoard === 'budget' && canWriteBoard('budget', member) && (
+                <button
+                  onClick={handleReceiptAnalyzer}
+                  className="px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded-lg text-xs font-bold hover:opacity-90 cursor-pointer"
+                >
+                  영수증 분석
+                </button>
+              )}
+            </div>
 
             <div
               onClick={() => fileInputRef.current?.click()}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={e => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
-              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                dragOver
-                  ? 'border-border-dark bg-bg-deep'
-                  : 'border-border-light bg-bg-light hover:border-border-dark hover:bg-bg-deep'
-              }`}
+              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${dragOver
+                ? 'border-border-dark bg-bg-deep'
+                : 'border-border-light bg-bg-light hover:border-border-dark hover:bg-bg-deep'
+                }`}
             >
               <PaperClipIcon className="w-6 h-6 text-text-muted mx-auto mb-2" />
               <div className="text-sm text-text-secondary">클릭하거나 파일을 드래그하여 첨부</div>
@@ -206,7 +239,10 @@ function BoardWritePage() {
             {loading ? '등록 중...' : (
               <>등록 <ArrowRightIcon className="w-4 h-4" /></>
             )}
+
+
           </button>
+          {isReceiptAnalyzerOpen && (<ReceiptAnalyzer isOpen={isReceiptAnalyzerOpen} onClose={handleReceiptAnalyzerClose} files={files} analyzeResult={analyzerResult} setAnalyzerResult={setAnalyzerResult} isLoading={isReceiptLoading} setIsLoading={setIsReceiptLoading} isError={isReceiptError} setIsError={setIsReceiptError} />)}
         </div>
       </div>
       <Footer />

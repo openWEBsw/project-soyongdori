@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../prisma/client.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 
 //회원가입
 export const signup = async (req: Request, res: Response) => {
-  console.log('signup called', req.body);
-  const { email, password, name, studentId, phone } = req.body;
+  const { email, password, name, studentId, phone, department, birthday } = req.body;
 
   if (!email || !password || !name) {
     return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'email, password, name required' } });
@@ -17,9 +17,15 @@ export const signup = async (req: Request, res: Response) => {
     if (exists) {
       return res.status(409).json({ success: false, error: { code: 'EMAIL_DUPLICATE', message: 'email already exists' } });
     }
+    if (studentId) {
+      const idExists = await prisma.member.findUnique({ where: { studentId } });
+      if (idExists) {
+        return res.status(409).json({ success: false, error: { code: 'STUDENT_ID_DUPLICATE', message: 'student id already exists' } });
+      }
+    }
     const passwordHash = await bcrypt.hash(password, 10);
     const member = await prisma.member.create({
-      data: { email, passwordHash, name, studentId, phone },
+      data: { email, passwordHash, name, studentId, phone, department, birthday: birthday ? new Date(birthday) : undefined, position: 'not_member' },
       select: { id: true, email: true, name: true, status: true, createdAt: true },
     });
     return res.status(201).json({ success: true, data: member });

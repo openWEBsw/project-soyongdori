@@ -15,6 +15,7 @@ interface AuthContextValue {
   token: string | null;
   login: (token: string, member: AuthMember) => void;
   logout: () => void;
+  updateMember: (updates: Partial<AuthMember>) => void;
   isAuthenticated: boolean;
 }
 
@@ -41,8 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMember(null);
   };
 
+  const updateMember = (updates: Partial<AuthMember>) => {
+    setMember(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem('member', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ member, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ member, token, login, logout, updateMember, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

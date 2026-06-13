@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../../lib/api';
 import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
+import signupBg from '../../../assets/signup_bg.jpeg';
 
+// 가입 절차 안내
 const processSteps = [
   { step: 1, title: '회원가입', desc: '계정 생성 · 현재 단계', active: true },
   { step: 2, title: '로그인', desc: '준회원 권한', active: false },
@@ -11,19 +13,20 @@ const processSteps = [
   { step: 4, title: '승인 완료', desc: '일반 회원 권한 부여', active: false },
 ];
 
-function SignupPage() {
+const SignupPage = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '', studentId: '', phone: '' });
+
+  // 폼 상태
+  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '', studentId: '', phone: '', department: '', birthday: '' });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm(prev => ({ ...prev, [key]: e.target.value }));
-
-  const handleSubmit = async (e: { preventDefault(): void }) => {
+  // 회원가입 요청
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    if (form.password.length < 8) { setError('비밀번호는 8자리 이상이어야 합니다.'); return; }
     if (form.password !== form.passwordConfirm) { setError('비밀번호가 일치하지 않습니다'); return; }
     if (!agree) { setError('개인정보 수집 이용에 동의해주세요'); return; }
     setLoading(true);
@@ -34,11 +37,14 @@ function SignupPage() {
         name: form.name,
         studentId: form.studentId || undefined,
         phone: form.phone || undefined,
+        department: form.department || undefined,
+        birthday: form.birthday || undefined,
       });
       navigate('/login', { state: { signed: true } });
     } catch (err: any) {
       const code = err.response?.data?.error?.code;
       if (code === 'EMAIL_DUPLICATE') setError('이미 사용 중인 이메일입니다');
+      else if (code === 'STUDENT_ID_DUPLICATE') setError('이미 사용 중인 학번입니다');
       else setError('회원가입에 실패했습니다');
     } finally {
       setLoading(false);
@@ -52,8 +58,11 @@ function SignupPage() {
       {/* 메인 2컬럼 */}
       <div className="flex flex-1 flex-col md:flex-row">
         {/* 좌측: 안내 */}
-        <div className="bg-bg-light flex-1 flex flex-col justify-between px-8 md:px-16 py-12 md:py-20">
-          <div>
+        <div className="relative bg-bg-light flex-1 flex flex-col justify-between items-end text-right px-8 md:px-16 py-12 md:py-20 overflow-hidden">
+          <img src={signupBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-l from-white via-white/90 to-transparent" />
+
+          <div className="relative">
             <span className="text-text-muted text-xs tracking-widest font-medium uppercase">
               Join SYDR
             </span>
@@ -73,7 +82,7 @@ function SignupPage() {
               </span>
               <div className="mt-4 flex flex-col gap-5">
                 {processSteps.map((s) => (
-                  <div key={s.step} className="flex items-start gap-4">
+                  <div key={s.step} className="flex flex-row-reverse items-start gap-4 hover:scale-110 duration-500">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${s.active
                         ? 'bg-btn-primary-bg text-btn-primary-text'
@@ -92,13 +101,13 @@ function SignupPage() {
             </div>
           </div>
 
-          <span className="text-xs text-text-muted tracking-wider mt-12">
+          <span className="relative text-xs text-text-muted tracking-wider mt-12">
             SYDR · CHUNGBUK NATIONAL UNIVERSITY
           </span>
         </div>
 
         {/* 우측: 회원가입 폼 */}
-        <div className="bg-bg-white flex-[3] flex items-start justify-center px-8 md:px-16 py-12 md:py-20 overflow-y-auto">
+        <div className="bg-bg-white flex-[3] flex items-center justify-center px-8 md:px-16 py-12 md:py-20 overflow-y-auto">
           <div className="w-full max-w-lg">
             <span className="text-text-muted text-xs tracking-widest font-medium uppercase">
               Sign Up
@@ -117,7 +126,7 @@ function SignupPage() {
                 <input
                   type="email"
                   value={form.email}
-                  onChange={set('email')}
+                  onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="your@email.com"
                   required
                   className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
@@ -133,11 +142,15 @@ function SignupPage() {
                   <input
                     type="password"
                     value={form.password}
-                    onChange={set('password')}
+                    onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}
                     placeholder="8자 이상, 영문/숫자 조합"
                     required
-                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                    className={`w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border ${form.password && form.password.length < 8 ? 'border-red-300 focus:border-red-300' : ''
+                      }`}
                   />
+                  {form.password && form.password.length < 8 && (
+                    <p className="text-xs text-text-danger mt-1.5">비밀번호는 8글자 이상이어야 합니다.</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-text-secondary block mb-1.5">
@@ -146,11 +159,15 @@ function SignupPage() {
                   <input
                     type="password"
                     value={form.passwordConfirm}
-                    onChange={set('passwordConfirm')}
+                    onChange={(e) => setForm(prev => ({ ...prev, passwordConfirm: e.target.value }))}
                     placeholder="비밀번호 확인"
                     required
-                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                    className={`w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border ${form.passwordConfirm && form.password !== form.passwordConfirm ? 'border-red-300 focus:border-red-300' : ''
+                      }`}
                   />
+                  {form.passwordConfirm && form.password !== form.passwordConfirm && (
+                    <p className="text-xs text-text-danger mt-1.5">비밀번호가 일치하지 않습니다.</p>
+                  )}
                 </div>
               </div>
 
@@ -163,7 +180,7 @@ function SignupPage() {
                   <input
                     type="text"
                     value={form.name}
-                    onChange={set('name')}
+                    onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="홍길동"
                     required
                     className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
@@ -176,7 +193,7 @@ function SignupPage() {
                   <input
                     type="text"
                     value={form.studentId}
-                    onChange={set('studentId')}
+                    onChange={(e) => setForm(prev => ({ ...prev, studentId: e.target.value }))}
                     placeholder="2022000000"
                     required
                     className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
@@ -184,19 +201,49 @@ function SignupPage() {
                 </div>
               </div>
 
-              {/* 전화번호 */}
-              <div className="mb-6">
-                <label className="text-xs font-semibold text-text-secondary block mb-1.5">
-                  전화번호 <span className="text-text-danger">*</span>
-                </label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={set('phone')}
-                  placeholder="010-0000-0000"
-                  required
-                  className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
-                />
+              {/* 전화번호 + 학과 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1.5">
+                    전화번호 <span className="text-text-danger">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value.replace(/\D/g, '') }))}
+                    placeholder="01000000000"
+                    maxLength={11}
+                    required
+                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1.5">
+                    학과
+                  </label>
+                  <input
+                    type="text"
+                    value={form.department}
+                    onChange={(e) => setForm(prev => ({ ...prev, department: e.target.value }))}
+                    placeholder="소프트웨어학과"
+                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
+                  />
+                </div>
+              </div>
+
+              {/* 생일 */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1.5">
+                    생일
+                  </label>
+                  <input
+                    type="date"
+                    value={form.birthday}
+                    onChange={(e) => setForm(prev => ({ ...prev, birthday: e.target.value }))}
+                    className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border cursor-pointer"
+                  />
+                </div>
               </div>
 
               {/* 개인정보 동의 */}
@@ -205,8 +252,8 @@ function SignupPage() {
                   <input
                     type="checkbox"
                     checked={agree}
-                    onChange={e => setAgree(e.target.checked)}
-                    className="w-4 h-4 border border-border-dark rounded accent-bg-dark"
+                    onChange={(e) => setAgree(e.target.checked)}
+                    className="w-4 h-4 border border-border-dark rounded accent-bg-dark cursor-pointer"
                   />
                   <span className="text-xs text-text-secondary">(필수) 개인정보 수집 이용에 동의합니다</span>
                 </label>
@@ -226,7 +273,7 @@ function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90'}`}
+                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity transition-transform ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90 hover:scale-102 duration-550'}`}
               >
                 {loading ? '처리 중...' : '회원가입 →'}
               </button>
@@ -249,6 +296,6 @@ function SignupPage() {
       <Footer />
     </div>
   );
-}
+};
 
 export default SignupPage;

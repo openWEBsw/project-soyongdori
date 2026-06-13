@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
@@ -8,8 +8,9 @@ import hero1 from '../../assets/hero_1.jpeg';
 import hero2 from '../../assets/hero_2.jpeg';
 import hero3 from '../../assets/hero_3.jpeg';
 import hero4 from '../../assets/hero_4.jpeg';
+import hero5 from '../../assets/hero_5.jpeg';
 
-const heroImages = [hero1, hero2, hero3, hero4];
+const heroImages = [hero1, hero2, hero3, hero4, hero5];
 const HERO_INTERVAL_MS = 5000;
 
 // 현재 연도 기준으로 년수 계산
@@ -56,29 +57,48 @@ const heroHighlights = [
     { label: '정기 합주', value: '매주 화·수 18:00' },
 ];
 
-// 동아리실 위치 
+// 동아리실 위치
 const clubLocation = {
     name: '충북대학교 제2학생회관 101호',
     roadAddress: '충북 청주시 서원구 성봉로242번길 57',
     mapUrl: 'https://naver.me/x3HduAZg',
-    // OpenStreetMap 
+    lat: 36.6279934,
+    lng: 127.4542997,
+    // 네이버 지도 키 없을 때 대체용 OpenStreetMap
     embedUrl:
         'https://www.openstreetmap.org/export/embed.html?bbox=127.4502997%2C36.6249934%2C127.4582997%2C36.6309934&layer=mapnik&marker=36.6279934%2C127.4542997',
 };
 
-const Home: React.FC = () => {
+// 네이버 지도 클라이언트 키 (네이버 클라우드 플랫폼에서 발급)
+const naverMapKey = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
+
+const Home = () => {
     const { isAuthenticated, member } = useAuth();
     const [heroIndex, setHeroIndex] = useState(0);
     const [memberCount, setMemberCount] = useState(0);
     const [notices, setNotices] = useState<Notice[]>([]);
     const [events, setEvents] = useState<EventItem[]>([]);
 
+    // 슬라이드쇼 자동 전환
     useEffect(() => {
         if (heroImages.length <= 1) return;
         const id = setInterval(() => {
             setHeroIndex((i) => (i + 1) % heroImages.length);
         }, HERO_INTERVAL_MS);
         return () => clearInterval(id);
+    }, []);
+
+    // 네이버 지도 그리기 (index.html에서 로드)
+    useEffect(() => {
+        const { naver } = window as any;
+        if (!naverMapKey || !naver) return;
+        const center = new naver.maps.LatLng(clubLocation.lat, clubLocation.lng);
+        const map = new naver.maps.Map('club-map', {
+            center,
+            zoom: 16,
+            scaleControl: false,
+        });
+        new naver.maps.Marker({ position: center, map });
     }, []);
 
     // 홈 화면 데이터 가져오기
@@ -94,10 +114,24 @@ const Home: React.FC = () => {
             .then((res) => setEvents(res.data.data.slice(0, 2)));
     }, []);
 
+    // 통계 숫자 올라감
+    const [countUp, setCountUp] = useState(0);
+    useEffect(() => {
+        setCountUp(0);
+        let frame = 0;
+        const id = setInterval(() => {
+            frame += 1;
+            setCountUp(frame / 30);
+            if (frame >= 30) clearInterval(id);
+        }, 30);
+        return () => clearInterval(id);
+    }, [memberCount]);
+
+    // 통계
     const statsData = [
-        { value: `${clubYears}`, label: 'YEARS' },
-        { value: '5', label: 'PARTS' },
-        { value: `${memberCount}`, label: 'MEMBERS' },
+        { value: `${Math.round(clubYears * countUp)}`, label: 'YEARS' },
+        { value: `${Math.round(5 * countUp)}`, label: 'PARTS' },
+        { value: `${Math.round(memberCount * countUp)}`, label: 'MEMBERS' },
     ];
 
     return (
@@ -112,7 +146,7 @@ const Home: React.FC = () => {
                         key={i}
                         src={src}
                         alt={`소용돌이 ${i + 1}`}
-                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIndex ? 'opacity-100' : 'opacity-0'
+                        className={`absolute inset-0 w-full h-full object-cover [transition:opacity_1s,scale_6s] ${i === heroIndex ? 'opacity-100 scale-120' : 'opacity-0 scale-100'
                             }`}
                     />
                 ))}
@@ -151,14 +185,14 @@ const Home: React.FC = () => {
                             {!(isAuthenticated && member?.status === 'active') && (
                                 <Link
                                     to="/apply"
-                                    className="bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity"
+                                    className="group bg-btn-primary-bg text-btn-primary-text px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                                 >
-                                    입부 신청 →
+                                    입부 신청 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                                 </Link>
                             )}
                             <Link
                                 to="/introduce"
-                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light transition-colors"
+                                className="bg-btn-secondary-bg text-btn-secondary-text px-6 py-3 rounded-md text-sm font-bold border border-border-dark hover:bg-bg-light hover:scale-115 active:scale-95 transition duration-500"
                             >
                                 소개 보기
                             </Link>
@@ -169,10 +203,10 @@ const Home: React.FC = () => {
                             {statsData.map((stat, index) => (
                                 <div
                                     key={index}
-                                    className="border border-border-light rounded-lg px-5 py-3 text-center bg-white/70 backdrop-blur-sm"
+                                    className="border border-border-light rounded-lg px-5 py-3 text-center bg-white/70 backdrop-blur-sm hover:scale-115 transition duration-500"
                                 >
-                                    <span className="text-xl font-black text-text-title block">{stat.value}</span>
-                                    <span className="text-xs font-medium text-text-muted tracking-wider">{stat.label}</span>
+                                    <span className="text-xl font-black text-text-title block hover:scale-115 duration-500">{stat.value}</span>
+                                    <span className="text-xs font-medium text-text-muted tracking-wider hover:scale-115 duration-500">{stat.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -192,9 +226,9 @@ const Home: React.FC = () => {
                         </div>
                         <Link
                             to="/boards/notice"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            전체보기 →
+                            전체보기 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
 
@@ -205,7 +239,7 @@ const Home: React.FC = () => {
                             <Link
                                 key={notice.id}
                                 to={`/posts/${notice.id}`}
-                                className="bg-bg-white border border-border-light rounded-lg p-6 flex flex-col gap-3 hover:shadow-sm transition-shadow"
+                                className="bg-bg-white border border-border-light rounded-lg p-6 flex flex-col gap-3 hover:shadow-sm hover:scale-108 transition duration-500"
                             >
                                 <span className="text-xs font-bold px-2.5 py-1 rounded self-start bg-bg-light text-text-secondary">
                                     공지
@@ -237,9 +271,9 @@ const Home: React.FC = () => {
                         </div>
                         <Link
                             to="/calendar"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            캘린더 →
+                            캘린더 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
 
@@ -247,9 +281,10 @@ const Home: React.FC = () => {
                         {events.length === 0 ? (
                             <p className="text-sm text-text-muted">다가오는 일정이 없습니다</p>
                         ) : events.map((event) => (
-                            <div
+                            <Link
+                                to="/calendar"
                                 key={event.id}
-                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white"
+                                className="border border-border-light rounded-lg p-6 flex items-center gap-6 bg-bg-white hover:shadow-sm hover:scale-105 transition duration-500"
                             >
                                 {/* 날짜 */}
                                 <div className="flex flex-col items-center justify-center min-w-[72px] border-r border-border-light pr-6">
@@ -268,7 +303,7 @@ const Home: React.FC = () => {
                                         <span className="text-xs text-text-muted">📍 {event.location}</span>
                                     )}
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
@@ -287,20 +322,24 @@ const Home: React.FC = () => {
                         <a
                             href={clubLocation.mapUrl}
                             target="_blank"
-                            className="bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 transition-opacity"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-5 py-2.5 rounded-md text-xs font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500"
                         >
-                            네이버 지도 →
+                            네이버 지도 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </a>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* 지도 */}
+                        {/* 지도 (네이버 지도, 키 없으면 OSM) */}
                         <div className="border border-border-light rounded-lg overflow-hidden bg-bg-white">
-                            <iframe
-                                title="동아리실 위치"
-                                src={clubLocation.embedUrl}
-                                className="w-full h-64 border-0"
-                            />
+                            {naverMapKey ? (
+                                <div id="club-map" className="w-full h-64" />
+                            ) : (
+                                <iframe
+                                    title="동아리실 위치"
+                                    src={clubLocation.embedUrl}
+                                    className="w-full h-64 border-0"
+                                />
+                            )}
                         </div>
                         {/* 정보 */}
                         <div className="border border-border-light rounded-lg p-6 flex flex-col gap-1 bg-bg-white">
@@ -320,9 +359,9 @@ const Home: React.FC = () => {
                         </h2>
                         <Link
                             to="/apply"
-                            className="bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
+                            className="group bg-btn-primary-bg text-btn-primary-text px-8 py-3 rounded-md text-sm font-bold hover:opacity-90 hover:scale-115 active:scale-95 transition duration-500 whitespace-nowrap"
                         >
-                            입부 신청하기 →
+                            입부 신청하기 <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                         </Link>
                     </div>
                 </section>

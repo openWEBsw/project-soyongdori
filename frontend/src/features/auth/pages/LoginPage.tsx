@@ -1,25 +1,28 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import Header from '../../../shared/layout/Header';
 import Footer from '../../../shared/layout/Footer';
+import loginBg from '../../../assets/login_bg.png';
 
-function LoginPage() {
+const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // 폼 상태
+  const [form, setForm] = useState({ email: '', password: '' });
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: { preventDefault(): void }) => {
+  // 로그인 요청
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email: form.email, password: form.password });
       const { token, member } = res.data.data;
       login(token, member);
       navigate('/home');
@@ -40,8 +43,11 @@ function LoginPage() {
       {/* 메인 2컬럼 */}
       <div className="flex flex-1 flex-col md:flex-row">
         {/* 좌측: 환영 메시지 */}
-        <div className="bg-bg-light flex-1 flex flex-col justify-between px-8 md:px-16 py-12 md:py-20">
-          <div>
+        <div className="relative bg-bg-light flex-1 flex flex-col justify-between items-end text-right px-8 md:px-16 py-12 md:py-20 overflow-hidden">
+          <img src={loginBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-l from-white via-white/90 to-transparent" />
+
+          <div className="relative">
             <span className="text-text-muted text-xs tracking-widest font-medium uppercase">
               Welcome Back
             </span>
@@ -54,7 +60,7 @@ function LoginPage() {
             </div>
           </div>
 
-          <span className="text-xs text-text-muted tracking-wider mt-12">
+          <span className="relative text-xs text-text-muted tracking-wider mt-12">
             SYDR · CHUNGBUK NATIONAL UNIVERSITY
           </span>
         </div>
@@ -78,8 +84,8 @@ function LoginPage() {
                 </label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  value={form.email}
+                  onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="your@email.com"
                   required
                   className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
@@ -93,8 +99,8 @@ function LoginPage() {
                 </label>
                 <input
                   type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  value={form.password}
+                  onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="비밀번호를 입력하세요"
                   required
                   className="w-full border border-border-light rounded-md px-4 py-3 text-sm text-text-primary outline-none bg-bg-white focus:border-border-dark transition-colors box-border"
@@ -107,8 +113,8 @@ function LoginPage() {
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 border border-border-dark rounded accent-bg-dark"
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 border border-border-dark rounded accent-bg-dark cursor-pointer"
                   />
                   <span className="text-xs text-text-secondary">로그인 상태 유지</span>
                 </label>
@@ -128,7 +134,7 @@ function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90'}`}
+                className={`w-full bg-btn-primary-bg text-btn-primary-text rounded-md py-3.5 text-sm font-bold cursor-pointer transition-opacity transition-transform ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90 hover:scale-105 duration-500'}`}
               >
                 {loading ? '로그인 중...' : '로그인 →'}
               </button>
@@ -150,6 +156,6 @@ function LoginPage() {
       <Footer />
     </div>
   );
-}
+};
 
 export default LoginPage;

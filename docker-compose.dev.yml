@@ -20,6 +20,11 @@ services:
       - DATABASE_PASSWORD=${MYSQL_PASSWORD}
       - DATABASE_NAME=${MYSQL_DATABASE:-soyongdori_db}
       - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_ACCESS_EXPIRE=${JWT_ACCESS_EXPIRE}
+      - JWT_REFRESH_EXPIRE=${JWT_REFRESH_EXPIRE}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       - ./uploads:/usr/src/uploads
     networks:
@@ -34,8 +39,8 @@ services:
     restart: unless-stopped
     expose:
       - "3306"
-    # ports:
-    #   - "127.0.0.1:${DB_PORT:-3306}:3306" # 필요시 이 주석을 풀어서 포트 개방
+    ports:
+      - "127.0.0.1:${DB_PORT:-3306}:3306" # 필요시 이 주석을 풀어서 포트 개방
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-soyongdori_db}

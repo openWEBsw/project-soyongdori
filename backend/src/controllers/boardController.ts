@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
 import prisma from '../prisma/client.js';
+import { extForMime } from '../middleware/upload.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.join(__dirname, '../../../uploads');
@@ -15,12 +16,28 @@ const toStr = (val: string | string[]): string => Array.isArray(val) ? val[0] : 
 
 const PUBLIC_BOARDS = ['free', 'notice'];
 
+const FULL_ACCESS_POSITIONS = ['vice_leader', 'leader', 'super_admin'];
+const BUDGET_WRITE_POSITIONS = ['treasurer', ...FULL_ACCESS_POSITIONS];
+const LEAD_WRITE_POSITIONS = ['planning_lead', ...BUDGET_WRITE_POSITIONS];
+const MEMBER_WRITE_POSITIONS = ['member', 'planning_member', ...LEAD_WRITE_POSITIONS];
+
+function canWriteBoard(boardType: string, position: string | undefined | null): boolean {
+  const pos = position ?? 'member';
+  if (boardType === 'notice') return ['leader', 'super_admin'].includes(pos);
+  if (boardType === 'free' || boardType === 'photo' || boardType === 'resource') return MEMBER_WRITE_POSITIONS.includes(pos);
+  if (boardType === 'planning') return LEAD_WRITE_POSITIONS.includes(pos);
+  if (boardType === 'budget') return BUDGET_WRITE_POSITIONS.includes(pos);
+  return false;
+}
+
 export const getPosts = async (req: AuthRequest, res: Response) => {
   const boardType = toStr(req.params.boardType);
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const skip = (page - 1) * limit;
   const year = new Date().getFullYear();
+  const search = (req.query.search as string | undefined)?.trim();
+  const searchField = (req.query.searchField as string) || 'title';
 
   if (!PUBLIC_BOARDS.includes(boardType) && !req.memberId) {
     return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다' } });
@@ -35,11 +52,22 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: { code: 'BOARD_NOT_FOUND', message: '게시판을 찾을 수 없습니다' } });
     }
 
-    const [posts, total] = await Promise.all([
+    const searchCondition = search
+      ? searchField === 'content'
+        ? { content: { contains: search } }
+        : searchField === 'author'
+        ? { author: { name: { contains: search } } }
+        : { title: { contains: search } }
+      : {};
+
+    const baseWhere = { boardId: board.id, deletedAt: null, isHidden: false, ...searchCondition };
+    const regularBaseWhere = { boardId: board.id, deletedAt: null, isHidden: false, isNotice: false };
+
+    const [rawPosts, total] = await Promise.all([
       prisma.post.findMany({
-        where: { boardId: board.id, deletedAt: null, isHidden: false },
+        where: baseWhere,
         include: {
-          author: { select: { name: true, part: true, cohort: true, profileImageUrl: true } },
+          author: { select: { id: true, name: true, part: true, cohort: true, profileImageUrl: true } },
           _count: { select: { comments: true } },
           attachments: { where: { mimeType: { startsWith: 'image/' } }, take: 1, select: { filePath: true } },
         },
@@ -47,10 +75,19 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
         skip,
         take: limit,
       }),
-      prisma.post.count({
-        where: { boardId: board.id, deletedAt: null, isHidden: false },
-      }),
+      prisma.post.count({ where: baseWhere }),
     ]);
+
+    // 각 일반 게시글의 고정 번호: 해당 게시글과 같거나 최신인 일반글 수 (검색/페이지 무관)
+    const posts = await Promise.all(
+      rawPosts.map(async (post) => {
+        if (post.isNotice) return { ...post, postNo: null };
+        const postNo = await prisma.post.count({
+          where: { ...regularBaseWhere, createdAt: { gte: post.createdAt } },
+        });
+        return { ...post, postNo };
+      })
+    );
 
     return res.json({
       data: {
@@ -112,7 +149,7 @@ export const getPost = async (req: AuthRequest, res: Response) => {
           orderBy: { createdAt: 'asc' },
         },
         attachments: true,
-        _count: { select: { comments: true } },
+        _count: { select: { comments: { where: { deletedAt: null } } } },
       },
     });
 
@@ -157,6 +194,10 @@ export const createPost = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: '제목과 내용을 입력해주세요' } });
   }
 
+  if (!canWriteBoard(boardType, req.memberPosition)) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: '해당 게시판에 글쓰기 권한이 없습니다' } });
+  }
+
   try {
     const board = await prisma.board.findFirst({
       where: { type: boardType as any, year },
@@ -168,7 +209,7 @@ export const createPost = async (req: AuthRequest, res: Response) => {
 
     const savedFiles = await Promise.all(memFiles.map(async f => {
       const originalname = Buffer.from(f.originalname, 'latin1').toString('utf8');
-      const ext = path.extname(originalname);
+      const ext = extForMime(f.mimetype);
       const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
       await fs.promises.writeFile(path.join(uploadsDir, filename), f.buffer);
       return { filename, originalname, size: f.size, mimetype: f.mimetype };
@@ -241,7 +282,7 @@ export const updatePost = async (req: AuthRequest, res: Response) => {
 
     const savedFiles = await Promise.all(memFiles.map(async f => {
       const originalname = Buffer.from(f.originalname, 'latin1').toString('utf8');
-      const ext = path.extname(originalname);
+      const ext = extForMime(f.mimetype);
       const filename = `${crypto.randomBytes(12).toString('hex')}${ext}`;
       await fs.promises.writeFile(path.join(uploadsDir, filename), f.buffer);
       return { filename, originalname, size: f.size, mimetype: f.mimetype };

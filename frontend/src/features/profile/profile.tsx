@@ -7,7 +7,6 @@
 // 3. 코멘트 눌러 이동시 그자리로
 
 import defaultProfileImg from '../../assets/default_profile_image.jpg';
-
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../shared/layout/Header';
@@ -55,7 +54,7 @@ const Profile = () => {
   const [postError, setPostError] = useState<string>('');
   const [commentError, setCommentError] = useState<string>('');
 
-  const { logout } = useAuth();
+  const { logout, updateMember } = useAuth();
 
   // 탭 상태
   const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts');
@@ -89,6 +88,10 @@ const Profile = () => {
   const [postPage, setPostPage] = useState(1);
   const [totalPostPages, setTotalPostPages] = useState(1);
 
+  const postPageGroup = Math.ceil(postPage / 10);
+  const startPostPage = ((postPageGroup - 1) * 10) + 1;
+  const endPostPage = Math.min(postPageGroup * 10, totalPostPages);
+
   const handlePostPageChange = async (page: number) => {
     setLoading(true);
     setPostError('');
@@ -118,6 +121,10 @@ const Profile = () => {
 
   const [commentPage, setCommentPage] = useState(1);
   const [totalComments, setTotalComments] = useState(0);
+
+  const commentPageGroup = Math.ceil(commentPage / 10);
+  const startCommentPage = ((commentPageGroup - 1) * 10) + 1;
+  const endCommentPage = Math.min(commentPageGroup * 10, totalCommentPages);
 
   const handleCommentPageChange = async (page: number) => {
     setLoading(true);
@@ -256,14 +263,11 @@ const Profile = () => {
     formData.append('profileImage', file);
 
     try {
-      const res = await api.post('/members/me/profile-image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res = await api.post('/members/me/profile-image', formData);
 
       const newImageUrl = res.data.data.profileImageUrl;
       setProfile(prev => ({ ...prev, profileImageUrl: newImageUrl }));
+      updateMember({ profileImageUrl: newImageUrl });
       alert('프로필 이미지가 성공적으로 변경되었습니다.');
     } catch (err: any) {
       console.error(err);
@@ -518,7 +522,15 @@ const Profile = () => {
                 </div>
                 {/* 페이지네이션 */}
                 <div className="flex justify-center items-center gap-2 mt-6">
-                  {Array.from({ length: totalPostPages }, (_, i) => i + 1).map(p => (
+                  {startPostPage > 1 && (<button
+                    onClick={() => handlePostPageChange(startPostPage - 1)}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                  </button>)}
+                  {Array.from({ length: endPostPage - startPostPage + 1 }, (_, i) => startPostPage + i).map(p => (
                     <button
                       key={p}
                       onClick={() => handlePostPageChange(p)}
@@ -530,6 +542,16 @@ const Profile = () => {
                       {p}
                     </button>
                   ))}
+                  {endPostPage < totalPostPages && (<button
+                    onClick={() => { handlePostPageChange(endPostPage + 1) }}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+
+
+                  </button>)}
                 </div>
               </div>
             )}
@@ -604,7 +626,17 @@ const Profile = () => {
                 </div>
                 {/* 페이지네이션 */}
                 <div className="flex justify-center items-center gap-2 mt-6">
-                  {Array.from({ length: totalCommentPages }, (_, i) => i + 1).map(p => (
+                  {startCommentPage > 1 && (<button
+                    onClick={() => handleCommentPageChange(startCommentPage - 1)}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+
+
+                  </button>)}
+                  {Array.from({ length: endCommentPage - startCommentPage + 1 }, (_, i) => startCommentPage + i).map(p => (
                     <button
                       key={p}
                       onClick={() => handleCommentPageChange(p)}
@@ -616,6 +648,15 @@ const Profile = () => {
                       {p}
                     </button>
                   ))}
+                  {endCommentPage < totalCommentPages && (<button
+                    onClick={() => { handleCommentPageChange(endCommentPage + 1) }}
+                    className='flex justify-center items-center w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+
+                  </button>)}
                 </div>
               </div>
             )}
@@ -668,6 +709,7 @@ const Profile = () => {
                 <input
                   type="email"
                   required
+                  placeholder="your@email.com"
                   value={editForm.email}
                   onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
@@ -679,7 +721,8 @@ const Profile = () => {
                   type="text"
                   required
                   value={editForm.phone}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder='01000000000'
+                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value.replace(/\D/g, '') }))}
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />
               </div>
@@ -689,6 +732,7 @@ const Profile = () => {
                   type="text"
                   required
                   value={editForm.department}
+                  placeholder="소프트웨어학과"
                   onChange={(e) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
                   className="w-full border border-border-dark rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-border-dark bg-bg-white text-text-primary"
                 />

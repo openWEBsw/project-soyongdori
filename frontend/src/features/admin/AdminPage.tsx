@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../../shared/layout/Header';
 import Footer from '../../shared/layout/Footer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -6,6 +6,7 @@ import api from '../../lib/api';
 import { positionToLevel, POSITION_LABELS, STATUS_LABELS } from '../../lib/permission';
 import { partNames } from '../../shared/utils/translations';
 
+// 타입 정의: 백엔드 응답 형태
 interface MemberRow {
     id: string;
     email: string;
@@ -37,34 +38,40 @@ interface ApplicationRow {
     reviewer: { id: string; name: string } | null;
 }
 
-const POSITION_OPTIONS = ['member', 'planning_member', 'planning_lead', 'treasurer', 'vice_leader', 'leader'];
-
 type Tab = 'members' | 'applications';
 
-const AdminPage: React.FC = () => {
+const POSITION_OPTIONS = ['member', 'planning_member', 'planning_lead', 'treasurer', 'vice_leader', 'leader'];
+const PAGE_SIZE = 30;
+const DEFAULT_COHORT = new Date().getFullYear() - 1977;
+
+const AdminPage = () => {
+    // 로그인 정보 + 권한 계산
     const { member } = useAuth();
     const myLevel = positionToLevel(member?.position);
 
+    const canManageApplications = myLevel >= 6;
     const [tab, setTab] = useState<Tab>('members');
-
-    // ---- 회원 관리 상태 ----
-    const [members, setMembers] = useState<MemberRow[]>([]);
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('');
-    const [membersLoading, setMembersLoading] = useState(false);
-
-    // ---- 신청 관리 상태 ----
-    const [apps, setApps] = useState<ApplicationRow[]>([]);
-    const [appStatusFilter, setAppStatusFilter] = useState<string>('pending');
-    const [appsLoading, setAppsLoading] = useState(false);
-
-    // 승인 시 선택할 직책 (appId -> position)
-    const [approvePositions, setApprovePositions] = useState<Record<string, string>>({});
-
     const [error, setError] = useState<string | null>(null);
 
+    // 회원 관리 상태
+    const [members, setMembers] = useState<MemberRow[]>([]);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [membersLoading, setMembersLoading] = useState(false);
+    const [memberPage, setMemberPage] = useState(1);
+
+    // 신청 관리 상태
+    const [apps, setApps] = useState<ApplicationRow[]>([]);
+    const [appStatusFilter, setAppStatusFilter] = useState('pending');
+    const [appsLoading, setAppsLoading] = useState(false);
+    const [appPage, setAppPage] = useState(1);
+
+    // 승인 시 선택할 직책/기수 (appId -> 값)
+    const [approvePositions, setApprovePositions] = useState<Record<string, string>>({});
+    const [approveCohorts, setApproveCohorts] = useState<Record<string, string>>({});
+
     // 회원 조회
-    const fetchMembers = useCallback(async () => {
+    const fetchMembers = async () => {
         setMembersLoading(true);
         setError(null);
         try {
@@ -78,38 +85,80 @@ const AdminPage: React.FC = () => {
         } finally {
             setMembersLoading(false);
         }
-    }, [search, statusFilter]);
+    };
 
     // 신청 조회
-    const fetchApps = useCallback(async () => {
+    const fetchApps = async () => {
         setAppsLoading(true);
         setError(null);
         try {
-            const params: Record<string, string> = { status: appStatusFilter };
-            const res = await api.get('/admin/applications', { params });
+            const res = await api.get('/admin/applications', { params: { status: appStatusFilter } });
             setApps(res.data.data);
         } catch (e: any) {
             setError(e.response?.data?.error?.message || '신청 목록을 불러오지 못했습니다');
         } finally {
             setAppsLoading(false);
         }
-    }, [appStatusFilter]);
+    };
 
+    // 탭/필터 바뀌면 다시 조회
     useEffect(() => {
         if (tab === 'members') fetchMembers();
         else fetchApps();
-    }, [tab, fetchMembers, fetchApps]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, statusFilter, appStatusFilter]);
 
-    // ---- 회원 액션 ----
+    // 필터 바뀌면 페이지 초기화
+    useEffect(() => { setMemberPage(1); }, [search, statusFilter]);
+    useEffect(() => { setAppPage(1); }, [appStatusFilter]);
+
+    // 페이징 슬라이스
+    const totalMemberPages = Math.max(1, Math.ceil(members.length / PAGE_SIZE));
+    const pagedMembers = members.slice((memberPage - 1) * PAGE_SIZE, memberPage * PAGE_SIZE);
+    const totalAppPages = Math.max(1, Math.ceil(apps.length / PAGE_SIZE));
+    const pagedApps = apps.slice((appPage - 1) * PAGE_SIZE, appPage * PAGE_SIZE);
+
+    // 직책 변경
     const changePosition = async (id: string, newPosition: string) => {
+        const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
+        if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
         try {
             await api.patch(`/admin/member/${id}/position`, { position: newPosition });
             fetchMembers();
+            alert('변경되었습니다.');
         } catch (e: any) {
             alert(e.response?.data?.error?.message || '직책 변경 실패');
         }
     };
 
+    // 파트 변경
+    const changePart = async (id: string, newPart: string) => {
+        const partLabel = partNames[newPart] ?? newPart;
+        if (!window.confirm(`파트를 ${partLabel}(으)로 변경하시겠습니까?`)) return;
+        try {
+            await api.patch(`/admin/member/${id}/part`, { part: newPart });
+            fetchMembers();
+            alert('변경되었습니다.');
+        } catch (e: any) {
+            alert(e.response?.data?.error?.message || '파트 변경 실패');
+        }
+    };
+
+    // 기수 변경
+    const changeCohort = async (id: string, newCohort: string) => {
+        const cohort = Number(newCohort);
+        if (!cohort || cohort < 1) return;
+        if (!window.confirm(`기수를 ${cohort}기로 변경하시겠습니까?`)) return;
+        try {
+            await api.patch(`/admin/member/${id}/cohort`, { cohort });
+            fetchMembers();
+            alert('변경되었습니다.');
+        } catch (e: any) {
+            alert(e.response?.data?.error?.message || '기수 변경 실패');
+        }
+    };
+
+    // 활성/비활성 전환
     const toggleStatus = async (id: string, currentStatus: string) => {
         const next = currentStatus === 'active' ? 'inactive' : 'active';
         const nextLabel = next === 'active' ? '활성' : '비활성';
@@ -122,19 +171,21 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // ---- 신청 액션 ----
+    // 신청 승인
     const approve = async (id: string) => {
         const position = approvePositions[id] || 'member';
         const posLabel = POSITION_LABELS[position] ?? position;
-        if (!window.confirm(`이 신청을 승인하시겠습니까?\n부여 직책: ${posLabel}`)) return;
+        const cohort = Number(approveCohorts[id] ?? DEFAULT_COHORT);
+        if (!window.confirm(`이 신청을 승인하시겠습니까?\n부여 직책: ${posLabel}\n기수: ${cohort}기`)) return;
         try {
-            await api.post(`/admin/applications/${id}/approve`, { position });
+            await api.post(`/admin/applications/${id}/approve`, { position, cohort });
             fetchApps();
         } catch (e: any) {
             alert(e.response?.data?.error?.message || '승인 실패');
         }
     };
 
+    // 신청 거절
     const reject = async (id: string) => {
         const note = window.prompt('거절 사유 (선택)') ?? undefined;
         if (note === null) return;
@@ -146,22 +197,27 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // 승인된 신청에서 직접 권한 변경
+    // 승인된 신청에서 직접 직책 변경
     const changeAppMemberPosition = async (memberId: string, newPosition: string) => {
+        const posLabel = POSITION_LABELS[newPosition] ?? newPosition;
+        if (!window.confirm(`직책을 ${posLabel}(으)로 변경하시겠습니까?`)) return;
         try {
             await api.patch(`/admin/member/${memberId}/position`, { position: newPosition });
             fetchApps();
+            alert('변경되었습니다.');
         } catch (e: any) {
             alert(e.response?.data?.error?.message || '직책 변경 실패');
         }
     };
 
+    // 내 레벨보다 낮은 회원만 수정 가능
     const canEditMember = (m: MemberRow) => positionToLevel(m.position) < myLevel;
 
     return (
         <div className="min-h-screen bg-bg-white text-text-primary font-sans flex flex-col">
             <Header />
 
+            {/* 페이지 헤더 */}
             <section className="bg-bg-light border-b border-border-light">
                 <div className="max-w-6xl mx-auto px-6 md:px-12 py-12 text-center flex flex-col items-center">
                     <span className="text-text-muted text-xs tracking-widest font-medium uppercase mb-3">Admin</span>
@@ -172,9 +228,8 @@ const AdminPage: React.FC = () => {
 
             <main className="flex-1 bg-bg-white">
                 <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
-                    {/* 탭 */}
                     <div className="flex gap-6 border-b border-border-light mb-6">
-                        {(['members', 'applications'] as Tab[]).map((t) => (
+                        {(['members', ...(canManageApplications ? ['applications'] : [])] as Tab[]).map((t) => (
                             <button
                                 key={t}
                                 type="button"
@@ -189,41 +244,39 @@ const AdminPage: React.FC = () => {
                         ))}
                     </div>
 
+                    {/* 에러 메시지 */}
                     {error && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-text-danger">{error}</div>
                     )}
 
-                    {/* === 회원 관리 탭 === */}
+                    {/* 회원 관리 탭 */}
                     {tab === 'members' && (
                         <div>
-                            <div className="flex flex-wrap gap-3 mb-4">
-                                <input
-                                    type="text"
-                                    placeholder="이름 또는 이메일 검색"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && fetchMembers()}
-                                    className="flex-1 min-w-[200px] px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
-                                />
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-3 py-2 cursor-pointer border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
-                                >
-                                    <option value="">전체 상태</option>
-                                    <option value="pending">대기</option>
-                                    <option value="active">활성</option>
-                                    <option value="inactive">비활성</option>
-                                </select>
-                                <button
-                                    type="button"
-                                    onClick={fetchMembers}
-                                    className="px-4 py-2 cursor-pointer bg-btn-primary-bg text-btn-primary-text rounded-md text-sm font-bold hover:opacity-90"
-                                >
-                                    검색
-                                </button>
+                            {/* 검색 + 상태 필터 */}
+                            <div className="overflow-x-auto mb-4">
+                                <div className="flex gap-3 min-w-max">
+                                    <input
+                                        type="text"
+                                        placeholder="이름 또는 이메일 검색"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && fetchMembers()}
+                                        className="w-52 shrink-0 px-3 py-2 border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
+                                    />
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                        className="px-3 py-2 cursor-pointer border border-border-light rounded-md text-sm focus:outline-none focus:border-text-primary"
+                                    >
+                                        <option value="">전체 상태</option>
+                                        <option value="pending">대기</option>
+                                        <option value="active">활성</option>
+                                        <option value="inactive">비활성</option>
+                                    </select>
+                                </div>
                             </div>
 
+                            {/* 회원 테이블 */}
                             <div className="border border-border-light rounded-lg overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-bg-light">
@@ -244,14 +297,14 @@ const AdminPage: React.FC = () => {
                                         {!membersLoading && members.length === 0 && (
                                             <tr><td colSpan={7} className="px-4 py-8 text-center text-text-muted">검색 결과가 없습니다.</td></tr>
                                         )}
-                                        {!membersLoading && members.map((m) => {
+                                        {!membersLoading && pagedMembers.map((m) => {
                                             const editable = canEditMember(m);
                                             return (
                                                 <tr key={m.id} className="border-t border-border-light hover:bg-bg-light/40">
-                                                    <td className="px-4 py-3 font-medium text-text-title">{m.name}</td>
+                                                    <td className="px-4 py-3 font-medium text-text-title whitespace-nowrap">{m.name}</td>
                                                     <td className="px-4 py-3 text-text-secondary">{m.email}</td>
-                                                    <td className="px-4 py-3 text-text-secondary">{m.position ? POSITION_LABELS[m.position] ?? m.position : '-'}</td>
-                                                    <td className="px-4 py-3">
+                                                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{m.position ? POSITION_LABELS[m.position] ?? m.position : '-'}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap">
                                                         <span className={`px-2 py-0.5 rounded text-xs font-bold ${m.status === 'active'
                                                             ? 'bg-emerald-50 text-emerald-700'
                                                             : m.status === 'pending'
@@ -265,7 +318,7 @@ const AdminPage: React.FC = () => {
                                                     <td className="px-4 py-3 text-text-secondary">{m.part ? (partNames[m.part] ?? m.part) : '-'}</td>
                                                     <td className="px-4 py-3 text-right">
                                                         {editable ? (
-                                                            <div className="inline-flex items-center gap-2">
+                                                            <div className="inline-flex flex-wrap items-center gap-2 justify-end">
                                                                 <select
                                                                     value={m.position ?? ''}
                                                                     onChange={(e) => changePosition(m.id, e.target.value)}
@@ -277,10 +330,32 @@ const AdminPage: React.FC = () => {
                                                                         <option key={p} value={p}>{POSITION_LABELS[p]}</option>
                                                                     ))}
                                                                 </select>
+                                                                <select
+                                                                    value={m.part ?? ''}
+                                                                    onChange={(e) => changePart(m.id, e.target.value)}
+                                                                    className="text-xs border border-border-light rounded px-2 py-1 cursor-pointer"
+                                                                >
+                                                                    <option value="">파트 선택</option>
+                                                                    {Object.entries(partNames).map(([val, label]) => (
+                                                                        <option key={val} value={val}>{label}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <input
+                                                                    type="number"
+                                                                    min={1}
+                                                                    defaultValue={m.cohort ?? ''}
+                                                                    placeholder="기수"
+                                                                    onBlur={(e) => {
+                                                                        if (e.target.value && Number(e.target.value) !== m.cohort) {
+                                                                            changeCohort(m.id, e.target.value);
+                                                                        }
+                                                                    }}
+                                                                    className="text-xs border border-border-light rounded px-2 py-1 w-14"
+                                                                />
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => toggleStatus(m.id, m.status)}
-                                                                    className="text-xs px-2 py-1 border border-border-dark rounded hover:bg-bg-light cursor-pointer"
+                                                                    className="text-xs px-2 py-1 border border-border-dark rounded hover:bg-bg-light cursor-pointer whitespace-nowrap"
                                                                 >
                                                                     {m.status === 'active' ? '비활성화' : '활성화'}
                                                                 </button>
@@ -295,12 +370,32 @@ const AdminPage: React.FC = () => {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* 페이지네이션 */}
+                            {totalMemberPages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-6">
+                                    {Array.from({ length: totalMemberPages }, (_, i) => i + 1).map(p => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setMemberPage(p)}
+                                            className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === memberPage
+                                                ? 'border border-border-light bg-bg-deep text-text-primary'
+                                                : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                                                }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    {/* === 입부 신청 탭 === */}
+                    {/* 입부 신청 탭 */}
                     {tab === 'applications' && (
                         <div>
+                            {/* 상태 필터 */}
                             <div className="flex gap-2 mb-4">
                                 {['pending', 'approved', 'rejected'].map((s) => (
                                     <button
@@ -317,14 +412,15 @@ const AdminPage: React.FC = () => {
                                 ))}
                             </div>
 
+                            {/* 신청 카드 목록 */}
                             <div className="flex flex-col gap-3">
                                 {appsLoading && <div className="py-8 text-center text-text-muted">불러오는 중…</div>}
                                 {!appsLoading && apps.length === 0 && (
                                     <div className="py-8 text-center text-text-muted">해당 상태의 신청이 없습니다.</div>
                                 )}
-                                {!appsLoading && apps.map((a) => (
+                                {!appsLoading && pagedApps.map((a) => (
                                     <div key={a.id} className="border border-border-light rounded-lg p-5 bg-bg-white">
-                                        <div className="flex items-start justify-between gap-4">
+                                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <h3 className="text-base font-bold text-text-title">{a.name}</h3>
@@ -374,32 +470,42 @@ const AdminPage: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* 대기 신청: 직책 선택 후 승인/거절 */}
+                                            {/* 대기 신청: 직책/기수 선택 후 승인/거절 */}
                                             {a.status === 'pending' && (
-                                                <div className="flex flex-col gap-2 shrink-0 min-w-[120px]">
-                                                    <div className="flex flex-col gap-1">
-                                                        <label className="text-xs text-text-muted font-medium">부여 직책</label>
+                                                <div className="flex flex-row sm:flex-col gap-2 sm:shrink-0 sm:min-w-[120px] w-full sm:w-auto">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <label className="text-xs text-text-muted font-medium whitespace-nowrap">부여 직책</label>
                                                         <select
                                                             value={approvePositions[a.id] ?? 'member'}
                                                             onChange={(e) => setApprovePositions(prev => ({ ...prev, [a.id]: e.target.value }))}
-                                                            className="text-xs border border-border-light rounded px-2 py-1 cursor-pointer"
+                                                            className="text-xs border border-border-light rounded px-2 py-1 cursor-pointer flex-1 sm:flex-none"
                                                         >
                                                             {POSITION_OPTIONS.filter((p) => positionToLevel(p) < myLevel).map((p) => (
                                                                 <option key={p} value={p}>{POSITION_LABELS[p]}</option>
                                                             ))}
                                                         </select>
                                                     </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-xs text-text-muted font-medium">기수</label>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            value={approveCohorts[a.id] ?? DEFAULT_COHORT}
+                                                            onChange={(e) => setApproveCohorts(prev => ({ ...prev, [a.id]: e.target.value }))}
+                                                            className="text-xs border border-border-light rounded px-2 py-1"
+                                                        />
+                                                    </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => approve(a.id)}
-                                                        className="px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded text-xs font-bold hover:opacity-90 cursor-pointer"
+                                                        className="flex-1 sm:flex-none px-4 py-2 bg-btn-primary-bg text-btn-primary-text rounded text-xs font-bold hover:opacity-90 cursor-pointer"
                                                     >
                                                         승인
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => reject(a.id)}
-                                                        className="px-4 py-2 border border-red-200 text-text-danger rounded text-xs font-bold hover:bg-red-50 cursor-pointer"
+                                                        className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-text-danger rounded text-xs font-bold hover:bg-red-50 cursor-pointer"
                                                     >
                                                         거절
                                                     </button>
@@ -409,6 +515,25 @@ const AdminPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* 페이지네이션 */}
+                            {totalAppPages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-6">
+                                    {Array.from({ length: totalAppPages }, (_, i) => i + 1).map(p => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setAppPage(p)}
+                                            className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${p === appPage
+                                                ? 'border border-border-light bg-bg-deep text-text-primary'
+                                                : 'border border-border-light text-text-muted bg-bg-white hover:bg-bg-light'
+                                                }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
