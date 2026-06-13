@@ -61,8 +61,9 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
       : {};
 
     const baseWhere = { boardId: board.id, deletedAt: null, isHidden: false, ...searchCondition };
+    const boardBaseWhere = { boardId: board.id, deletedAt: null, isHidden: false };
 
-    const [posts, total] = await Promise.all([
+    const [posts, total, boardTotal, boardNoticeTotal] = await Promise.all([
       prisma.post.findMany({
         where: baseWhere,
         include: {
@@ -75,12 +76,18 @@ export const getPosts = async (req: AuthRequest, res: Response) => {
         take: limit,
       }),
       prisma.post.count({ where: baseWhere }),
+      prisma.post.count({ where: boardBaseWhere }),
+      prisma.post.count({ where: { ...boardBaseWhere, isNotice: true } }),
     ]);
 
     return res.json({
       data: {
         posts,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        pagination: {
+          page, limit, total, totalPages: Math.ceil(total / limit),
+          boardRegularTotal: boardTotal - boardNoticeTotal,
+          boardNoticeTotal,
+        },
       },
     });
   } catch (error) {

@@ -14,6 +14,10 @@ const MIME_TO_EXT: Record<string, string> = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
   'application/vnd.ms-excel': '.xls',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+  'video/mp4': '.mp4',
+  'video/quicktime': '.mov',
+  'video/x-msvideo': '.avi',
+  'video/webm': '.webm',
 };
 
 const ALLOWED_TYPES = Object.keys(MIME_TO_EXT);

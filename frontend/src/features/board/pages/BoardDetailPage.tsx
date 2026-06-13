@@ -59,6 +59,22 @@ function formatDateTime(iso: string) {
   return iso.slice(0, 16).replace('T', ' ').replace(/-/g, '.');
 }
 
+const YOUTUBE_REGEX = /https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([A-Za-z0-9_-]{11})[^\s]*/g;
+
+function renderContentWithYoutube(content: string) {
+  const parts: { type: 'text' | 'youtube'; content: string; videoId?: string }[] = [];
+  let lastIndex = 0;
+  YOUTUBE_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = YOUTUBE_REGEX.exec(content)) !== null) {
+    if (match.index > lastIndex) parts.push({ type: 'text', content: content.slice(lastIndex, match.index) });
+    parts.push({ type: 'youtube', content: match[0], videoId: match[1] });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < content.length) parts.push({ type: 'text', content: content.slice(lastIndex) });
+  return parts;
+}
+
 function BoardDetailPage() {
   const navigate = useNavigate();
   const { postId } = useParams();
@@ -240,8 +256,22 @@ function BoardDetailPage() {
           {/* 이미지 첨부파일 — 본문에 크게 표시 */}
           <div className="px-4 sm:px-8 py-6">
             {post.content && (
-              <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap mb-6">
-                {post.content}
+              <div className="text-sm text-text-secondary leading-relaxed mb-6">
+                {renderContentWithYoutube(post.content).map((part, i) =>
+                  part.type === 'youtube' ? (
+                    <div key={i} className="my-4 w-full max-w-2xl" style={{ aspectRatio: '16/9' }}>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${part.videoId}`}
+                        className="w-full h-full rounded-lg"
+                        allowFullScreen
+                        title="YouTube video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      />
+                    </div>
+                  ) : (
+                    <span key={i} className="whitespace-pre-wrap">{part.content}</span>
+                  )
+                )}
               </div>
             )}
 
@@ -348,7 +378,12 @@ function BoardDetailPage() {
               <div className="flex-1">
                 <div className="flex justify-between items-start mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-text-primary">{comment.author.name}</span>
+                    <button
+                      className="text-xs font-semibold text-text-primary hover:underline cursor-pointer"
+                      onClick={() => setMemberModalId(comment.authorId)}
+                    >
+                      {comment.author.name}
+                    </button>
                     <span className="text-[10px] text-text-muted">
                       {[comment.author.part ? partNames[comment.author.part] : null, comment.author.cohort ? `${comment.author.cohort}기` : null].filter(Boolean).join(' · ')}
                     </span>
