@@ -21,12 +21,12 @@ const BUDGET_WRITE_POSITIONS = ['treasurer', ...FULL_ACCESS_POSITIONS];
 const LEAD_WRITE_POSITIONS = ['planning_lead', ...BUDGET_WRITE_POSITIONS];
 const MEMBER_WRITE_POSITIONS = ['member', 'planning_member', ...LEAD_WRITE_POSITIONS];
 
-function canWriteBoard(boardType: string, position: string | undefined): boolean {
-  if (!position) return false;
-  if (boardType === 'notice') return ['leader', 'super_admin'].includes(position);
-  if (boardType === 'free' || boardType === 'photo') return MEMBER_WRITE_POSITIONS.includes(position);
-  if (boardType === 'resource' || boardType === 'planning') return LEAD_WRITE_POSITIONS.includes(position);
-  if (boardType === 'budget') return BUDGET_WRITE_POSITIONS.includes(position);
+function canWriteBoard(boardType: string, position: string | undefined | null): boolean {
+  const pos = position ?? 'member';
+  if (boardType === 'notice') return ['leader', 'super_admin'].includes(pos);
+  if (boardType === 'free' || boardType === 'photo' || boardType === 'resource') return MEMBER_WRITE_POSITIONS.includes(pos);
+  if (boardType === 'planning') return LEAD_WRITE_POSITIONS.includes(pos);
+  if (boardType === 'budget') return BUDGET_WRITE_POSITIONS.includes(pos);
   return false;
 }
 
