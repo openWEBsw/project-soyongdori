@@ -124,7 +124,8 @@ function BoardListPage() {
     }
     setLoading(true);
     setError('');
-    const params = new URLSearchParams({ page: String(page), limit: boardType === 'photo' ? '12' : '10' });
+    const limit = boardType === 'photo' ? 12 : 10;
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (appliedSearch) {
       params.set('search', appliedSearch);
       params.set('searchField', appliedSearchField);
@@ -314,7 +315,8 @@ function BoardListPage() {
                     {posts.length === 0 ? (
                       <div className="text-center py-12 text-text-muted text-sm">게시글이 없습니다</div>
                     ) : (() => {
-                      const regularPostsBefore = page === 1 ? 0 : (page - 1) * 10 - boardNoticeTotal;
+                      const pageLimit = boardType === 'photo' ? 12 : 10;
+                      const regularPostsBefore = page === 1 ? 0 : (page - 1) * pageLimit - boardNoticeTotal;
                       let regularIdx = -1;
                       return posts.map((post) => {
                         if (!post.isNotice) regularIdx++;
@@ -376,7 +378,8 @@ function BoardListPage() {
                           </td>
                         </tr>
                       ) : (() => {
-                        const regularPostsBefore = page === 1 ? 0 : (page - 1) * 10 - boardNoticeTotal;
+                        const pageLimit = boardType === 'photo' ? 12 : 10;
+                        const regularPostsBefore = page === 1 ? 0 : (page - 1) * pageLimit - boardNoticeTotal;
                         let regularIdx = -1;
                         return posts.map((post) => {
                           if (!post.isNotice) regularIdx++;
