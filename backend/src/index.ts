@@ -39,7 +39,14 @@ app.use('/uploads', express.static(path.join(__dirname, '../../uploads'), {
 
 // 정적 파일 서빙
 const publicPath = path.join(__dirname, '../public');
-app.use(express.static(publicPath));
+app.use(express.static(publicPath, {
+  maxAge: 0,
+  setHeaders: (res, filePath) => {
+    if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 // api 라우팅
 app.use('/api/auth', authRouter);
